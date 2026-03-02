@@ -320,10 +320,20 @@ document.addEventListener("DOMContentLoaded", () => {
             modalLoading.classList.remove("hidden");
             modalResult.classList.add("hidden");
 
-            // 결과 초기화 방지
+            // 결과 초기화
             modalHook.innerHTML = "";
             modalBody.innerHTML = "";
             modalCta.innerHTML = "";
+
+            // 비디오 타입은 AI 분석 미지원
+            if (ad.media_type === "video") {
+                modalLoading.classList.add("hidden");
+                modalHook.innerHTML = `<span style="font-size:1.5rem;">🎬</span>`;
+                modalBody.innerHTML = `<p style="text-align:center;color:#64748b;font-size:1rem;margin-top:0.5rem;">비디오 AI 분석은 개발중입니다.</p>`;
+                modalCta.innerHTML = "";
+                modalResult.classList.remove("hidden");
+                return;
+            }
 
             try {
                 const res = await fetch("/api/v1/analyze-single", {
@@ -337,6 +347,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (!res.ok) throw new Error("분석 서버 응답 에러");
 
                 const jsonRes = await res.json();
+
+                // 비디오 분석 불가 안내 (alert 대신 모달에 표시)
+                if (jsonRes.status === "error" && jsonRes.message && jsonRes.message.includes("개발중")) {
+                    modalLoading.classList.add("hidden");
+                    modalHook.innerHTML = `<span style="font-size:1.5rem;">🎬</span>`;
+                    modalBody.innerHTML = `<p style="text-align:center;color:#64748b;font-size:1rem;margin-top:0.5rem;">${jsonRes.message}</p>`;
+                    modalCta.innerHTML = "";
+                    modalResult.classList.remove("hidden");
+                    return;
+                }
+
                 if (jsonRes.status === "error") throw new Error(jsonRes.message);
 
                 modalHook.innerText = jsonRes.data.hook;

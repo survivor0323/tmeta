@@ -278,6 +278,13 @@ async def delete_bookmark(bookmark_id: str, authorization: str = Header(default=
 
 @app.post("/api/v1/analyze-single")
 async def trigger_single_analysis(req: SingleAnalyzeRequest):
+    # 비디오 타입은 AI 분석 미지원
+    if req.media_type and req.media_type.lower() == "video":
+        return {
+            "status": "error",
+            "message": "비디오 AI 분석은 개발중입니다.",
+            "data": None
+        }
     try:
         from anti_gravity_ads_logic import analyze_single_creative_with_ai
         report = analyze_single_creative_with_ai(req.media_url, req.media_type)
