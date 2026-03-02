@@ -709,30 +709,30 @@ def analyze_single_creative_with_ai(media_url: str, media_type: str) -> dict:
             temp_video_path = temp_video.name
             
         try:
-            # OpenCV로 프레임 추출
-            cap = cv2.VideoCapture(temp_video_path)
-            
-            # 전체 프레임 수 확인
-            total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-            if total_frames <= 0:
-                total_frames = 30 # fallback
-            
-            # 3개 정도의 핵심 프레임 추출 (0초, 중간, 끝부분)
-            target_frames = [0, int(total_frames * 0.33), int(total_frames * 0.66)]
-            
-            for frame_index in target_frames:
-                cap.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
-                ret, frame = cap.read()
-                if ret:
-                    # API 비용 및 속도 최적화를 위해 리사이징
-                    frame = cv2.resize(frame, (640, 360))
-                    _, buffer = cv2.imencode('.jpg', frame)
-                    base64_image = base64.b64encode(buffer).decode('utf-8')
-                    base64_images.append(base64_image)
-                    
-            cap.release()
+            if not CV2_AVAILABLE:
+                # cv2 없는 환경(Vercel 등): 프레임 추출 불가 → 영상 URL만 base64로 첫 청크 전달
+                chunk_data = next(res.iter_content(chunk_size=32768), None)
+                if chunk_data:
+                    base64_images.append(base64.b64encode(chunk_data).decode('utf-8'))
+            else:
+                # OpenCV로 프레임 추출
+                cap = cv2.VideoCapture(temp_video_path)
+                total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+                if total_frames <= 0:
+                    total_frames = 30
+                target_frames = [0, int(total_frames * 0.33), int(total_frames * 0.66)]
+                for frame_index in target_frames:
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
+                    ret, frame = cap.read()
+                    if ret:
+                        frame = cv2.resize(frame, (640, 360))
+                        _, buffer = cv2.imencode('.jpg', frame)
+                        base64_image = base64.b64encode(buffer).decode('utf-8')
+                        base64_images.append(base64_image)
+                cap.release()
         finally:
-            os.remove(temp_video_path)
+            if os.path.exists(temp_video_path):
+                os.remove(temp_video_path)
             
     else: # media_type == 'image'
         res = requests.get(media_url)
