@@ -1,0 +1,6 @@
+GET https://api.scrapecreators.com/v1/facebook/adLibrary/search/companies?query=nike -> 200
+{"success":true,"credits_remaining":93,"searchResults":[{"page_id":"15087023444","category":"Sportswear Store","image_uri":"https://scontent-sea5-1.xx.fbcdn.net/v/t39.30808-1/284964043_10159903868513445_7696353984967674128_n.jpg?stp=dst-jpg_s200x200_tt6&_nc_cat=1&ccb=1-7&_nc_sid=418b77&_nc_ohc=_Lo_eNLCLwMQ7kNvwE1rZBd&_nc_oc=AdnXDlOTjXCtAy9nPxpRtQA7ZQt5CY_01FievSLxHVkbza3tVW9yVr_FU2CTe4-1Ogg&_nc_zt=24&_nc_ht=scontent-sea5-1.xx&_nc_gid=ynjENPw7FwXnqy-Nwet3_w&_nc_ss=8&oh=00_AfygDS1iZXIaQuZyS5y98fbu
+
+GET https://api.scrapecreators.com/v1/facebook/adLibrary/company/ads?pageId=nike -> 200
+{"success":true,"credits_remaining":92}
+

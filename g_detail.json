@@ -1,0 +1,49 @@
+{
+  "success": true,
+  "credits_remaining": 24668,
+  "advertiserId": "AR12235561708256493569",
+  "creativeId": "CR10645319349306392577",
+  "firstShown": null,
+  "url": "https://adstransparency.google.com/advertiser/AR12235561708256493569/creative/CR10645319349306392577",
+  "lastShown": "2026-03-02T07:16:50.000Z",
+  "format": "text",
+  "overallImpressions": {
+    "min": null,
+    "max": null
+  },
+  "creativeRegions": [
+    {
+      "regionCode": "KR",
+      "regionName": "South Korea"
+    }
+  ],
+  "regionStats": [
+    {
+      "regionCode": "KR",
+      "regionName": "South Korea",
+      "firstShown": null,
+      "lastShown": "2026-03-01T00:00:00.000Z",
+      "impressions": {},
+      "platformImpressions": []
+    }
+  ],
+  "variations": [
+    {
+      "destinationUrl": "Iguplus.com",
+      "headline": "U + 유독 , 통신사 상관 없이 - 유독 픽 으로 최대 42 % 할인 유독 에서는 통신사 상관 없이 원하는 상품 으로 조합 하여",
+      "description": "할인 유튜브 프리미엄 + 메가 MGC 커피 or ... 디즈니 플러스 할인 유튜브 + 라이프 상품 할인 까지",
+      "allText": "광고 Iguplus.com www.lguplus.com/ U + 유독 , 통신사 상관 없이 - 유독 픽 으로 최대 42 % 할인 유독 에서는 통신사 상관 없이 원하는 상품 으로 조합 하여 할인 유튜브 프리미엄 + 메가 MGC 커피 or ... 디즈니 플러스 할인 유튜브 + 라이프 상품 할인 까지",
+      "imageUrl": "https://tpc.googlesyndication.com/archive/simgad/14186268712498661097"
+    },
+    {
+      "destinationUrl": "Iguplus.com",
+      "headline": "U + 유독 , 통신사 상관 없이 - 유독 픽 으로 최대 42 % 할인 유독 에서는 통신사 상관 없이 원하는 상품 으로 조합 하여",
+      "description": "할인 유튜브 프리미엄 + 메가 MGC 커피 or ... 디즈니 플러스 할인 유튜브 + 라이프 상품 할인 까지",
+      "allText": "광고 Iguplus.com www.lguplus.com/ U + 유독 , 통신사 상관 없이 - 유독 픽 으로 최대 42 % 할인 유독 에서는 통신사 상관 없이 원하는 상품 으로 조합 하여 할인 유튜브 프리미엄 + 메가 MGC 커피 or ... 디즈니 플러스 할인 유튜브 + 라이프 상품 할인 까지",
+      "imageUrl": "https://tpc.googlesyndication.com/archive/simgad/14186268712498661097"
+    },
+    {
+      "destinationUrl": "Iguplus.com",
+      "headline": "U + 유독 , 통신사 상관 없이 - 유독 픽 으로 최대 42 % 할인 유독 에서는 통신사 상관 없이 원하는 상품 으로 조합 하여",
+      "description": "할인 유튜브 프리미엄 + 메가 MGC 커피 or ... 디즈니 플러스 할인 유튜브 + 라이프 상품 할인 까지",
+      "allText": "
