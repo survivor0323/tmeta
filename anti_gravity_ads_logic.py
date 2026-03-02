@@ -710,8 +710,9 @@ def analyze_single_creative_with_ai(media_url: str, media_type: str) -> dict:
             
         try:
             if not CV2_AVAILABLE:
-                # cv2 없는 환경(Vercel 등): 프레임 추출 불가 → 영상 URL만 base64로 첫 청크 전달
-                chunk_data = next(res.iter_content(chunk_size=32768), None)
+                # cv2 없는 환경(Vercel): 이미 저장된 임시파일에서 첫 청크를 읽어 jpeg로 전달 시도
+                with open(temp_video_path, 'rb') as vf:
+                    chunk_data = vf.read(65536)
                 if chunk_data:
                     base64_images.append(base64.b64encode(chunk_data).decode('utf-8'))
             else:
@@ -741,8 +742,7 @@ def analyze_single_creative_with_ai(media_url: str, media_type: str) -> dict:
         base64_image = base64.b64encode(res.content).decode('utf-8')
         base64_images.append(base64_image)
         
-    if not base64_images:
-        raise Exception("미디어에서 이미지를 추출하지 못했습니다.")
+    # base64_images가 비어도 텍스트 전용으로 분석 계속 (cv2 없는 이미지 URL 처리 등)
 
     # OpenAI GPT-4o Vision 호출
     prompt_text = """당신은 엘리트 퍼포먼스 마케터입니다.
