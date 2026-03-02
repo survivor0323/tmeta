@@ -5,7 +5,12 @@ from datetime import datetime
 from typing import List, Dict, Any
 from dotenv import load_dotenv
 
-import cv2
+try:
+    import cv2
+    CV2_AVAILABLE = True
+except ImportError:
+    cv2 = None
+    CV2_AVAILABLE = False
 import base64
 import requests
 import tempfile
