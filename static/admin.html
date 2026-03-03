@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motiverse AI | 통합 관리자 대시보드</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <!-- 프리미엄 폰트 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;700&display=swap"
+        rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="/static/styles.css?v=10">
+    <style>
+        body {
+            background: #f1f5f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .admin-header {
+            background: #fff;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .admin-container {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            flex: 1;
+            box-sizing: border-box;
+        }
+
+        .admin-content {
+            background: #fff;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+            min-height: 600px;
+        }
+
+        .user-select-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            align-items: center;
+        }
+
+        .user-select-bar select {
+            padding: 0.6rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            min-width: 250px;
+            outline: none;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="admin-header">
+        <h1 style="margin:0; font-family:var(--font-heading); font-size:1.5rem;">
+            <i class="fa-solid fa-user-shield text-gradient"></i> 모티버스 통합 관리자 대시보드
+        </h1>
+        <div style="font-size:0.9rem; color:#64748b;">
+            <span id="adminEmailDisplay">로딩 중...</span>
+        </div>
+    </header>
+
+    <div class="admin-container">
+        <div class="admin-tabs filter-tabs" style="margin-bottom:1.5rem;">
+            <div class="tab-chip active" data-target="adminViewOverview">전체 개요</div>
+            <div class="tab-chip" data-target="adminViewUsers">유저 및 통계</div>
+            <div class="tab-chip" data-target="adminViewUserDetail">개별 유저 상세 (히스토리/북마크)</div>
+            <div class="tab-chip" data-target="adminViewQueries">전체 검색어 로그</div>
+        </div>
+
+        <div id="adminLoading" class="loading-state">
+            <div class="spinner"></div>
+            <p>관리자 데이터를 불러오는 중...</p>
+        </div>
+
+        <div class="admin-content hidden" id="adminContent">
+            <!-- 1. 전체 개요 -->
+            <div id="adminViewOverview" class="admin-view-panel">
+                <div class="admin-stats-grid">
+                    <div class="stat-card">
+                        <h3>총 가입자</h3>
+                        <p id="statTotalUsers">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>총 검색 횟수</h3>
+                        <p id="statTotalSearches">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>API 호출량</h3>
+                        <p id="statTotalApi">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>추정 토큰 사용</h3>
+                        <p id="statTotalTokens">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. 유저 및 통계 -->
+            <div id="adminViewUsers" class="admin-view-panel hidden">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>이메일</th>
+                            <th>가입일</th>
+                            <th>마지막 접속</th>
+                            <th>관리자 여부</th>
+                            <th>권한 설정</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminUsersTbody"></tbody>
+                </table>
+            </div>
+
+            <!-- 3. 개별 유저 상세조회 -->
+            <div id="adminViewUserDetail" class="admin-view-panel hidden">
+                <div class="user-select-bar">
+                    <label style="font-weight:600; color:var(--text-main);">조회할 사용자 선택:</label>
+                    <select id="detailUserSelect">
+                        <option value="">-- 사용자를 선택하세요 --</option>
+                    </select>
+                </div>
+
+                <div id="userDetailData" class="hidden">
+                    <div class="admin-stats-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom:1.5rem;">
+                        <div class="stat-card">
+                            <h3>해당 유저 총 검색</h3>
+                            <p id="udTotalSearch">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>해당 유저 총 북마크</h3>
+                            <p id="udTotalBookmark">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>해당 유저 총 소비 토큰</h3>
+                            <p id="udTotalToken">0</p>
+                        </div>
+                    </div>
+
+                    <h3
+                        style="margin-bottom:1rem; border-bottom:1px solid #e2e8f0; padding-bottom:0.5rem; color:var(--text-main);">
+                        사용자 검색 히스토리 (최근)</h3>
+                    <table class="admin-table" style="margin-bottom: 2rem;">
+                        <thead>
+                            <tr>
+                                <th>검색어</th>
+                                <th>플랫폼</th>
+                                <th>국가</th>
+                                <th>일시</th>
+                            </tr>
+                        </thead>
+                        <tbody id="udHistoryTbody"></tbody>
+                    </table>
+
+                    <h3
+                        style="margin-bottom:1rem; border-bottom:1px solid #e2e8f0; padding-bottom:0.5rem; color:var(--text-main);">
+                        사용자 북마크 내역</h3>
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>검색어</th>
+                                <th>브랜드/매체</th>
+                                <th>북마크 일시</th>
+                            </tr>
+                        </thead>
+                        <tbody id="udBookmarkTbody"></tbody>
+                    </table>
+                </div>
+                <div id="userDetailEmpty" style="text-align:center; padding:3rem; color:#94a3b8;">
+                    사용자를 선택하면 상세 히스토리와 북마크가 표시됩니다.
+                </div>
+            </div>
+
+            <!-- 4. 전체 검색어 이력 -->
+            <div id="adminViewQueries" class="admin-view-panel hidden">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>사용자</th>
+                            <th>검색어</th>
+                            <th>플랫폼</th>
+                            <th>일시</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminQueriesTbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth 로드 및 Admin 기능 분리 스크립트 -->
+    <script src="/static/auth.js"></script>
+    <script src="/static/admin.js"></script>
+</body>
+
+</html>

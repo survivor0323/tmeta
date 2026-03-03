@@ -83,7 +83,13 @@ BEGIN
        FROM public.api_usage_logs u
        LEFT JOIN public.user_profiles p ON p.user_id = u.user_id
        ORDER BY u.created_at DESC LIMIT 500
-    ) u)
+    ) u),
+    'bookmarks', (SELECT COALESCE(json_agg(b), '[]'::json) FROM (
+       SELECT b.id, b.user_id, p.email, b.query, b.platform, b.created_at, b.ad_data 
+       FROM public.bookmarks b
+       LEFT JOIN public.user_profiles p ON p.user_id = b.user_id
+       ORDER BY b.created_at DESC LIMIT 500
+    ) b)
   ) INTO res;
 
   RETURN res;
