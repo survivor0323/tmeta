@@ -268,15 +268,18 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
 
             <!-- 하단 바디 -->
-            <div class="ad-details">
-                <div class="brand-name">
-                    <div class="brand-avatar">${ad.brand.charAt(0).toUpperCase()}</div> ${ad.brand}
+            <div class="ad-details" style="flex-direction:column;align-items:stretch;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div class="brand-name">
+                        <div class="brand-avatar">${ad.brand.charAt(0).toUpperCase()}</div> ${ad.brand}
+                    </div>
+                    <button class="btn-ai-analyze analyze-single-btn" title="상세 기획 의도 분석"><i class="fa-solid fa-wand-magic-sparkles"></i> 딥다이브</button>
                 </div>
                 ${ad.hashtags && ad.hashtags.length > 0 ?
                 `<div class="hashtags-container" style="margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.25rem;">
                         ${ad.hashtags.map(tag => `<span style="font-size: 0.75rem; background: #e0e7ff; color: #4338ca; padding: 2px 6px; border-radius: 4px;">${tag}</span>`).join('')}
                     </div>` : ''}
-                <button class="btn-ai-analyze analyze-single-btn" style="margin-top:0.75rem;" title="상세 기획 의도 분석"><i class="fa-solid fa-wand-magic-sparkles"></i> 딥다이브</button>
+                ${ad.direct_link ? `<button class="btn-landing-analyze" style="margin-top:0.5rem;" onclick="event.stopPropagation();window.analyzeLandingPage('${ad.direct_link.replace(/'/g, "\\'")}')"><i class="fa-solid fa-globe"></i> 랜딩페이지 분석</button>` : ''}
             </div>
         `;
 

@@ -28,6 +28,15 @@
         <!-- 1. Header Area -->
         <header class="navbar">
             <div class="navbar-right">
+                <!-- 모니터링 아이콘 (로그인 후 표시) -->
+                <button class="icon-btn hidden" id="monitorBtn" title="경쟁사 모니터링">
+                    <i class="fa-solid fa-satellite-dish"></i>
+                    <span class="alert-dot hidden" id="alertDot"></span>
+                </button>
+                <!-- 보드 아이콘 (로그인 후 표시) -->
+                <button class="icon-btn hidden" id="boardsBtn" title="보드/컬렉션">
+                    <i class="fa-solid fa-folder-open"></i>
+                </button>
                 <!-- 히스토리 아이콘 (로그인 후 표시) -->
                 <button class="icon-btn hidden" id="historyBtn" title="검색 히스토리">
                     <i class="fa-solid fa-clock-rotate-left"></i>
@@ -164,9 +173,75 @@
         </div>
     </div>
 
+    <!-- ═══ P1: 경쟁사 모니터링 모달 ═══ -->
+    <div id="monitorModal" class="modal hidden">
+        <div class="modal-content" style="max-width:700px;">
+            <span class="close-btn"
+                onclick="document.getElementById('monitorModal').classList.add('hidden')">&times;</span>
+            <h2 class="modal-title"><i class="fa-solid fa-satellite-dish text-gradient"></i> 경쟁사 자동 모니터링</h2>
+
+            <div style="display:flex;gap:0.5rem;margin-bottom:1.5rem;">
+                <input type="text" id="monitorBrandInput" placeholder="브랜드명 입력 (예: 벨킨, 삼성전자)"
+                    style="flex:1;padding:0.7rem 1rem;border:1.5px solid #e2e8f0;border-radius:10px;outline:none;font-size:0.95rem;" />
+                <select id="monitorPlatformSelect"
+                    style="padding:0.7rem;border:1.5px solid #e2e8f0;border-radius:10px;">
+                    <option value="meta">Meta</option>
+                    <option value="instagram">Instagram</option>
+                    <option value="tiktok">TikTok</option>
+                    <option value="google">Google</option>
+                </select>
+                <button id="addMonitorBtn" class="btn-search" style="padding:0.7rem 1.2rem;"><i
+                        class="fa-solid fa-plus"></i> 등록</button>
+            </div>
+
+            <div id="monitorList" style="max-height:250px;overflow-y:auto;margin-bottom:1rem;"></div>
+
+            <button id="checkNowBtn" class="btn-search" style="width:100%;justify-content:center;gap:0.5rem;"><i
+                    class="fa-solid fa-sync"></i> 지금 체크하기</button>
+
+            <h3 style="margin-top:1.5rem;font-size:1rem;color:#334155;"><i class="fa-solid fa-bell"></i> 최근 알림</h3>
+            <div id="alertList" style="max-height:200px;overflow-y:auto;margin-top:0.5rem;"></div>
+        </div>
+    </div>
+
+    <!-- ═══ P3: 보드/컬렉션 모달 ═══ -->
+    <div id="boardModal" class="modal hidden">
+        <div class="modal-content" style="max-width:600px;">
+            <span class="close-btn"
+                onclick="document.getElementById('boardModal').classList.add('hidden')">&times;</span>
+            <h2 class="modal-title"><i class="fa-solid fa-folder-open text-gradient"></i> 보드 / 컬렉션</h2>
+
+            <div style="display:flex;gap:0.5rem;margin-bottom:1.5rem;">
+                <input type="text" id="boardNameInput" placeholder="새 보드 이름"
+                    style="flex:1;padding:0.7rem 1rem;border:1.5px solid #e2e8f0;border-radius:10px;outline:none;" />
+                <input type="color" id="boardColorInput" value="#3b82f6"
+                    style="width:40px;height:40px;border:none;cursor:pointer;border-radius:8px;" />
+                <button id="createBoardBtn" class="btn-search" style="padding:0.7rem 1.2rem;"><i
+                        class="fa-solid fa-plus"></i></button>
+            </div>
+
+            <div id="boardList"></div>
+        </div>
+    </div>
+
+    <!-- ═══ P4: 랜딩페이지 분석 모달 ═══ -->
+    <div id="landingModal" class="modal hidden">
+        <div class="modal-content" style="max-width:650px;">
+            <span class="close-btn"
+                onclick="document.getElementById('landingModal').classList.add('hidden')">&times;</span>
+            <h2 class="modal-title"><i class="fa-solid fa-globe text-gradient"></i> 랜딩페이지 분석</h2>
+            <div id="landingLoading" class="loading-state hidden">
+                <div class="spinner"></div>
+                <p class="pulsing-text">랜딩페이지를 분석하고 있습니다...</p>
+            </div>
+            <div id="landingResult"></div>
+        </div>
+    </div>
+
     <!-- 자바스크립트 -->
-    <script src="/static/auth.js?v=21"></script>
-    <script src="/static/script.js?v=21"></script>
+    <script src="/static/auth.js?v=22"></script>
+    <script src="/static/script.js?v=22"></script>
+    <script src="/static/features.js?v=1"></script>
 </body>
 
 </html>

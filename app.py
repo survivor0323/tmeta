@@ -32,6 +32,22 @@ except Exception as e:
     logger.warning(f"Supabase 초기화 실패: {e}")
     supabase = None
 
+# JWT에서 user_id 추출 헬퍼
+def get_user_id_from_token(authorization: str) -> str:
+    """Authorization 헤더의 Bearer 토큰에서 Supabase user_id를 추출합니다."""
+    if not authorization or not supabase:
+        return None
+    token = authorization.replace("Bearer ", "").strip()
+    if not token:
+        return None
+    try:
+        result = supabase.auth.get_user(token)
+        if result and result.user:
+            return result.user.id
+    except Exception as e:
+        logger.warning(f"[Auth] 토큰 검증 실패: {e}")
+    return None
+
 app = FastAPI(title="Motiverse AI Ads Platform")
 
 # 정적 파일 서빙 ('static' 폴더 하위의 html, css, js 리소스들을 루트경로에 호스팅)
@@ -224,6 +240,12 @@ async def trigger_analysis(req: AnalyzeRequest, authorization: str = Header(defa
         if len(tried_queries) > 1:
             success_msg = f"'{tried_queries[0]}' 결과가 없어 자동으로 '{current_query}'(으)로 변환 탐색하여 총 {len(real_responses)}개의 실전 소재를 찾았습니다."
 
+        # P2: 검색된 광고를 아카이브에 자동 저장 (종료되어도 영구 보관)
+        try:
+            archive_ads(real_responses, platform, req.country or "KR")
+        except Exception as archive_err:
+            logger.warning(f"[Archive] 자동 저장 실패: {archive_err}")
+
         return {
             "status": "success",
             "message": success_msg,
@@ -384,6 +406,416 @@ async def get_recommended_keywords(req: RecommendRequest):
         logger.error(f"검색어 추천 중 오류 발생: {e}")
         return {"status": "error", "message": str(e), "data": []}
 
+
+# ═══════════════════════════════════════════════════════
+# P1: 경쟁사 자동 모니터링 API
+# ═══════════════════════════════════════════════════════
+
+class MonitorRequest(BaseModel):
+    brand_name: str
+    platform: str = "meta"
+    country: str = "KR"
+
+@app.post("/api/v1/monitors")
+async def add_monitor(req: MonitorRequest, authorization: str = Header(default="")):
+    """모니터링할 브랜드를 등록합니다."""
+    user_id = get_user_id_from_token(authorization)
+    if not user_id:
+        return {"status": "error", "message": "로그인이 필요합니다."}
+    try:
+        # 중복 체크
+        existing = supabase.table("monitored_brands")\
+            .select("id")\
+            .eq("user_id", user_id)\
+            .eq("brand_name", req.brand_name)\
+            .eq("platform", req.platform)\
+            .execute()
+        if existing.data:
+            return {"status": "error", "message": f"'{req.brand_name}'은(는) 이미 모니터링 중입니다."}
+
+        result = supabase.table("monitored_brands").insert({
+            "user_id": user_id,
+            "brand_name": req.brand_name,
+            "platform": req.platform,
+            "country": req.country,
+        }).execute()
+        return {"status": "success", "data": result.data[0] if result.data else {}}
+    except Exception as e:
+        logger.error(f"모니터 등록 실패: {e}")
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/v1/monitors")
+async def list_monitors(authorization: str = Header(default="")):
+    """사용자의 모니터링 브랜드 목록을 반환합니다."""
+    user_id = get_user_id_from_token(authorization)
+    if not user_id:
+        return {"status": "error", "message": "로그인이 필요합니다.", "data": []}
+    try:
+        result = supabase.table("monitored_brands")\
+            .select("*")\
+            .eq("user_id", user_id)\
+            .eq("is_active", True)\
+            .order("created_at", desc=True)\
+            .execute()
+        return {"status": "success", "data": result.data}
+    except Exception as e:
+        return {"status": "error", "message": str(e), "data": []}
+
+@app.delete("/api/v1/monitors/{monitor_id}")
+async def delete_monitor(monitor_id: str, authorization: str = Header(default="")):
+    """모니터링 브랜드를 삭제합니다."""
+    user_id = get_user_id_from_token(authorization)
+    if not user_id:
+        return {"status": "error", "message": "로그인이 필요합니다."}
+    try:
+        supabase.table("monitored_brands")\
+            .delete().eq("id", monitor_id).eq("user_id", user_id).execute()
+        return {"status": "success"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/v1/monitor-alerts")
+async def get_monitor_alerts(authorization: str = Header(default="")):
+    """모니터링 알림 목록을 반환합니다."""
+    user_id = get_user_id_from_token(authorization)
+    if not user_id:
+        return {"status": "error", "message": "로그인이 필요합니다.", "data": []}
+    try:
+        result = supabase.table("monitor_alerts")\
+            .select("*")\
+            .eq("user_id", user_id)\
+            .order("created_at", desc=True)\
+            .limit(50)\
+            .execute()
+        return {"status": "success", "data": result.data}
+    except Exception as e:
+        return {"status": "error", "message": str(e), "data": []}
+
+@app.put("/api/v1/monitor-alerts/{alert_id}/read")
+async def mark_alert_read(alert_id: str, authorization: str = Header(default="")):
+    """알림을 읽음 처리합니다."""
+    user_id = get_user_id_from_token(authorization)
+    if not user_id:
+        return {"status": "error", "message": "로그인이 필요합니다."}
+    try:
+        supabase.table("monitor_alerts")\
+            .update({"is_read": True})\
+            .eq("id", alert_id).eq("user_id", user_id).execute()
+        return {"status": "success"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/v1/monitors/check-now")
+async def check_monitors_now(authorization: str = Header(default="")):
+    """등록된 모니터를 즉시 체크합니다 (수동 트리거)."""
+    user_id = get_user_id_from_token(authorization)
+    if not user_id:
+        return {"status": "error", "message": "로그인이 필요합니다."}
+    try:
+        monitors = supabase.table("monitored_brands")\
+            .select("*")\
+            .eq("user_id", user_id)\
+            .eq("is_active", True)\
+            .execute()
+        if not monitors.data:
+            return {"status": "error", "message": "모니터링 중인 브랜드가 없습니다."}
+
+        total_new = 0
+        for mon in monitors.data:
+            brand = mon["brand_name"]
+            platform = mon.get("platform", "meta")
+            country = mon.get("country", "KR")
+
+            try:
+                if platform == "meta":
+                    ads_by_brand = fetch_competitor_ads_batch([brand], country=country)
+                    ads = ads_by_brand.get(brand, [])
+                elif platform == "tiktok":
+                    from anti_gravity_ads_logic import fetch_tiktok_creatives
+                    ads = fetch_tiktok_creatives(keyword=brand, country=country)
+                elif platform == "instagram":
+                    from anti_gravity_ads_logic import fetch_instagram_reels
+                    ads = fetch_instagram_reels(keyword=brand)
+                elif platform == "google":
+                    from anti_gravity_ads_logic import fetch_google_ads
+                    ads = fetch_google_ads(keyword=brand, country=country)
+                else:
+                    ads = []
+            except Exception as fetch_err:
+                logger.error(f"[Monitor] {brand} 수집 실패: {fetch_err}")
+                ads = []
+
+            if ads:
+                # P2: 아카이브에 저장
+                archive_ads(ads, platform, country)
+
+                # 알림 생성
+                slim_ads = [{"ad_id": a.get("ad_id"), "brand": a.get("brand"),
+                             "media_url": a.get("media_url"), "media_type": a.get("media_type"),
+                             "body": (a.get("body") or "")[:200], "direct_link": a.get("direct_link"),
+                             "platform": platform} for a in ads[:20]]
+                supabase.table("monitor_alerts").insert({
+                    "user_id": user_id,
+                    "monitor_id": mon["id"],
+                    "brand_name": brand,
+                    "new_ads_count": len(ads),
+                    "ads_data": slim_ads,
+                }).execute()
+                total_new += len(ads)
+
+            # last_checked_at 갱신
+            from datetime import datetime, timezone
+            supabase.table("monitored_brands")\
+                .update({"last_checked_at": datetime.now(timezone.utc).isoformat()})\
+                .eq("id", mon["id"]).execute()
+
+        return {"status": "success", "message": f"체크 완료! 총 {total_new}개의 새 광고를 발견했습니다."}
+    except Exception as e:
+        logger.error(f"모니터 체크 실패: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+# ═══════════════════════════════════════════════════════
+# P2: 광고 아카이브 (종료된 광고 영구 보관)
+# ═══════════════════════════════════════════════════════
+
+def archive_ads(ads: list, platform: str, country: str = "KR"):
+    """수집된 광고를 아카이브 테이블에 upsert합니다."""
+    if not supabase or not ads:
+        return
+    for ad in ads:
+        ad_id = ad.get("ad_id")
+        if not ad_id:
+            continue
+        try:
+            supabase.table("ad_archive").upsert({
+                "ad_id": ad_id,
+                "brand": ad.get("brand", ""),
+                "platform": platform,
+                "country": country,
+                "media_url": ad.get("media_url", ""),
+                "media_type": ad.get("media_type", ""),
+                "image_url": ad.get("image_url", ""),
+                "body": (ad.get("body") or "")[:500],
+                "direct_link": ad.get("direct_link", ""),
+                "start_date": ad.get("start_date", ""),
+                "analysis_report": ad.get("analysis_report"),
+                "is_active": True,
+                "last_seen_at": "now()",
+            }, on_conflict="ad_id,platform").execute()
+        except Exception as e:
+            logger.warning(f"[Archive] {ad_id} 저장 실패: {e}")
+
+@app.get("/api/v1/archive")
+async def search_archive(
+    q: str = "",
+    platform: str = "",
+    brand: str = "",
+    authorization: str = Header(default="")
+):
+    """아카이브된 광고를 검색합니다 (종료된 광고 포함)."""
+    user_id = get_user_id_from_token(authorization)
+    if not user_id:
+        return {"status": "error", "message": "로그인이 필요합니다.", "data": []}
+    try:
+        query = supabase.table("ad_archive").select("*")
+        if brand:
+            query = query.ilike("brand", f"%{brand}%")
+        if platform:
+            query = query.eq("platform", platform)
+        if q:
+            query = query.or_(f"brand.ilike.%{q}%,body.ilike.%{q}%")
+        result = query.order("last_seen_at", desc=True).limit(50).execute()
+        return {"status": "success", "data": result.data}
+    except Exception as e:
+        return {"status": "error", "message": str(e), "data": []}
+
+
+# ═══════════════════════════════════════════════════════
+# P3: 보드 / 컬렉션 기능 (북마크 개선)
+# ═══════════════════════════════════════════════════════
+
+class BoardRequest(BaseModel):
+    name: str
+    description: str = ""
+    color: str = "#3b82f6"
+
+class BookmarkMoveRequest(BaseModel):
+    bookmark_ids: list
+    board_id: Optional[str] = None
+
+@app.post("/api/v1/boards")
+async def create_board(req: BoardRequest, authorization: str = Header(default="")):
+    """새 보드를 생성합니다."""
+    user_id = get_user_id_from_token(authorization)
+    if not user_id:
+        return {"status": "error", "message": "로그인이 필요합니다."}
+    try:
+        result = supabase.table("boards").insert({
+            "user_id": user_id,
+            "name": req.name,
+            "description": req.description,
+            "color": req.color,
+        }).execute()
+        return {"status": "success", "data": result.data[0] if result.data else {}}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/v1/boards")
+async def list_boards(authorization: str = Header(default="")):
+    """사용자의 보드 목록을 반환합니다."""
+    user_id = get_user_id_from_token(authorization)
+    if not user_id:
+        return {"status": "error", "message": "로그인이 필요합니다.", "data": []}
+    try:
+        result = supabase.table("boards")\
+            .select("*")\
+            .eq("user_id", user_id)\
+            .order("created_at", desc=True)\
+            .execute()
+        return {"status": "success", "data": result.data}
+    except Exception as e:
+        return {"status": "error", "message": str(e), "data": []}
+
+@app.delete("/api/v1/boards/{board_id}")
+async def delete_board(board_id: str, authorization: str = Header(default="")):
+    """보드를 삭제합니다 (북마크는 유지, board_id NULL 처리)."""
+    user_id = get_user_id_from_token(authorization)
+    if not user_id:
+        return {"status": "error", "message": "로그인이 필요합니다."}
+    try:
+        supabase.table("boards").delete().eq("id", board_id).eq("user_id", user_id).execute()
+        return {"status": "success"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/v1/boards/{board_id}/bookmarks")
+async def get_board_bookmarks(board_id: str, authorization: str = Header(default="")):
+    """특정 보드의 북마크를 반환합니다."""
+    user_id = get_user_id_from_token(authorization)
+    if not user_id:
+        return {"status": "error", "message": "로그인이 필요합니다.", "data": []}
+    try:
+        result = supabase.table("bookmarks")\
+            .select("*")\
+            .eq("user_id", user_id)\
+            .eq("board_id", board_id)\
+            .order("created_at", desc=True)\
+            .execute()
+        return {"status": "success", "data": result.data}
+    except Exception as e:
+        return {"status": "error", "message": str(e), "data": []}
+
+@app.put("/api/v1/bookmarks/move")
+async def move_bookmarks_to_board(req: BookmarkMoveRequest, authorization: str = Header(default="")):
+    """북마크를 특정 보드로 이동합니다."""
+    user_id = get_user_id_from_token(authorization)
+    if not user_id:
+        return {"status": "error", "message": "로그인이 필요합니다."}
+    try:
+        for bm_id in req.bookmark_ids:
+            supabase.table("bookmarks")\
+                .update({"board_id": req.board_id})\
+                .eq("id", bm_id)\
+                .eq("user_id", user_id)\
+                .execute()
+        return {"status": "success"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+# ═══════════════════════════════════════════════════════
+# P4: 랜딩페이지 분석
+# ═══════════════════════════════════════════════════════
+
+class LandingPageRequest(BaseModel):
+    url: str
+
+@app.post("/api/v1/analyze-landing")
+async def analyze_landing_page(req: LandingPageRequest):
+    """광고 랜딩페이지의 OG 메타데이터와 구조를 분석합니다."""
+    import requests as req_lib
+    from urllib.parse import urlparse
+
+    url = req.url.strip()
+    if not url:
+        return {"status": "error", "message": "URL이 필요합니다.", "data": None}
+
+    try:
+        parsed = urlparse(url)
+        domain = parsed.netloc or parsed.path
+
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        }
+        resp = req_lib.get(url, headers=headers, timeout=10, allow_redirects=True)
+        html = resp.text[:50000]  # 최대 50KB만 파싱
+
+        # OG 태그 추출
+        import re
+        og_data = {}
+        og_patterns = {
+            "title": r'<meta\s+(?:property|name)=["\']og:title["\']\s+content=["\']([^"\']*)["\']',
+            "description": r'<meta\s+(?:property|name)=["\']og:description["\']\s+content=["\']([^"\']*)["\']',
+            "image": r'<meta\s+(?:property|name)=["\']og:image["\']\s+content=["\']([^"\']*)["\']',
+            "site_name": r'<meta\s+(?:property|name)=["\']og:site_name["\']\s+content=["\']([^"\']*)["\']',
+            "type": r'<meta\s+(?:property|name)=["\']og:type["\']\s+content=["\']([^"\']*)["\']',
+        }
+        for key, pattern in og_patterns.items():
+            match = re.search(pattern, html, re.IGNORECASE)
+            if match:
+                og_data[key] = match.group(1).strip()
+
+        # Fallback: <title> 태그
+        if "title" not in og_data:
+            title_match = re.search(r'<title[^>]*>([^<]*)</title>', html, re.IGNORECASE)
+            if title_match:
+                og_data["title"] = title_match.group(1).strip()
+
+        # meta description fallback
+        if "description" not in og_data:
+            desc_match = re.search(r'<meta\s+name=["\']description["\']\s+content=["\']([^"\']*)["\']', html, re.IGNORECASE)
+            if desc_match:
+                og_data["description"] = desc_match.group(1).strip()
+
+        # CTA 버튼 텍스트 추출 (흔한 패턴들)
+        cta_patterns = [
+            r'<(?:a|button)[^>]*class=["\'][^"\']*(?:cta|btn|button|purchase|buy|shop)[^"\']*["\'][^>]*>([^<]+)<',
+            r'<(?:a|button)[^>]*>([^<]*(구매|신청|가입|다운로드|시작|체험|주문|예약|상담)[^<]*)<',
+        ]
+        cta_texts = []
+        for pattern in cta_patterns:
+            matches = re.findall(pattern, html, re.IGNORECASE)
+            for m in matches:
+                text = m[0].strip() if isinstance(m, tuple) else m.strip()
+                if text and len(text) < 50:
+                    cta_texts.append(text)
+        cta_texts = list(dict.fromkeys(cta_texts))[:5]  # 중복 제거, 최대 5개
+
+        # 리디렉션 체인 분석
+        redirect_chain = [r.url for r in resp.history] + [resp.url]
+        final_url = str(resp.url)
+
+        result = {
+            "domain": domain,
+            "final_url": final_url,
+            "status_code": resp.status_code,
+            "redirect_count": len(resp.history),
+            "redirect_chain": [str(u) for u in redirect_chain] if len(resp.history) > 0 else [],
+            "og_data": og_data,
+            "cta_buttons": cta_texts,
+        }
+
+        return {"status": "success", "data": result}
+
+    except req_lib.exceptions.Timeout:
+        return {"status": "error", "message": "랜딩페이지 응답 시간 초과 (10초)", "data": None}
+    except Exception as e:
+        logger.error(f"랜딩페이지 분석 실패: {e}")
+        return {"status": "error", "message": str(e), "data": None}
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
+

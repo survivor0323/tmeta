@@ -27,6 +27,8 @@ function updateAuthUI(session) {
     const historyBtn = document.getElementById("historyBtn");
     const bookmarkBtn = document.getElementById("bookmarkBtn");
     const adminBtn = document.getElementById("adminBtn");
+    const monitorBtn = document.getElementById("monitorBtn");
+    const boardsBtn = document.getElementById("boardsBtn");
 
     if (session && session.user) {
         window._motiverseSession = session;
@@ -34,6 +36,8 @@ function updateAuthUI(session) {
         userInfo.classList.remove("hidden");
         historyBtn.classList.remove("hidden");
         bookmarkBtn.classList.remove("hidden");
+        if (monitorBtn) monitorBtn.classList.remove("hidden");
+        if (boardsBtn) boardsBtn.classList.remove("hidden");
 
         const meta = session.user.user_metadata;
         const displayName = meta?.full_name || meta?.name || session.user.email?.split("@")[0] || "사용자";
@@ -62,6 +66,8 @@ function updateAuthUI(session) {
         userInfo.classList.add("hidden");
         historyBtn.classList.add("hidden");
         bookmarkBtn.classList.add("hidden");
+        if (monitorBtn) monitorBtn.classList.add("hidden");
+        if (boardsBtn) boardsBtn.classList.add("hidden");
         if (adminBtn) adminBtn.classList.add("hidden");
     }
 }
