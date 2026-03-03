@@ -280,7 +280,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const bookmarkBtn = document.createElement('button');
         bookmarkBtn.className = 'ad-bookmark-btn';
         bookmarkBtn.title = '북마크';
-        bookmarkBtn.innerHTML = '<i class="fa-regular fa-bookmark"></i>';
+        if (ad.is_bookmarked) {
+            bookmarkBtn.classList.add('bookmarked');
+            bookmarkBtn.innerHTML = '<i class="fa-solid fa-bookmark"></i>';
+            bookmarkBtn.dataset.bookmarkId = ad.bookmark_id;
+        } else {
+            bookmarkBtn.innerHTML = '<i class="fa-regular fa-bookmark"></i>';
+        }
         // 전역 Map에 등록하여 패널과 동기화
         if (!window._bookmarkBtnMap) window._bookmarkBtnMap = new Map();
         const adKey = ad.ad_id || ad.media_url || JSON.stringify(ad).slice(0, 60);
@@ -386,135 +392,113 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-// ─── 사이드 패널 로직 ─────────────────────────────────
-function openPanel(panelId) {
-    document.getElementById(panelId).classList.add('open');
-    document.getElementById('panelOverlay').classList.remove('hidden');
-}
-function closeAllPanels() {
-    document.querySelectorAll('.side-panel').forEach(p => p.classList.remove('open'));
-    document.getElementById('panelOverlay').classList.add('hidden');
-}
-
+// ─── 히스토리 & 북마크 모아보기 (전체 화면) ────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-    // 오버레이 클릭 시 패널 닫기
-    document.getElementById('panelOverlay')?.addEventListener('click', closeAllPanels);
-    document.getElementById('historyPanelClose')?.addEventListener('click', closeAllPanels);
-    document.getElementById('bookmarkPanelClose')?.addEventListener('click', closeAllPanels);
-
-    // 히스토리 패널 열기
-    document.getElementById('historyBtn')?.addEventListener('click', async () => {
-        openPanel('historyPanel');
-        await loadHistoryPanel();
+    // 오버레이 클릭 시 모달 닫기
+    document.getElementById('panelOverlay')?.addEventListener('click', () => {
+        document.getElementById('panelOverlay').classList.add('hidden');
     });
 
-    // 북마크 패널 열기
+    // 히스토리 전체 조회
+    document.getElementById('historyBtn')?.addEventListener('click', async () => {
+        if (!window._motiverseSession) { alert("로그인이 필요합니다."); return; }
+
+        const resultsSection = document.getElementById('resultsSection');
+        const loadingState = document.getElementById('loadingState');
+        const adGrid = document.getElementById('adGrid');
+
+        resultsSection.classList.remove('hidden');
+        loadingState.classList.remove('hidden');
+        document.getElementById('loadingState').querySelector('p').innerText = "이전 검색 히스토리를 불러오는 중입니다...";
+        adGrid.innerHTML = '';
+
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('search_history')
+                .select('ads_data, query, created_at')
+                .order('created_at', { ascending: false })
+                .limit(50);
+
+            if (error) throw error;
+
+            let flatAds = [];
+            const seenMap = new Set();
+            if (data) {
+                data.forEach(row => {
+                    if (row.ads_data && Array.isArray(row.ads_data)) {
+                        row.ads_data.forEach(ad => {
+                            const id = ad.ad_id || ad.media_url;
+                            if (!seenMap.has(id)) {
+                                seenMap.add(id);
+                                if (!ad.query) ad.query = row.query;
+                                flatAds.push(ad);
+                            }
+                        });
+                    }
+                });
+            }
+
+            if (!flatAds.length) {
+                loadingState.classList.add('hidden');
+                adGrid.innerHTML = '<div style="text-align:center;width:100%;grid-column:1 / -1;padding:3rem;color:#64748b;">검색 히스토리가 없습니다.</div>';
+                return;
+            }
+
+            window.currentAdsData = flatAds;
+            window.currentAdsPage = 1;
+            document.getElementById('competitorInput').value = "나의 검색 히스토리 소재 모아보기";
+            document.getElementById('loadingState').querySelector('p').innerText = "AI 에이전트가 완벽한 레퍼런스를 탐색하고 있습니다..."; // 초기화
+            loadingState.classList.add('hidden');
+            renderAdsPage();
+        } catch (e) {
+            console.error(e);
+            alert("히스토리를 불러오는 데 실패했습니다.");
+            loadingState.classList.add('hidden');
+        }
+    });
+
+    // 북마크 전체 조회
     document.getElementById('bookmarkBtn')?.addEventListener('click', async () => {
-        openPanel('bookmarkPanel');
-        await loadBookmarkPanel();
+        if (!window._motiverseSession) { alert("로그인이 필요합니다."); return; }
+
+        const resultsSection = document.getElementById('resultsSection');
+        const loadingState = document.getElementById('loadingState');
+        const adGrid = document.getElementById('adGrid');
+
+        resultsSection.classList.remove('hidden');
+        loadingState.classList.remove('hidden');
+        document.getElementById('loadingState').querySelector('p').innerText = "북마크된 소재를 불러오는 중입니다...";
+        adGrid.innerHTML = '';
+
+        try {
+            const items = await window.loadBookmarksFromDB();
+            if (!items || !items.length) {
+                loadingState.classList.add('hidden');
+                adGrid.innerHTML = '<div style="text-align:center;width:100%;grid-column:1 / -1;padding:3rem;color:#64748b;">북마크가 없습니다.</div>';
+                return;
+            }
+
+            const flatAds = items.map(item => {
+                const ad = item.ad_data;
+                ad.is_bookmarked = true;
+                ad.bookmark_id = item.id;
+                return ad;
+            });
+
+            window.currentAdsData = flatAds;
+            window.currentAdsPage = 1;
+            document.getElementById('competitorInput').value = "내 북마크 소재 모아보기";
+            document.getElementById('loadingState').querySelector('p').innerText = "AI 에이전트가 완벽한 레퍼런스를 탐색하고 있습니다..."; // 초기화
+            loadingState.classList.add('hidden');
+            renderAdsPage();
+
+        } catch (e) {
+            console.error(e);
+            alert("북마크를 불러오는 데 실패했습니다.");
+            loadingState.classList.add('hidden');
+        }
     });
 });
-
-// 플랫폼 이름 매핑
-const PLATFORM_LABELS = { meta: 'Meta', tiktok: 'TikTok', instagram: 'Instagram', google: 'Google Ads' };
-
-async function loadHistoryPanel() {
-    const list = document.getElementById('historyList');
-    list.innerHTML = '<p class="panel-empty">히스토리 불러오는 중...</p>';
-    if (!window._motiverseSession) {
-        list.innerHTML = '<p class="panel-empty">로그인이 필요합니다.</p>';
-        return;
-    }
-    try {
-        const items = await window.loadHistoryFromDB();
-        if (!items || !items.length) {
-            list.innerHTML = '<p class="panel-empty">검색 히스토리가 없습니다.</p>';
-            return;
-        }
-        list.innerHTML = items.map(item => {
-            const dt = new Date(item.created_at);
-            const dateStr = `${dt.getFullYear()}.${String(dt.getMonth() + 1).padStart(2, '0')}.${String(dt.getDate()).padStart(2, '0')} ${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`;
-            return `<div class="history-item" data-id="${item.id}">
-                <span class="history-query">${item.query}</span>
-                <div class="history-meta">
-                    <span class="platform-badge">${PLATFORM_LABELS[item.platform] || item.platform || ''}</span>
-                    <span>${dateStr}</span>
-                </div>
-            </div>`;
-        }).join('');
-        // 클릭 시 DB에서 소재 로드 (재API 호출 없음)
-        list.querySelectorAll('.history-item').forEach(el => {
-            el.addEventListener('click', async () => {
-                closeAllPanels();
-                const detail = await window.loadHistoryDetailFromDB(el.dataset.id);
-                if (!detail) return;
-                window.currentAdsData = detail.ads_data || [];
-                window.currentAdsPage = 1;
-                window._lastSearchQuery = detail.query;
-                window._lastSearchPlatform = detail.platform;
-                document.getElementById('competitorInput').value = detail.query;
-                document.getElementById('resultsSection').classList.remove('hidden');
-                document.getElementById('loadingState').classList.add('hidden');
-                renderAdsPage();
-            });
-        });
-    } catch (e) {
-        console.error('[히스토리 패널]', e);
-        list.innerHTML = '<p class="panel-empty">불러오기 실패</p>';
-    }
-}
-
-async function loadBookmarkPanel() {
-    const list = document.getElementById('bookmarkList');
-    list.innerHTML = '<p class="panel-empty">북마크 불러오는 중...</p>';
-    if (!window._motiverseSession) { list.innerHTML = '<p class="panel-empty">로그인이 필요합니다.</p>'; return; }
-    try {
-        const items = await window.loadBookmarksFromDB();
-        if (!items.length) { list.innerHTML = '<p class="panel-empty">북마크가 없습니다.</p>'; return; }
-        list.innerHTML = '';
-        items.forEach(item => {
-            const ad = item.ad_data;
-            const card = document.createElement('div');
-            card.className = 'bookmark-card';
-            const thumb = ad.media_type === 'video'
-                ? `<div class="bookmark-thumb bm-video-thumb"><i class="fa-solid fa-play"></i></div>`
-                : `<img class="bookmark-thumb" src="${ad.image_url || ad.media_url || ''}" alt="" onerror="this.style.display='none'">`;
-            card.innerHTML = `
-                ${thumb}
-                <div class="bookmark-info">
-                    <span class="bookmark-brand">${ad.brand || ''}</span>
-                    <span class="bookmark-query">🔍 ${item.query || ''} · ${PLATFORM_LABELS[item.platform] || item.platform}</span>
-                    <p class="bookmark-body">${ad.body || ad.analysis_report?.hook || ''}</p>
-                </div>
-                <button class="bookmark-remove-btn" data-id="${item.id}" title="삭제"><i class="fa-solid fa-xmark"></i></button>
-            `;
-            // 클릭 시 광고 원본 미리보기 모달
-            card.querySelector('.bookmark-info').addEventListener('click', () => {
-                showAdPreviewModal(ad, item.query, item.platform);
-            });
-            card.querySelector('.bookmark-thumb')?.addEventListener('click', () => {
-                showAdPreviewModal(ad, item.query, item.platform);
-            });
-            // 삭제 버튼 - 메인 카드 북마크 버튼도 동기화
-            card.querySelector('.bookmark-remove-btn').addEventListener('click', async (e) => {
-                e.stopPropagation();
-                const bId = e.currentTarget.dataset.id;
-                await window.deleteBookmarkFromDB(bId);
-                // 메인 카드 북마크 버튼 동기화
-                const cardBtn = window._bookmarkBtnMap?.get(bId);
-                if (cardBtn) {
-                    cardBtn.classList.remove('bookmarked');
-                    cardBtn.innerHTML = '<i class="fa-regular fa-bookmark"></i>';
-                    cardBtn.dataset.bookmarkId = '';
-                    window._bookmarkBtnMap?.delete(bId);
-                }
-                card.remove();
-                if (!list.children.length) list.innerHTML = '<p class="panel-empty">북마크가 없습니다.</p>';
-            });
-            list.appendChild(card);
-        });
-    } catch (e) { list.innerHTML = '<p class="panel-empty">불러오기 실패</p>'; }
-}
 
 // ─── 광고 원본 미리보기 모달 ───────────────────────────
 function showAdPreviewModal(ad, query, platform) {
