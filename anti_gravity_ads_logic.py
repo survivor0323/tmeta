@@ -932,3 +932,49 @@ def extract_brands_from_natural_language(query: str, country: str = None) -> Lis
         return [q.strip() for q in query.split(",")]
 
 
+def suggest_alternative_keyword(original_query: str, tried_keywords: List[str]) -> str:
+    """
+    검색결과가 없을 때 원래 쿼리와 검색 실패한 키워드 목록을 바탕으로
+    영문 변환, 유사어, 공식 명칭 등 새로운 1개의 대체 키워드를 추천합니다.
+    """
+    import openai
+    import json
+    
+    api_key = os.getenv("OPENAI_API_KEY", "")
+    if not api_key:
+        return ""
+    
+    client = openai.OpenAI(api_key=api_key)
+    prompt = f"""
+우리는 글로벌 광고 라이브러리(메타/틱톡/구글 등)에서 광고 레퍼런스를 검색하고 있습니다. 
+사용자가 처음에 '{original_query}'(으)로 검색했지만 결과가 아예 없었습니다.
+지금까지 시스템이 시도해본 키워드 목록(결과 없음): {tried_keywords}
+
+광고 플랫폼 검색엔진의 특성상, 데이터가 없다면 다음 전략 중 하나로 변환해서 다시 검색해야 합니다:
+1. 영문/한글 표기 상호 변환 (예: 케이티 -> KT, 엘지 -> LG, 넷플릭스 -> Netflix, 애플 -> Apple)
+2. 가장 널리 쓰이는 일반적인 공식 브랜드명 / 법인명 (예: 제일 기획 -> 제일기획, 유플러스 -> LG유플러스)
+3. 띄어쓰기 제거나 철자 보정 (예: 삼성 전자 -> 삼성전자)
+
+위의 시도해본 키워드들과 절대 겹치지 않으면서, 라이브러리에 광고가 등록되어 있을 확률이 가장 높은 "단 1개의 가장 강력한 대체 키워드"를 추천해주세요.
+반드시 아래와 같이 순수 JSON 형식으로만 반환하세요.
+{{"keyword": "새로운추천키워드"}}
+"""
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=50,
+            temperature=0.3
+        )
+        content = response.choices[0].message.content.strip()
+        if content.startswith("```json"):
+            content = content[7:]
+        if content.endswith("```"):
+            content = content[:-3]
+        data = json.loads(content.strip())
+        new_keyword = data.get("keyword", "")
+        logger.info(f"AI 대체 키워드 제안: {new_keyword} (시도된 목록: {tried_keywords})")
+        return new_keyword
+    except Exception as e:
+        logger.error(f"대체 키워드 제안 중 에러 발생: {e}")
+        return ""

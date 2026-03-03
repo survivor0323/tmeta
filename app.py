@@ -130,58 +130,84 @@ async def trigger_analysis(req: AnalyzeRequest, authorization: str = Header(defa
                 logger.warning(f"캐시(RPC) 조회 실패: {e}")
         # -----------------------------------------------------------------------------------------
 
-        brands = extract_brands_from_natural_language(req.query, country=req.country)
-        logger.info(f"AI 자연어 분석으로 도출된 검색 타겟 브랜드: {brands} (Platform: {platform})")
+        max_attempts = 3
+        attempt = 1
+        current_query = req.query
+        tried_queries = []
+        real_responses = []
+        brands = []
+        
+        from anti_gravity_ads_logic import extract_brands_from_natural_language, suggest_alternative_keyword
+        
+        while attempt <= max_attempts:
+            tried_queries.append(current_query)
+            brands = extract_brands_from_natural_language(current_query, country=req.country)
+            logger.info(f"AI 자연어 분석으로 도출된 검색 타겟 브랜드: {brands} (Platform: {platform}, 시도: {attempt}/{max_attempts})")
 
-        if not brands:
+            real_responses = []
+
+            if brands:
+                if platform == "tiktok":
+                    brand_keyword = brands[0]
+                    from anti_gravity_ads_logic import fetch_tiktok_creatives
+                    tiktok_ads = fetch_tiktok_creatives(
+                        keyword=brand_keyword,
+                        country=req.country,
+                        search_type=req.search_type
+                    )
+                    if tiktok_ads:
+                        analyze_creatives_with_ai(tiktok_ads)
+                        real_responses.extend(tiktok_ads)
+                        
+                elif platform == "instagram":
+                    brand_keyword = brands[0]
+                    from anti_gravity_ads_logic import fetch_instagram_reels
+                    ig_ads = fetch_instagram_reels(keyword=brand_keyword)
+                    if ig_ads:
+                        analyze_creatives_with_ai(ig_ads)
+                        real_responses.extend(ig_ads)
+                        
+                elif platform == "google":
+                    from anti_gravity_ads_logic import fetch_google_ads
+                    google_ads = fetch_google_ads(
+                        keyword=current_query,
+                        country=req.country
+                    )
+                    if google_ads:
+                        analyze_creatives_with_ai(google_ads)
+                        real_responses.extend(google_ads)
+                else:
+                    ads_by_brand = fetch_competitor_ads_batch(brands)
+                    for brand, ads in ads_by_brand.items():
+                        if not ads:
+                            continue
+                        winning_ads = extract_winning_creatives(ads, min_months_active=0)
+                        if winning_ads:
+                            analyze_creatives_with_ai(winning_ads)
+                            real_responses.extend(winning_ads)
+
+            if real_responses:
+                break # 결과 찾았으면 루프 종료
+            
+            # 여기서 못 찾았다면, 다음 시도를 위한 새로운 대체 키워드 제안받기
+            if attempt < max_attempts:
+                logger.info(f"[{current_query}] 결과 없음. 대체 키워드 탐색 시도 ({attempt}/{max_attempts})")
+                new_query = suggest_alternative_keyword(req.query, tried_queries)
+                if not new_query:
+                    # 대체할 단어도 못 찾으면 조기 종료
+                    break
+                current_query = new_query
+            
+            attempt += 1
+
+        if not real_responses:
+            failed_keywords_str = ", ".join([f"'{k}'" for k in tried_queries])
             return {
                 "status": "error",
-                "message": "AI가 해당 쿼리와 연관된 브랜드를 찾지 못했습니다. 쿼리를 변경해 보세요.",
+                "message": f"검색결과가 없어 다음 {len(tried_queries)}가지 키워드를 순차적으로 자동 전환하여 찾았으나 레퍼런스를 발견하지 못했습니다: {failed_keywords_str}. 브랜드명이나 검색어를 변경하여 다시 시도해보세요.",
                 "data": []
             }
-            
-        real_responses = []
-        
-        if platform == "tiktok":
-            brand_keyword = brands[0]
-            from anti_gravity_ads_logic import fetch_tiktok_creatives
-            tiktok_ads = fetch_tiktok_creatives(
-                keyword=brand_keyword,
-                country=req.country,
-                search_type=req.search_type
-            )
-            if tiktok_ads:
-                analyze_creatives_with_ai(tiktok_ads)
-                real_responses.extend(tiktok_ads)
-                
-        elif platform == "instagram":
-            brand_keyword = brands[0]
-            from anti_gravity_ads_logic import fetch_instagram_reels
-            ig_ads = fetch_instagram_reels(keyword=brand_keyword)
-            if ig_ads:
-                analyze_creatives_with_ai(ig_ads)
-                real_responses.extend(ig_ads)
-                
-        elif platform == "google":
-            from anti_gravity_ads_logic import fetch_google_ads
-            google_ads = fetch_google_ads(
-                keyword=req.query,
-                country=req.country
-            )
-            if google_ads:
-                analyze_creatives_with_ai(google_ads)
-                real_responses.extend(google_ads)
-        else:
-            ads_by_brand = fetch_competitor_ads_batch(brands)
-            for brand, ads in ads_by_brand.items():
-                if not ads:
-                    logger.info(f"[{brand}] 수집된 광고가 없습니다.")
-                    continue
-                winning_ads = extract_winning_creatives(ads, min_months_active=0)
-                if winning_ads:
-                    analyze_creatives_with_ai(winning_ads)
-                    real_responses.extend(winning_ads)
-                
+
         # 토큰 사용량 추정 및 로깅
         if user_id and supabase:
             try:
@@ -194,9 +220,13 @@ async def trigger_analysis(req: AnalyzeRequest, authorization: str = Header(defa
             except Exception as e:
                 logger.warning(f"API Usage 로깅 실패: {e}")
 
+        success_msg = f"{len(brands)}개의 브랜드에서 총 {len(real_responses)}개의 실전 위닝 소재를 추출 및 AI 분석했습니다."
+        if len(tried_queries) > 1:
+            success_msg = f"'{tried_queries[0]}' 결과가 없어 자동으로 '{current_query}'(으)로 변환 탐색하여 총 {len(real_responses)}개의 실전 소재를 찾았습니다."
+
         return {
             "status": "success",
-            "message": f"{len(brands)}개의 브랜드에서 총 {len(real_responses)}개의 실전 위닝 소재를 추출 및 AI 분석했습니다.",
+            "message": success_msg,
             "data": real_responses
         }
     except Exception as e:
