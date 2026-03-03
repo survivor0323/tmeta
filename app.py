@@ -177,7 +177,7 @@ async def trigger_analysis(req: AnalyzeRequest, authorization: str = Header(defa
                         analyze_creatives_with_ai(google_ads)
                         real_responses.extend(google_ads)
                 else:
-                    ads_by_brand = fetch_competitor_ads_batch(brands)
+                    ads_by_brand = fetch_competitor_ads_batch(brands, country=req.country or "KR")
                     for brand, ads in ads_by_brand.items():
                         if not ads:
                             continue

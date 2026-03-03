@@ -87,8 +87,10 @@ def with_retry_and_error_handling(max_retries=3, base_delay=5):
 
 # --- 1. 다중 경쟁사 자동 모니터링 및 배치 처리 ---
 @with_retry_and_error_handling()
-def fetch_competitor_ads_batch(brand_names: List[str]) -> Dict[str, List[Dict]]:
-    """사용자가 입력한 검색어와 API 키를 바탕으로 ScrapeCreators API에 접속해 실제 Meta 광고를 수집합니다."""
+def fetch_competitor_ads_batch(brand_names: List[str], country: str = "KR") -> Dict[str, List[Dict]]:
+    """사용자가 입력한 검색어와 API 키를 바탕으로 ScrapeCreators API에 접속해 실제 Meta 광고를 수집합니다.
+    country: 광고 타겟 국가 코드 (기본값 KR - 한국 타겟 광고만 수집)
+    """
     import requests
 
     api_key = os.getenv("SCRAPECREATORS_API_KEY", "")
@@ -142,10 +144,14 @@ def fetch_competitor_ads_batch(brand_names: List[str]) -> Dict[str, List[Dict]]:
                     continue
                     
                 # Step 2: page_id를 이용해 실제 구동 중인 광고 목록 조회
-                url_ads = f"https://api.scrapecreators.com/v1/facebook/adLibrary/company/ads?pageId={page_id}"
-                logger.info(f"[{brand}] 실전 메타 광고 데이터 요청 중 (Page Name: {page_info.get('page_name', 'Unknown')}, ID: {page_id})")
+                # country 파라미터를 추가하여 해당 국가를 타겟으로 한 광고만 수집 (기본: KR)
+                url_ads = "https://api.scrapecreators.com/v1/facebook/adLibrary/company/ads"
+                ads_params = {"pageId": page_id}
+                if country:
+                    ads_params["country"] = country
+                logger.info(f"[{brand}] 실전 메타 광고 데이터 요청 중 (Page Name: {page_info.get('page_name', 'Unknown')}, ID: {page_id}, Country: {country})")
                 
-                res_ads = requests.get(url_ads, headers=headers)
+                res_ads = requests.get(url_ads, headers=headers, params=ads_params)
                 
                 if res_ads.status_code == 401:
                     raise ScrapeCreatorsCreditError("API 키 인증 실패(401 Unauthorized). 키를 점검하거나 새로 발급받아주세요.")
