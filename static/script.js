@@ -390,10 +390,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         return card;
     }
-});
 
-// ─── 히스토리 & 북마크 모아보기 (전체 화면) ────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
+    // ─── 히스토리 & 북마크 모아보기 (전체 화면) ────────────────────────
     // 오버레이 클릭 시 모달 닫기
     document.getElementById('panelOverlay')?.addEventListener('click', () => {
         document.getElementById('panelOverlay').classList.add('hidden');
