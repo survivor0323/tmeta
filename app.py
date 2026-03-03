@@ -749,10 +749,24 @@ async def analyze_landing_page(req: LandingPageRequest):
         parsed = urlparse(url)
         domain = parsed.netloc or parsed.path
 
+        # SNS 플랫폼: 봇 요청을 메인페이지로 리다이렉트시키므로 따라가지 않음
+        sns_domains = ['tiktok.com', 'instagram.com', 'facebook.com', 'twitter.com', 'x.com', 'threads.net']
+        is_sns = any(d in domain for d in sns_domains)
+
         headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
-        resp = req_lib.get(url, headers=headers, timeout=10, allow_redirects=True)
+        resp = req_lib.get(url, headers=headers, timeout=10, allow_redirects=not is_sns)
+        
+        # SNS에서 리다이렉트가 감지되면 원본 URL을 최종 URL로 사용
+        if is_sns and resp.status_code in (301, 302, 303, 307, 308):
+            # Location 헤더에서 실제 랜딩 URL 추출 (메인페이지가 아닌 경우만)
+            redirect_target = resp.headers.get("Location", "")
+            generic_pages = ['/foryou', '/login', '/accounts/login', '/?lang=']
+            if any(gp in redirect_target for gp in generic_pages) or not redirect_target:
+                # 봇 차단 리다이렉트 → 원본 URL 기준으로 분석
+                resp = req_lib.get(url, headers=headers, timeout=10, allow_redirects=False)
+
         html = resp.text[:50000]  # 최대 50KB만 파싱
 
         # OG 태그 추출
@@ -797,17 +811,26 @@ async def analyze_landing_page(req: LandingPageRequest):
         cta_texts = list(dict.fromkeys(cta_texts))[:5]  # 중복 제거, 최대 5개
 
         # 리디렉션 체인 분석
-        redirect_chain = [r.url for r in resp.history] + [resp.url]
-        final_url = str(resp.url)
+        if is_sns:
+            # SNS 봇 차단: 원본 URL을 최종 URL로 보여줌
+            final_url = url
+            redirect_chain_list = []
+            redirect_count = 0
+        else:
+            redirect_chain = [r.url for r in resp.history] + [resp.url]
+            final_url = str(resp.url)
+            redirect_chain_list = [str(u) for u in redirect_chain] if len(resp.history) > 0 else []
+            redirect_count = len(resp.history)
 
         result = {
             "domain": domain,
             "final_url": final_url,
             "status_code": resp.status_code,
-            "redirect_count": len(resp.history),
-            "redirect_chain": [str(u) for u in redirect_chain] if len(resp.history) > 0 else [],
+            "redirect_count": redirect_count,
+            "redirect_chain": redirect_chain_list,
             "og_data": og_data,
             "cta_buttons": cta_texts,
+            "is_sns": is_sns,
         }
 
         return {"status": "success", "data": result}
