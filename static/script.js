@@ -417,7 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let flatAds = [];
             const seenMap = new Set();
-            if (data) {
+            if (data && Array.isArray(data)) {
                 data.forEach(row => {
                     let adsArray = row.ads_data;
 
@@ -428,7 +428,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (adsArray && Array.isArray(adsArray)) {
                         adsArray.forEach(ad => {
                             if (!ad || typeof ad !== 'object') return;
-                            const id = ad.ad_id || ad.media_url;
+                            const id = ad.ad_id || ad.media_url || ad.id || Math.random().toString();
                             if (id && !seenMap.has(id)) {
                                 seenMap.add(id);
                                 if (!ad.query) ad.query = row.query;
@@ -453,7 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderAdsPage();
         } catch (e) {
             console.error(e);
-            alert("히스토리를 불러오는 데 실패했습니다.");
+            alert("히스토리 에러 상세: " + e.message + "\n발생 위치: " + (e.stack ? e.stack.substring(0, 200) : 'stack 없음'));
             loadingState.classList.add('hidden');
         }
     });
@@ -500,7 +500,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (e) {
             console.error(e);
-            alert("북마크를 불러오는 데 실패했습니다.");
+            alert("북마크 에러 상세: " + e.message + "\n발생 위치: " + (e.stack ? e.stack.substring(0, 200) : 'stack 없음'));
             loadingState.classList.add('hidden');
         }
     });
