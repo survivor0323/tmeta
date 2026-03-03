@@ -121,16 +121,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 else alertDot.classList.add('hidden');
             }
 
-            list.innerHTML = json.data.slice(0, 20).map(a => `
+            list.innerHTML = json.data.slice(0, 20).map(a => {
+                // ads_data에서 platform 추출
+                const platform = (a.ads_data && a.ads_data.length > 0 && a.ads_data[0].platform) ? a.ads_data[0].platform : '';
+                const platformLabel = PLATFORM_LABELS[platform] || platform || '';
+                const platformColors = { meta: '#1877f2', instagram: '#e4405f', tiktok: '#000000', google: '#4285f4' };
+                const pColor = platformColors[platform] || '#6b7280';
+
+                return `
                 <div style="padding:0.6rem;border:1px solid ${a.is_read ? '#e2e8f0' : '#bfdbfe'};border-radius:8px;margin-bottom:0.4rem;background:${a.is_read ? '#fff' : '#eff6ff'};cursor:pointer;" onclick="viewAlertAds('${a.id}', ${JSON.stringify(a.ads_data || []).replace(/"/g, '&quot;')})">
-                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                    <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
                         ${!a.is_read ? '<span style="width:8px;height:8px;border-radius:50%;background:#3b82f6;flex-shrink:0;"></span>' : ''}
                         <strong>${a.brand_name}</strong>
+                        ${platformLabel ? `<span style="font-size:0.7rem;background:${pColor};color:#fff;padding:1px 6px;border-radius:4px;font-weight:600;">${platformLabel}</span>` : ''}
                         <span style="font-size:0.8rem;color:#3b82f6;">${a.new_ads_count}개 새 광고</span>
                         <span style="margin-left:auto;font-size:0.7rem;color:#94a3b8;">${new Date(a.created_at).toLocaleDateString('ko-KR')}</span>
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
         } catch (e) { list.innerHTML = '<p style="color:#ef4444;">알림 로드 실패</p>'; }
     }
 
