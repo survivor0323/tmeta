@@ -112,7 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
             loadingState.classList.add("hidden");
 
             if (jsonResponse.status === "error") {
-                adGrid.innerHTML = `<div style="text-align:center;width:100%;color:#ef4444;font-size:1rem;padding:2rem;">${jsonResponse.message}</div>`;
+                adGrid.innerHTML = `<div style="text-align:center;width:100%;grid-column:1 / -1;padding:3rem;color:#64748b;font-size:1rem;line-height:1.6;word-break:keep-all;">${jsonResponse.message}</div>`;
                 return;
             }
 
