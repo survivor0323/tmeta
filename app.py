@@ -95,6 +95,43 @@ async def trigger_analysis(req: AnalyzeRequest, authorization: str = Header(defa
         
         # 1. 자연어 쿼리 -> 알맞은 타겟 라이브러리 브랜드명 배열 변환
         platform = getattr(req, "platform", "meta").lower()
+        
+        # --- [추가] 24시간 이내 다른 사용자가 동일한 키워드로 검색한 이력 체킹 (토큰/시간 절약) ---
+        if supabase:
+            try:
+                from datetime import datetime, timedelta, timezone
+                import json
+                time_threshold = datetime.now(timezone.utc) - timedelta(hours=24)
+                
+                cached = supabase.table("search_history")\
+                    .select("ads_data")\
+                    .ilike("query", req.query)\
+                    .eq("platform", platform)\
+                    .eq("country", req.country or "KR")\
+                    .gte("created_at", time_threshold.isoformat())\
+                    .order("created_at", desc=True)\
+                    .limit(1)\
+                    .execute()
+                
+                if cached.data and cached.data[0].get("ads_data"):
+                    cached_data = cached.data[0]["ads_data"]
+                    if isinstance(cached_data, str):
+                        try:
+                            cached_data = json.loads(cached_data)
+                        except:
+                            cached_data = []
+                    
+                    if cached_data and isinstance(cached_data, list) and len(cached_data) > 0:
+                        logger.info(f"DB Cache Hit: '{req.query}' on {platform}. Return {len(cached_data)} items.")
+                        return {
+                            "status": "success",
+                            "message": f"최근 24시간 내 검색된 이력이 있어 기존 데이터({len(cached_data)}개 소재)를 빠르게 불러왔습니다. (시간 및 토큰 절약)",
+                            "data": cached_data
+                        }
+            except Exception as e:
+                logger.warning(f"캐시(search_history) 조회 실패: {e}")
+        # -----------------------------------------------------------------------------------------
+
         brands = extract_brands_from_natural_language(req.query, country=req.country)
         logger.info(f"AI 자연어 분석으로 도출된 검색 타겟 브랜드: {brands} (Platform: {platform})")
 
