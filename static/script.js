@@ -279,7 +279,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 `<div class="hashtags-container" style="margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.25rem;">
                         ${ad.hashtags.map(tag => `<span style="font-size: 0.75rem; background: #e0e7ff; color: #4338ca; padding: 2px 6px; border-radius: 4px;">${tag}</span>`).join('')}
                     </div>` : ''}
-                ${ad.direct_link ? `<button class="btn-landing-analyze" style="margin-top:0.5rem;" onclick="event.stopPropagation();window.analyzeLandingPage('${ad.direct_link.replace(/'/g, "\\'")}')"><i class="fa-solid fa-globe"></i> 랜딩페이지 분석</button>` : ''}
+                ${(ad.direct_link && ad.platform !== 'tiktok') ? `<button class="btn-landing-analyze" style="margin-top:0.5rem;" onclick="event.stopPropagation();window.analyzeLandingPage('${ad.direct_link.replace(/'/g, "\\'")}')" title="광고 랜딩페이지 OG·CTA 분석"><i class="fa-solid fa-globe"></i> 랜딩페이지 분석</button>` : ''}
             </div>
         `;
 
