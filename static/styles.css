@@ -633,6 +633,94 @@ body {
     color: var(--accent-blue);
 }
 
+/* ====== Admin Dashboard Styles ====== */
+.admin-view-panel {
+    margin-top: 1.5rem;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.admin-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: #f8fafc;
+    border: 1px solid var(--border-color);
+    padding: 1.5rem;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.stat-card h3 {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.stat-card p {
+    font-size: 2rem;
+    color: var(--accent-blue);
+    font-weight: 700;
+    font-family: var(--font-heading);
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    text-align: left;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.admin-table th {
+    background: #f1f5f9;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.admin-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+.toggle-admin-btn {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.toggle-admin-btn.is-admin {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border-color: #10b981;
+}
+
+.toggle-admin-btn:hover {
+    border-color: var(--accent-blue);
+}
+
 /* ====== Navbar Right Items ====== */
 .navbar-right {
     display: flex;

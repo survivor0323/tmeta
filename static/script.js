@@ -649,3 +649,128 @@ window.loadRecentSearchChips = async () => {
         container.classList.add('hidden');
     }
 };
+
+// ─── 관리자 대시보드 로직 ────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    const adminBtn = document.getElementById('adminBtn');
+    const adminModal = document.getElementById('adminModal');
+    const closeAdminBtn = document.getElementById('closeAdminBtn');
+    const adminTabs = document.querySelectorAll('.admin-tabs .tab-chip');
+    const adminPanels = document.querySelectorAll('.admin-view-panel');
+
+    if (adminBtn) {
+        adminBtn.addEventListener('click', async () => {
+            adminModal.classList.remove('hidden');
+            await loadAdminData();
+        });
+    }
+
+    if (closeAdminBtn) {
+        closeAdminBtn.addEventListener('click', () => {
+            adminModal.classList.add('hidden');
+        });
+    }
+
+    window.addEventListener('click', (e) => {
+        if (e.target === adminModal) adminModal.classList.add('hidden');
+    });
+
+    // Tab Switching
+    adminTabs.forEach((tab) => {
+        tab.addEventListener('click', () => {
+            adminTabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            adminPanels.forEach(p => p.classList.add('hidden'));
+
+            const targetId = tab.id.replace('adminTab', 'adminView');
+            document.getElementById(targetId)?.classList.remove('hidden');
+        });
+    });
+});
+
+async function loadAdminData() {
+    const loading = document.getElementById('adminLoading');
+    loading.classList.remove('hidden');
+
+    try {
+        const { data, error } = await window.supabaseClient.rpc('get_admin_dashboard_data');
+        if (error) throw error;
+
+        // 1. Overview
+        const users = data.users || [];
+        const history = data.history || [];
+        const usage = data.api_usage || [];
+
+        document.getElementById('statTotalUsers').innerText = users.length;
+        document.getElementById('statTotalSearches').innerText = history.length;
+        document.getElementById('statTotalApi').innerText = usage.length;
+        const totalTokens = usage.reduce((sum, item) => sum + (item.tokens_used || 0), 0);
+        document.getElementById('statTotalTokens').innerText = totalTokens.toLocaleString();
+
+        // 2. Users Table
+        const usersTbody = document.getElementById('adminUsersTbody');
+        usersTbody.innerHTML = users.map(u => `
+            <tr>
+                <td>${u.email}</td>
+                <td>${u.created_at ? new Date(u.created_at).toLocaleDateString() : '-'}</td>
+                <td>${u.last_login ? new Date(u.last_login).toLocaleString() : '-'}</td>
+                <td>
+                    <button class="toggle-admin-btn ${u.is_admin ? 'is-admin' : ''}" 
+                            data-email="${u.email}" data-status="${u.is_admin}">
+                        ${u.is_admin ? '<i class="fa-solid fa-check"></i> 관리자 해제' : '관리자 지정'}
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+
+        // Admin Toggle Logic
+        document.querySelectorAll('.toggle-admin-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const target = e.currentTarget;
+                const email = target.dataset.email;
+                const currentStatus = target.dataset.status === 'true';
+                if (confirm(`${email}님의 관리자 권한을 ${currentStatus ? '해제' : '부여'}하시겠습니까?`)) {
+                    const { error: rpcErr } = await window.supabaseClient.rpc('toggle_admin_status', {
+                        target_email: email,
+                        assign_admin: !currentStatus
+                    });
+                    if (rpcErr) {
+                        alert("권한 변경 실패: " + rpcErr.message);
+                    } else {
+                        alert("권한이 변경되었습니다.");
+                        loadAdminData(); // Refresh UI
+                    }
+                }
+            });
+        });
+
+        // 3. Queries Table
+        const queriesTbody = document.getElementById('adminQueriesTbody');
+        queriesTbody.innerHTML = history.map(h => `
+            <tr>
+                <td><span title="${h.user_id}">${h.email || '알 수 없음'}</span></td>
+                <td><strong>${h.query}</strong></td>
+                <td><span class="platform-badge">${PLATFORM_LABELS[h.platform] || h.platform}</span></td>
+                <td>${h.country || 'Global'}</td>
+                <td>${h.created_at ? new Date(h.created_at).toLocaleString() : '-'}</td>
+            </tr>
+        `).join('');
+
+        // 4. API Usage Table
+        const usageTbody = document.getElementById('adminUsageTbody');
+        usageTbody.innerHTML = usage.map(u => `
+            <tr>
+                <td><span title="${u.user_id}">${u.email || '알 수 없음'}</span></td>
+                <td><code>${u.endpoint}</code></td>
+                <td style="color:var(--accent-indigo); font-weight:bold;">${(u.tokens_used || 0).toLocaleString()}</td>
+                <td>${u.created_at ? new Date(u.created_at).toLocaleString() : '-'}</td>
+            </tr>
+        `).join('');
+
+    } catch (e) {
+        console.error("Admin Load Error", e);
+        alert("데이터를 가져오는 데 실패했습니다. (DB 마이그레이션이 적용되었는지 확인하세요)");
+    } finally {
+        loading.classList.add('hidden');
+    }
+}

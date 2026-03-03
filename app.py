@@ -84,11 +84,12 @@ def get_user_id_from_token(authorization: str) -> Optional[str]:
 
 
 @app.post("/api/v1/analyze")
-async def trigger_analysis(req: AnalyzeRequest):
+async def trigger_analysis(req: AnalyzeRequest, authorization: str = Header(default="")):
     """
     프론트엔드에서 수신받은 자연어 쿼리(query)를 바탕으로 연관 브랜드를 추출하고,
     해당 브랜드들의 위닝 소재 및 AI 분석을 마친 결과를 반환합니다.
     """
+    user_id = get_user_id_from_token(authorization)
     try:
         from anti_gravity_ads_logic import extract_brands_from_natural_language
         
@@ -146,6 +147,18 @@ async def trigger_analysis(req: AnalyzeRequest):
                     analyze_creatives_with_ai(winning_ads)
                     real_responses.extend(winning_ads)
                 
+        # 토큰 사용량 추정 및 로깅
+        if user_id and supabase:
+            try:
+                tokens_est = len(str(real_responses)) // 4
+                supabase.rpc("log_api_usage", {
+                    "p_user_id": user_id,
+                    "p_endpoint": f"/api/v1/analyze ({platform})",
+                    "p_tokens": tokens_est
+                }).execute()
+            except Exception as e:
+                logger.warning(f"API Usage 로깅 실패: {e}")
+
         return {
             "status": "success",
             "message": f"{len(brands)}개의 브랜드에서 총 {len(real_responses)}개의 실전 위닝 소재를 추출 및 AI 분석했습니다.",

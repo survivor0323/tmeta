@@ -18,7 +18,6 @@ window.getAuthHeaders = () => {
     return token ? { "Authorization": `Bearer ${token}` } : {};
 };
 
-// ─── UI 업데이트 ─────────────────────────────────────
 function updateAuthUI(session) {
     const loginBtn = document.getElementById("loginBtn");
     const userInfo = document.getElementById("userInfo");
@@ -26,6 +25,7 @@ function updateAuthUI(session) {
     const userName = document.getElementById("userName");
     const historyBtn = document.getElementById("historyBtn");
     const bookmarkBtn = document.getElementById("bookmarkBtn");
+    const adminBtn = document.getElementById("adminBtn");
 
     if (session && session.user) {
         window._motiverseSession = session;
@@ -46,6 +46,10 @@ function updateAuthUI(session) {
         } else {
             userAvatar.style.display = "none";
         }
+
+        // 로그인 성공 시 프로필 데이터베이스에 기록 & 관리자 여부 확인
+        checkAdminAndUpsertProfile(session.user);
+
         // 최근 검색어 칩 로드 (한 번만)
         if (window.loadRecentSearchChips && !window._chipsLoaded) {
             window._chipsLoaded = true;
@@ -57,6 +61,32 @@ function updateAuthUI(session) {
         userInfo.classList.add("hidden");
         historyBtn.classList.add("hidden");
         bookmarkBtn.classList.add("hidden");
+        if(adminBtn) adminBtn.classList.add("hidden");
+    }
+}
+
+// ─── 관리자 체크 및 프로필 갱신 (에러 무시 처리 포함) ────
+async function checkAdminAndUpsertProfile(user) {
+    const adminBtn = document.getElementById("adminBtn");
+    if (!adminBtn) return;
+    try {
+        const { data, error } = await supabaseClient.rpc("upsert_profile_and_check_admin", {
+            p_user_id: user.id,
+            p_email: user.email
+        });
+        if (error) {
+            console.warn("[Admin Check] RPC 실패 (마이그레이션 적용 전일 수 있습니다):", error.message);
+            adminBtn.classList.add("hidden");
+            return;
+        }
+        if (data && data.is_admin) {
+            adminBtn.classList.remove("hidden");
+        } else {
+            adminBtn.classList.add("hidden");
+        }
+    } catch (e) {
+        console.warn("[Admin Check] 예외 발생:", e.message);
+        adminBtn.classList.add("hidden");
     }
 }
 
