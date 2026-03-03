@@ -27,10 +27,14 @@ try:
     from supabase import create_client, Client
     SUPABASE_URL = os.getenv("SUPABASE_URL", "")
     SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
+    SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
     supabase: Client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY) if SUPABASE_URL else None
+    # Service Role 키 (RLS 우회 - 백엔드 전용)
+    supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) if (SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY) else supabase
 except Exception as e:
     logger.warning(f"Supabase 초기화 실패: {e}")
     supabase = None
+    supabase_admin = None
 
 # JWT에서 user_id 추출 헬퍼
 def get_user_id_from_token(authorization: str) -> str:
@@ -424,7 +428,7 @@ async def add_monitor(req: MonitorRequest, authorization: str = Header(default="
         return {"status": "error", "message": "로그인이 필요합니다."}
     try:
         # 중복 체크
-        existing = supabase.table("monitored_brands")\
+        existing = supabase_admin.table("monitored_brands")\
             .select("id")\
             .eq("user_id", user_id)\
             .eq("brand_name", req.brand_name)\
@@ -433,7 +437,7 @@ async def add_monitor(req: MonitorRequest, authorization: str = Header(default="
         if existing.data:
             return {"status": "error", "message": f"'{req.brand_name}'은(는) 이미 모니터링 중입니다."}
 
-        result = supabase.table("monitored_brands").insert({
+        result = supabase_admin.table("monitored_brands").insert({
             "user_id": user_id,
             "brand_name": req.brand_name,
             "platform": req.platform,
@@ -451,7 +455,7 @@ async def list_monitors(authorization: str = Header(default="")):
     if not user_id:
         return {"status": "error", "message": "로그인이 필요합니다.", "data": []}
     try:
-        result = supabase.table("monitored_brands")\
+        result = supabase_admin.table("monitored_brands")\
             .select("*")\
             .eq("user_id", user_id)\
             .eq("is_active", True)\
@@ -468,7 +472,7 @@ async def delete_monitor(monitor_id: str, authorization: str = Header(default=""
     if not user_id:
         return {"status": "error", "message": "로그인이 필요합니다."}
     try:
-        supabase.table("monitored_brands")\
+        supabase_admin.table("monitored_brands")\
             .delete().eq("id", monitor_id).eq("user_id", user_id).execute()
         return {"status": "success"}
     except Exception as e:
@@ -481,7 +485,7 @@ async def get_monitor_alerts(authorization: str = Header(default="")):
     if not user_id:
         return {"status": "error", "message": "로그인이 필요합니다.", "data": []}
     try:
-        result = supabase.table("monitor_alerts")\
+        result = supabase_admin.table("monitor_alerts")\
             .select("*")\
             .eq("user_id", user_id)\
             .order("created_at", desc=True)\
@@ -498,7 +502,7 @@ async def mark_alert_read(alert_id: str, authorization: str = Header(default="")
     if not user_id:
         return {"status": "error", "message": "로그인이 필요합니다."}
     try:
-        supabase.table("monitor_alerts")\
+        supabase_admin.table("monitor_alerts")\
             .update({"is_read": True})\
             .eq("id", alert_id).eq("user_id", user_id).execute()
         return {"status": "success"}
@@ -512,7 +516,7 @@ async def check_monitors_now(authorization: str = Header(default="")):
     if not user_id:
         return {"status": "error", "message": "로그인이 필요합니다."}
     try:
-        monitors = supabase.table("monitored_brands")\
+        monitors = supabase_admin.table("monitored_brands")\
             .select("*")\
             .eq("user_id", user_id)\
             .eq("is_active", True)\
@@ -554,7 +558,7 @@ async def check_monitors_now(authorization: str = Header(default="")):
                              "media_url": a.get("media_url"), "media_type": a.get("media_type"),
                              "body": (a.get("body") or "")[:200], "direct_link": a.get("direct_link"),
                              "platform": platform} for a in ads[:20]]
-                supabase.table("monitor_alerts").insert({
+                supabase_admin.table("monitor_alerts").insert({
                     "user_id": user_id,
                     "monitor_id": mon["id"],
                     "brand_name": brand,
@@ -565,7 +569,7 @@ async def check_monitors_now(authorization: str = Header(default="")):
 
             # last_checked_at 갱신
             from datetime import datetime, timezone
-            supabase.table("monitored_brands")\
+            supabase_admin.table("monitored_brands")\
                 .update({"last_checked_at": datetime.now(timezone.utc).isoformat()})\
                 .eq("id", mon["id"]).execute()
 
@@ -581,14 +585,14 @@ async def check_monitors_now(authorization: str = Header(default="")):
 
 def archive_ads(ads: list, platform: str, country: str = "KR"):
     """수집된 광고를 아카이브 테이블에 upsert합니다."""
-    if not supabase or not ads:
+    if not supabase_admin or not ads:
         return
     for ad in ads:
         ad_id = ad.get("ad_id")
         if not ad_id:
             continue
         try:
-            supabase.table("ad_archive").upsert({
+            supabase_admin.table("ad_archive").upsert({
                 "ad_id": ad_id,
                 "brand": ad.get("brand", ""),
                 "platform": platform,
@@ -618,7 +622,7 @@ async def search_archive(
     if not user_id:
         return {"status": "error", "message": "로그인이 필요합니다.", "data": []}
     try:
-        query = supabase.table("ad_archive").select("*")
+        query = supabase_admin.table("ad_archive").select("*")
         if brand:
             query = query.ilike("brand", f"%{brand}%")
         if platform:
@@ -651,7 +655,7 @@ async def create_board(req: BoardRequest, authorization: str = Header(default=""
     if not user_id:
         return {"status": "error", "message": "로그인이 필요합니다."}
     try:
-        result = supabase.table("boards").insert({
+        result = supabase_admin.table("boards").insert({
             "user_id": user_id,
             "name": req.name,
             "description": req.description,
@@ -668,7 +672,7 @@ async def list_boards(authorization: str = Header(default="")):
     if not user_id:
         return {"status": "error", "message": "로그인이 필요합니다.", "data": []}
     try:
-        result = supabase.table("boards")\
+        result = supabase_admin.table("boards")\
             .select("*")\
             .eq("user_id", user_id)\
             .order("created_at", desc=True)\
@@ -684,7 +688,7 @@ async def delete_board(board_id: str, authorization: str = Header(default="")):
     if not user_id:
         return {"status": "error", "message": "로그인이 필요합니다."}
     try:
-        supabase.table("boards").delete().eq("id", board_id).eq("user_id", user_id).execute()
+        supabase_admin.table("boards").delete().eq("id", board_id).eq("user_id", user_id).execute()
         return {"status": "success"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
@@ -696,7 +700,7 @@ async def get_board_bookmarks(board_id: str, authorization: str = Header(default
     if not user_id:
         return {"status": "error", "message": "로그인이 필요합니다.", "data": []}
     try:
-        result = supabase.table("bookmarks")\
+        result = supabase_admin.table("bookmarks")\
             .select("*")\
             .eq("user_id", user_id)\
             .eq("board_id", board_id)\
@@ -714,7 +718,7 @@ async def move_bookmarks_to_board(req: BookmarkMoveRequest, authorization: str =
         return {"status": "error", "message": "로그인이 필요합니다."}
     try:
         for bm_id in req.bookmark_ids:
-            supabase.table("bookmarks")\
+            supabase_admin.table("bookmarks")\
                 .update({"board_id": req.board_id})\
                 .eq("id", bm_id)\
                 .eq("user_id", user_id)\
