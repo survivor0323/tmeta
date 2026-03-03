@@ -413,13 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
         adGrid.innerHTML = '';
 
         try {
-            const { data, error } = await window.supabaseClient
-                .from('search_history')
-                .select('ads_data, query, created_at')
-                .order('created_at', { ascending: false })
-                .limit(50);
-
-            if (error) throw error;
+            const data = await window.loadHistoryFromDB();
 
             let flatAds = [];
             const seenMap = new Set();
@@ -427,8 +421,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 data.forEach(row => {
                     if (row.ads_data && Array.isArray(row.ads_data)) {
                         row.ads_data.forEach(ad => {
+                            if (!ad || typeof ad !== 'object') return;
                             const id = ad.ad_id || ad.media_url;
-                            if (!seenMap.has(id)) {
+                            if (id && !seenMap.has(id)) {
                                 seenMap.add(id);
                                 if (!ad.query) ad.query = row.query;
                                 flatAds.push(ad);
@@ -480,10 +475,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const flatAds = items.map(item => {
                 const ad = item.ad_data;
+                if (!ad || typeof ad !== 'object') return null;
                 ad.is_bookmarked = true;
                 ad.bookmark_id = item.id;
                 return ad;
-            });
+            }).filter(Boolean);
 
             window.currentAdsData = flatAds;
             window.currentAdsPage = 1;
