@@ -137,20 +137,100 @@ function renderUsers(users) {
     });
 }
 
-function renderAllQueries(history) {
-    const tbody = document.getElementById('adminQueriesTbody');
-    tbody.innerHTML = history.map(h => `
-        <tr>
-            <td>${h.email || '알 수 없음'}</td>
-            <td><strong>${h.query}</strong></td>
-            <td><span class="platform-badge">${PLATFORM_LABELS[h.platform] || h.platform}</span></td>
-            <td>${h.created_at ? new Date(h.created_at).toLocaleString() : '-'}</td>
-        </tr>
-    `).join('');
+// ─── 페이징 및 필터용 전역 상태 ────────────────────────
+let udCurrentPage = 1;
+let bmkCurrentPage = 1;
+let gqCurrentPage = 1;
+const ITEMS_PER_PAGE = 20;
+
+function filterByDate(dataArray, startStr, endStr) {
+    if (!startStr && !endStr) return dataArray;
+    let start = startStr ? new Date(startStr) : new Date('1970-01-01');
+    let end = endStr ? new Date(endStr) : new Date('2099-12-31');
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+    return dataArray.filter(item => {
+        const itemDate = new Date(item.created_at);
+        return itemDate >= start && itemDate <= end;
+    });
 }
+
+function renderPaginationControls(containerId, totalItems, currentPage, onPageChange) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE) || 1;
+    let html = '';
+
+    if (currentPage > 1) {
+        html += `<button class="btn" style="padding:0.2rem 0.6rem;" onclick="${onPageChange}(${currentPage - 1})">&lt;</button>`;
+    }
+
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, currentPage + 2);
+
+    for (let i = startPage; i <= endPage; i++) {
+        const activeStyle = i === currentPage ? 'background:var(--accent-indigo);color:white;' : 'background:transparent;color:var(--text-main);';
+        html += `<button class="btn" style="padding:0.2rem 0.6rem; ${activeStyle}" onclick="${onPageChange}(${i})">${i}</button>`;
+    }
+
+    if (currentPage < totalPages) {
+        html += `<button class="btn" style="padding:0.2rem 0.6rem;" onclick="${onPageChange}(${currentPage + 1})">&gt;</button>`;
+    }
+
+    container.innerHTML = html;
+}
+
+window.changeUdHistoryPage = function (page) {
+    udCurrentPage = page;
+    const userId = document.getElementById('detailUserSelect').value;
+    if (userId) renderUserDetail(userId);
+};
+
+window.changeUdBookmarkPage = function (page) {
+    bmkCurrentPage = page;
+    const userId = document.getElementById('detailUserSelect').value;
+    if (userId) renderUserDetail(userId);
+};
+
+window.changeGqPage = function (page) {
+    gqCurrentPage = page;
+    renderAllQueries(globalAdminData?.history || []);
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('udDateFilterBtn')?.addEventListener('click', () => {
+        udCurrentPage = 1;
+        bmkCurrentPage = 1;
+        const userId = document.getElementById('detailUserSelect').value;
+        if (userId) renderUserDetail(userId);
+    });
+
+    document.getElementById('udDateResetBtn')?.addEventListener('click', () => {
+        document.getElementById('udStartDate').value = '';
+        document.getElementById('udEndDate').value = '';
+        udCurrentPage = 1;
+        bmkCurrentPage = 1;
+        const userId = document.getElementById('detailUserSelect').value;
+        if (userId) renderUserDetail(userId);
+    });
+
+    document.getElementById('gqDateFilterBtn')?.addEventListener('click', () => {
+        gqCurrentPage = 1;
+        renderAllQueries(globalAdminData?.history || []);
+    });
+
+    document.getElementById('gqDateResetBtn')?.addEventListener('click', () => {
+        document.getElementById('gqStartDate').value = '';
+        document.getElementById('gqEndDate').value = '';
+        gqCurrentPage = 1;
+        renderAllQueries(globalAdminData?.history || []);
+    });
+});
 
 function populateUserDetailSelect(users) {
     const select = document.getElementById('detailUserSelect');
+    if (!select) return;
     select.innerHTML = '<option value="">-- 사용자를 선택하세요 --</option>';
     users.forEach(u => {
         const opt = document.createElement('option');
@@ -160,15 +240,46 @@ function populateUserDetailSelect(users) {
     });
 }
 
+function renderAllQueries(history) {
+    const startStr = document.getElementById('gqStartDate')?.value;
+    const endStr = document.getElementById('gqEndDate')?.value;
+    const filteredHistory = filterByDate(history, startStr, endStr);
+
+    const startIndex = (gqCurrentPage - 1) * ITEMS_PER_PAGE;
+    const paginatedHistory = filteredHistory.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+    const tbody = document.getElementById('adminQueriesTbody');
+    if (!tbody) return;
+
+    if (paginatedHistory.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#94a3b8;">검색 이력이 없습니다.</td></tr>';
+    } else {
+        tbody.innerHTML = paginatedHistory.map(h => `
+            <tr>
+                <td>${h.email || '알 수 없음'}</td>
+                <td><strong>${h.query}</strong></td>
+                <td><span class="platform-badge">${PLATFORM_LABELS[h.platform] || h.platform}</span></td>
+                <td>${h.created_at ? new Date(h.created_at).toLocaleString() : '-'}</td>
+            </tr>
+        `).join('');
+    }
+
+    renderPaginationControls('adminQueriesPagination', filteredHistory.length, gqCurrentPage, 'changeGqPage');
+}
+
 function renderUserDetail(userId) {
     if (!globalAdminData) return;
 
-    // 히스토리 필터링
-    const history = (globalAdminData.history || []).filter(h => h.user_id === userId);
-    // 토큰 필터링
-    const usage = (globalAdminData.api_usage || []).filter(u => u.user_id === userId);
-    // 북마크 필터링
-    const bookmarks = (globalAdminData.bookmarks || []).filter(b => b.user_id === userId);
+    const startStr = document.getElementById('udStartDate')?.value;
+    const endStr = document.getElementById('udEndDate')?.value;
+
+    let history = (globalAdminData.history || []).filter(h => h.user_id === userId);
+    let usage = (globalAdminData.api_usage || []).filter(u => u.user_id === userId);
+    let bookmarks = (globalAdminData.bookmarks || []).filter(b => b.user_id === userId);
+
+    history = filterByDate(history, startStr, endStr);
+    usage = filterByDate(usage, startStr, endStr);
+    bookmarks = filterByDate(bookmarks, startStr, endStr);
 
     const totalToken = usage.reduce((s, u) => s + (u.tokens_used || 0), 0);
 
@@ -179,10 +290,13 @@ function renderUserDetail(userId) {
 
     // 2. 사용자 검색 이력 테이블
     const hBody = document.getElementById('udHistoryTbody');
-    if (history.length === 0) {
+    const hStartIndex = (udCurrentPage - 1) * ITEMS_PER_PAGE;
+    const paginatedHistory = history.slice(hStartIndex, hStartIndex + ITEMS_PER_PAGE);
+
+    if (paginatedHistory.length === 0) {
         hBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#94a3b8;">검색 이력이 없습니다.</td></tr>';
     } else {
-        hBody.innerHTML = history.slice(0, 30).map(h => `
+        hBody.innerHTML = paginatedHistory.map(h => `
             <tr>
                 <td><strong>${h.query}</strong></td>
                 <td><span class="platform-badge">${PLATFORM_LABELS[h.platform] || h.platform}</span></td>
@@ -191,13 +305,17 @@ function renderUserDetail(userId) {
             </tr>
         `).join('');
     }
+    renderPaginationControls('udHistoryPagination', history.length, udCurrentPage, 'changeUdHistoryPage');
 
     // 3. 사용자 북마크 테이블
     const bBody = document.getElementById('udBookmarkTbody');
-    if (bookmarks.length === 0) {
+    const bStartIndex = (bmkCurrentPage - 1) * ITEMS_PER_PAGE;
+    const paginatedBookmarks = bookmarks.slice(bStartIndex, bStartIndex + ITEMS_PER_PAGE);
+
+    if (paginatedBookmarks.length === 0) {
         bBody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#94a3b8;">북마크 내역이 없습니다.</td></tr>';
     } else {
-        bBody.innerHTML = bookmarks.slice(0, 30).map(b => {
+        bBody.innerHTML = paginatedBookmarks.map(b => {
             const ad = b.ad_data || {};
             return `
             <tr>
@@ -207,4 +325,5 @@ function renderUserDetail(userId) {
             </tr>
         `}).join('');
     }
+    renderPaginationControls('udBookmarkPagination', bookmarks.length, bmkCurrentPage, 'changeUdBookmarkPage');
 }

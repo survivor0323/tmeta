@@ -137,28 +137,38 @@
                     <select id="detailUserSelect">
                         <option value="">-- 사용자를 선택하세요 --</option>
                     </select>
+
+                    <label style="font-weight:600; color:var(--text-main); margin-left: 1rem;">기간:</label>
+                    <input type="date" id="udStartDate"
+                        style="padding: 0.4rem; border: 1px solid var(--border-color); border-radius: 6px;">
+                    <span style="color:var(--text-muted)">~</span>
+                    <input type="date" id="udEndDate"
+                        style="padding: 0.4rem; border: 1px solid var(--border-color); border-radius: 6px;">
+                    <button class="btn" id="udDateFilterBtn" style="padding: 0.4rem 1rem;">조회</button>
+                    <button class="btn" id="udDateResetBtn"
+                        style="padding: 0.4rem 1rem; background: var(--bg-panel); color: var(--text-main); border: 1px solid var(--border-color);">초기화</button>
                 </div>
 
                 <div id="userDetailData" class="hidden">
                     <div class="admin-stats-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom:1.5rem;">
                         <div class="stat-card">
-                            <h3>해당 유저 총 검색</h3>
+                            <h3>해당 조건 총 검색</h3>
                             <p id="udTotalSearch">0</p>
                         </div>
                         <div class="stat-card">
-                            <h3>해당 유저 총 북마크</h3>
+                            <h3>해당 조건 총 북마크</h3>
                             <p id="udTotalBookmark">0</p>
                         </div>
                         <div class="stat-card">
-                            <h3>해당 유저 총 소비 토큰</h3>
+                            <h3>해당 조건 총 소비 토큰</h3>
                             <p id="udTotalToken">0</p>
                         </div>
                     </div>
 
                     <h3
                         style="margin-bottom:1rem; border-bottom:1px solid #e2e8f0; padding-bottom:0.5rem; color:var(--text-main);">
-                        사용자 검색 히스토리 (최근)</h3>
-                    <table class="admin-table" style="margin-bottom: 2rem;">
+                        사용자 검색 히스토리</h3>
+                    <table class="admin-table">
                         <thead>
                             <tr>
                                 <th>검색어</th>
@@ -169,6 +179,9 @@
                         </thead>
                         <tbody id="udHistoryTbody"></tbody>
                     </table>
+                    <div class="pagination-container" id="udHistoryPagination"
+                        style="margin-top: 1rem; margin-bottom: 2rem; display: flex; justify-content: center; gap: 0.5rem;">
+                    </div>
 
                     <h3
                         style="margin-bottom:1rem; border-bottom:1px solid #e2e8f0; padding-bottom:0.5rem; color:var(--text-main);">
@@ -183,6 +196,8 @@
                         </thead>
                         <tbody id="udBookmarkTbody"></tbody>
                     </table>
+                    <div class="pagination-container" id="udBookmarkPagination"
+                        style="margin-top: 1rem; display: flex; justify-content: center; gap: 0.5rem;"></div>
                 </div>
                 <div id="userDetailEmpty" style="text-align:center; padding:3rem; color:#94a3b8;">
                     사용자를 선택하면 상세 히스토리와 북마크가 표시됩니다.
@@ -191,6 +206,17 @@
 
             <!-- 4. 전체 검색어 이력 -->
             <div id="adminViewQueries" class="admin-view-panel hidden">
+                <div class="user-select-bar" style="justify-content: flex-end;">
+                    <label style="font-weight:600; color:var(--text-main);">기간:</label>
+                    <input type="date" id="gqStartDate"
+                        style="padding: 0.4rem; border: 1px solid var(--border-color); border-radius: 6px;">
+                    <span style="color:var(--text-muted)">~</span>
+                    <input type="date" id="gqEndDate"
+                        style="padding: 0.4rem; border: 1px solid var(--border-color); border-radius: 6px;">
+                    <button class="btn" id="gqDateFilterBtn" style="padding: 0.4rem 1rem;">조회</button>
+                    <button class="btn" id="gqDateResetBtn"
+                        style="padding: 0.4rem 1rem; background: var(--bg-panel); color: var(--text-main); border: 1px solid var(--border-color);">초기화</button>
+                </div>
                 <table class="admin-table">
                     <thead>
                         <tr>
@@ -202,6 +228,8 @@
                     </thead>
                     <tbody id="adminQueriesTbody"></tbody>
                 </table>
+                <div class="pagination-container" id="adminQueriesPagination"
+                    style="margin-top: 1.5rem; display: flex; justify-content: center; gap: 0.5rem;"></div>
             </div>
         </div>
     </div>
