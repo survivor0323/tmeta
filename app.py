@@ -101,20 +101,18 @@ async def trigger_analysis(req: AnalyzeRequest, authorization: str = Header(defa
             try:
                 from datetime import datetime, timedelta, timezone
                 import json
-                time_threshold = datetime.now(timezone.utc) - timedelta(hours=24)
+                time_threshold = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
                 
-                cached = supabase.table("search_history")\
-                    .select("ads_data")\
-                    .ilike("query", req.query)\
-                    .eq("platform", platform)\
-                    .eq("country", req.country or "KR")\
-                    .gte("created_at", time_threshold.isoformat())\
-                    .order("created_at", desc=True)\
-                    .limit(1)\
-                    .execute()
+                # RLS를 우회하여 캐시 데이터를 가져오는 RPC 함수 호출
+                cached = supabase.rpc("get_cached_ads_data", {
+                    "p_query": req.query,
+                    "p_platform": platform,
+                    "p_country": req.country or "KR",
+                    "p_time_threshold": time_threshold
+                }).execute()
                 
-                if cached.data and cached.data[0].get("ads_data"):
-                    cached_data = cached.data[0]["ads_data"]
+                if cached.data:
+                    cached_data = cached.data
                     if isinstance(cached_data, str):
                         try:
                             cached_data = json.loads(cached_data)
@@ -125,11 +123,11 @@ async def trigger_analysis(req: AnalyzeRequest, authorization: str = Header(defa
                         logger.info(f"DB Cache Hit: '{req.query}' on {platform}. Return {len(cached_data)} items.")
                         return {
                             "status": "success",
-                            "message": f"최근 24시간 내 검색된 이력이 있어 기존 데이터({len(cached_data)}개 소재)를 빠르게 불러왔습니다. (시간 및 토큰 절약)",
+                            "message": f"최근 24시간 내 누군가 검색한 이력이 있어 기존 데이터({len(cached_data)}개 소재)를 즉시 불러왔습니다. (시간/API토큰 절약)",
                             "data": cached_data
                         }
             except Exception as e:
-                logger.warning(f"캐시(search_history) 조회 실패: {e}")
+                logger.warning(f"캐시(RPC) 조회 실패: {e}")
         # -----------------------------------------------------------------------------------------
 
         brands = extract_brands_from_natural_language(req.query, country=req.country)
