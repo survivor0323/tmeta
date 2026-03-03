@@ -80,6 +80,9 @@ document.addEventListener("DOMContentLoaded", () => {
         analyzeBtn.disabled = true;
         analyzeBtn.innerHTML = `검색 중... <i class="fa-solid fa-spinner fa-spin"></i>`;
 
+        const existingBanner = document.getElementById("historyBanner");
+        if (existingBanner) existingBanner.remove();
+
         // 비동기 파생 키워드 추천 로직 (블로킹 X)
         fetchKeywordRecommendations(rawInput);
 
@@ -179,6 +182,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    window.renderAdsPage = renderAdsPage;
     function renderAdsPage() {
         const ITEMS_PER_PAGE = 9;
 
@@ -592,11 +596,16 @@ window.loadRecentSearchChips = async () => {
                 document.getElementById('loadMoreBtnContainer')?.classList.add('hidden');
                 const detail = await window.loadHistoryDetailFromDB(item.id);
                 loadingState.classList.add('hidden');
-                if (!detail || !detail.ads_data?.length) {
+                let parsedData = detail.ads_data;
+                if (typeof parsedData === 'string') {
+                    try { parsedData = JSON.parse(parsedData); } catch (e) { parsedData = []; }
+                }
+
+                if (!parsedData || !parsedData.length) {
                     adGrid.innerHTML = `<div style="text-align:center;width:100%;color:#94a3b8;padding:2rem;">저장된 소재가 없습니다. 다시 검색해보세요.</div>`;
                     return;
                 }
-                window.currentAdsData = detail.ads_data;
+                window.currentAdsData = parsedData;
                 window.currentAdsPage = 1;
                 window._lastSearchQuery = detail.query;
                 window._lastSearchPlatform = detail.platform;
@@ -627,7 +636,11 @@ window.loadRecentSearchChips = async () => {
                     document.getElementById('analyzeBtn').click();
                 });
 
-                renderAdsPage();
+                if (typeof window.renderAdsPage === 'function') {
+                    window.renderAdsPage();
+                } else {
+                    console.error("renderAdsPage function is not accessible globally.");
+                }
             });
             list.appendChild(btn);
         });
