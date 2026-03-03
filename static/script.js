@@ -602,7 +602,9 @@ window.loadRecentSearchChips = async () => {
                 }
 
                 if (!parsedData || !parsedData.length) {
-                    adGrid.innerHTML = `<div style="text-align:center;width:100%;color:#94a3b8;padding:2rem;">저장된 소재가 없습니다. 다시 검색해보세요.</div>`;
+                    adGrid.innerHTML = `<div style="text-align:center;width:100%;grid-column:1 / -1;padding:3rem;color:#64748b;font-size:1rem;line-height:1.6;word-break:keep-all;">
+                        이전에 <b>'${detail.query}'</b> 및 대체 키워드들로 반복 탐색했으나 레퍼런스(광고)를 발견하지 못한 기록입니다.<br>다른 브랜드명이나 영문, 혹은 다른 키워드로 다시 검색해 보세요.
+                    </div>`;
                     return;
                 }
                 window.currentAdsData = parsedData;
