@@ -419,8 +419,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const seenMap = new Set();
             if (data) {
                 data.forEach(row => {
-                    if (row.ads_data && Array.isArray(row.ads_data)) {
-                        row.ads_data.forEach(ad => {
+                    let adsArray = row.ads_data;
+
+                    if (typeof adsArray === 'string') {
+                        try { adsArray = JSON.parse(adsArray); } catch (e) { adsArray = null; }
+                    }
+
+                    if (adsArray && Array.isArray(adsArray)) {
+                        adsArray.forEach(ad => {
                             if (!ad || typeof ad !== 'object') return;
                             const id = ad.ad_id || ad.media_url;
                             if (id && !seenMap.has(id)) {
@@ -474,7 +480,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const flatAds = items.map(item => {
-                const ad = item.ad_data;
+                let ad = item.ad_data;
+                if (typeof ad === 'string') {
+                    try { ad = JSON.parse(ad); } catch (e) { ad = null; }
+                }
+
                 if (!ad || typeof ad !== 'object') return null;
                 ad.is_bookmarked = true;
                 ad.bookmark_id = item.id;
