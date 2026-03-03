@@ -170,7 +170,7 @@ window.loadHistoryFromDB = async () => {
     try {
         const { data, error } = await supabaseClient
             .from("search_history")
-            .select("id, query, platform, country, created_at")
+            .select("id, query, platform, ads_data, created_at")
             .order("created_at", { ascending: false })
             .limit(50);
         if (error) {
