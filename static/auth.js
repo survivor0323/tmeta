@@ -8,6 +8,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_w7r4IY60O392RTqPmUGRhg_rs_pJKuF";
 // Supabase JS 클라이언트 초기화
 const { createClient } = window.supabase;
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+window.supabaseClient = supabaseClient;
 
 // 현재 세션 (전역)
 window._motiverseSession = null;
@@ -61,7 +62,7 @@ function updateAuthUI(session) {
         userInfo.classList.add("hidden");
         historyBtn.classList.add("hidden");
         bookmarkBtn.classList.add("hidden");
-        if(adminBtn) adminBtn.classList.add("hidden");
+        if (adminBtn) adminBtn.classList.add("hidden");
     }
 }
 
