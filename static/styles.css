@@ -161,6 +161,47 @@ body {
     background: var(--accent-blue-hover);
 }
 
+/* 마케터용 검색 팁 UI */
+.search-tips-box {
+    background: rgba(59, 130, 246, 0.05);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-top: 1rem;
+    text-align: left;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.search-tips-box .tip-title {
+    font-weight: 600;
+    color: var(--accent-blue);
+    margin-bottom: 0.6rem;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.search-tips-box .tip-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.search-tips-box .tip-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+    line-height: 1.4;
+}
+
+.search-tips-box .tip-list li strong {
+    color: var(--text-main);
+    white-space: nowrap;
+}
+
 /* ====== Filter & Recommendation Tabs ====== */
 .filter-tabs {
     display: flex;
