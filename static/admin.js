@@ -141,7 +141,7 @@ function renderUsers(users) {
 let udCurrentPage = 1;
 let bmkCurrentPage = 1;
 let gqCurrentPage = 1;
-const ITEMS_PER_PAGE = 20;
+const ITEMS_PER_PAGE = 30;
 
 function filterByDate(dataArray, startStr, endStr) {
     if (!startStr && !endStr) return dataArray;
