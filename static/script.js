@@ -405,6 +405,9 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('historyBtn')?.addEventListener('click', async () => {
         if (!window._motiverseSession) { alert("로그인이 필요합니다."); return; }
 
+        const existingBanner = document.getElementById("historyBanner");
+        if (existingBanner) existingBanner.remove();
+
         const resultsSection = document.getElementById('resultsSection');
         const loadingState = document.getElementById('loadingState');
         const adGrid = document.getElementById('adGrid');
@@ -463,6 +466,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // 북마크 전체 조회
     document.getElementById('bookmarkBtn')?.addEventListener('click', async () => {
         if (!window._motiverseSession) { alert("로그인이 필요합니다."); return; }
+
+        const existingBanner = document.getElementById("historyBanner");
+        if (existingBanner) existingBanner.remove();
 
         const resultsSection = document.getElementById('resultsSection');
         const loadingState = document.getElementById('loadingState');
