@@ -769,7 +769,7 @@ async function loadAdminData() {
 
     } catch (e) {
         console.error("Admin Load Error", e);
-        alert("데이터를 가져오는 데 실패했습니다. (DB 마이그레이션이 적용되었는지 확인하세요)");
+        alert(`데이터를 가져오는 데 실패했습니다.\n\n[상세 에러 내용]\n${e.message || JSON.stringify(e)}`);
     } finally {
         loading.classList.add('hidden');
     }
