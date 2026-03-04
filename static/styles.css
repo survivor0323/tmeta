@@ -1262,7 +1262,7 @@ body {
 
 /* ====== Side Navigation ====== */
 .side-nav {
-    width: 260px;
+    width: 80px;
     background: #1e293b;
     color: #fff;
     display: flex;
@@ -1272,22 +1272,54 @@ body {
     height: 100vh;
     flex-shrink: 0;
     border-right: 1px solid rgba(255, 255, 255, 0.1);
+    transition: width 0.3s ease;
+    overflow: hidden;
+    z-index: 100;
+}
+
+.side-nav:hover {
+    width: 260px;
 }
 
 .nav-brand {
-    padding: 2rem 1.5rem;
+    padding: 2rem 0;
+    text-align: center;
     font-size: 1.25rem;
     font-weight: 700;
     font-family: var(--font-heading);
     letter-spacing: 0.5px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     margin-bottom: 1rem;
+    white-space: nowrap;
+    display: flex;
+    justify-content: center;
 }
 
 .brand-text {
     background: linear-gradient(135deg, #60a5fa, #a78bfa);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    display: none;
+}
+
+.side-nav:hover .brand-text {
+    opacity: 1;
+    display: inline-block;
+}
+
+/* 닫힌 형태일 때 보여줄 로고 축약형 (M) */
+.nav-brand::before {
+    content: "M";
+    background: linear-gradient(135deg, #60a5fa, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-block;
+}
+
+.side-nav:hover .nav-brand::before {
+    display: none;
 }
 
 .nav-menu {
@@ -1307,19 +1339,40 @@ body {
     display: flex;
     align-items: center;
     gap: 1rem;
-    padding: 0.85rem 1.2rem;
+    padding: 0.85rem;
+    justify-content: center;
     color: #cbd5e1;
     text-decoration: none;
     font-weight: 500;
     font-size: 1rem;
     transition: all 0.2s;
     border-radius: 12px;
+    white-space: nowrap;
+}
+
+.side-nav:hover .nav-link {
+    padding: 0.85rem 1.2rem;
+    justify-content: flex-start;
+}
+
+.nav-link span {
+    opacity: 0;
+    width: 0;
+    display: none;
+    transition: opacity 0.3s ease;
+}
+
+.side-nav:hover .nav-link span {
+    opacity: 1;
+    width: auto;
+    display: inline-block;
 }
 
 .nav-link i {
     font-size: 1.1rem;
     width: 24px;
     text-align: center;
+    flex-shrink: 0;
 }
 
 .nav-item:hover .nav-link {
