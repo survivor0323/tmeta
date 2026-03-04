@@ -162,7 +162,8 @@ document.addEventListener("DOMContentLoaded", () => {
         // 리사이즈
         resizeCanvasToDisplaySize();
         // 세이프존 가이드라인 업데이트 (추후 구현)
-        updateSafeZoneGuide(width, height);
+        const currentPlatform = document.querySelector('#creativePlatformTabs .active')?.dataset?.platform || 'naver';
+        updateSafeZoneGuide(width, height, currentPlatform);
     }
 
     function updateSafeZoneGuide(width, height) {
@@ -265,6 +266,125 @@ document.addEventListener("DOMContentLoaded", () => {
                 brandCustomFontLabel.style.color = '#94a3b8';
                 window.currentBrandFont = null;
             }
+        });
+    }
+
+
+
+    // === Step 3: Render Preview ===
+    const btnPreviewRender = document.getElementById('btnPreviewRender');
+    
+    if (btnPreviewRender) {
+        btnPreviewRender.addEventListener('click', () => {
+            const canvas = window.creativeCanvasInstance;
+            if (!canvas) {
+                alert('캔버스가 초기화되지 않았습니다.');
+                return;
+            }
+
+            // 숨겨져있던 캔버스 표시
+            document.getElementById('creativeCanvas').style.display = 'block';
+            document.getElementById('canvasEmptyState').style.display = 'none';
+            // 표시 크기 다시 조율
+            resizeCanvasToDisplaySize();
+
+            const cWidth = canvas.getWidth();
+            const cHeight = canvas.getHeight();
+            
+            // Clear canvas
+            canvas.clear();
+            
+            // Background Color
+            const bgHex = document.getElementById('brandColor1')?.value || '#0f172a';
+            const accentHex = document.getElementById('brandColor2')?.value || '#3b82f6';
+            
+            // Set Background
+            const bgRect = new fabric.Rect({
+                left: 0,
+                top: 0,
+                width: cWidth,
+                height: cHeight,
+                fill: bgHex,
+                selectable: false
+            });
+            canvas.add(bgRect);
+
+            // Fetch texts
+            const fontFam = window.currentBrandFont || 'Pretendard, Arial, sans-serif';
+            const mainText = document.getElementById('copyMain')?.value || 'Main Headline';
+            const subText = document.getElementById('copySub')?.value || 'Sub Copy';
+            const ctaText = document.getElementById('copyCta')?.value || 'Learn More';
+
+            // Add Top left Logo/BrandName placeholder if small or big
+            const brandText = document.getElementById('brandName')?.value || 'Motiverse';
+            const brandLabel = new fabric.Text(brandText, {
+                left: 40,
+                top: 40,
+                fontFamily: fontFam,
+                fontSize: Math.min(cWidth * 0.04, 30),
+                fill: '#ffffff',
+                opacity: 0.7,
+                selectable: true
+            });
+            canvas.add(brandLabel);
+
+            // Add Main Headline
+            const headLabel = new fabric.Textbox(mainText, {
+                left: 40,
+                top: cHeight * 0.25,
+                width: cWidth * 0.8,
+                fontFamily: fontFam,
+                fontSize: Math.min(cWidth * 0.08, 90),
+                fill: '#ffffff',
+                fontWeight: 'bold',
+                lineHeight: 1.2,
+                selectable: true
+            });
+            canvas.add(headLabel);
+
+            // Add Sub Copy
+            const sbLabel = new fabric.Textbox(subText, {
+                left: 40,
+                top: headLabel.top + headLabel.height + (cHeight * 0.05),
+                width: cWidth * 0.8,
+                fontFamily: fontFam,
+                fontSize: Math.min(cWidth * 0.04, 40),
+                fill: '#e2e8f0',
+                lineHeight: 1.4,
+                selectable: true
+            });
+            canvas.add(sbLabel);
+
+            // Add CTA Button Shape
+            const ctaGroup = new fabric.Group([
+                new fabric.Rect({
+                    originX: 'center',
+                    originY: 'center',
+                    fill: accentHex,
+                    width: Math.min(cWidth * 0.4, 400),
+                    height: Math.min(cHeight * 0.1, 80),
+                    rx: Math.min(cHeight * 0.05, 40),
+                    ry: Math.min(cHeight * 0.05, 40)
+                }),
+                new fabric.Text(ctaText, {
+                    originX: 'center',
+                    originY: 'center',
+                    fontFamily: fontFam,
+                    fontSize: Math.min(cWidth * 0.035, 30),
+                    fill: '#ffffff',
+                    fontWeight: 'bold'
+                })
+            ], {
+                left: 40,
+                top: sbLabel.top + sbLabel.height + (cHeight * 0.1),
+                selectable: true,
+                hoverCursor: 'pointer'
+            });
+            canvas.add(ctaGroup);
+
+            // Update Safe zone bounds
+            const currentPlatform = document.querySelector('#creativePlatformTabs .active')?.dataset?.platform || 'naver';
+            updateSafeZoneGuide(cWidth, cHeight, currentPlatform);
         });
     }
 
