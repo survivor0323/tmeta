@@ -251,9 +251,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // === Step 1: Create Brand Logic ===
     const brandLogoInput = document.getElementById('brandLogo');
     const brandLogoPreview = document.getElementById('brandLogoPreview');
-    const btnScanWebsite = document.getElementById('btnScanWebsite');
-    const brandWebsiteUrl = document.getElementById('brandWebsiteUrl');
-    const brandName = document.getElementById('brandName');
+    // btnScanWebsite, brandWebsiteUrl, brandName → 아래 API 연동 블록에서 직접 접근
     const brandCustomFont = document.getElementById('brandCustomFont');
     const brandCustomFontLabel = document.getElementById('brandCustomFontLabel');
     const brandColor1 = document.getElementById('brandColor1');
@@ -275,40 +273,9 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 1-2. Website Scan (Mock)
-    if (btnScanWebsite && brandWebsiteUrl) {
-        btnScanWebsite.addEventListener('click', () => {
-            const url = brandWebsiteUrl.value.trim();
-            if (!url) {
-                alert('스캔할 웹사이트 URL을 입력해주세요.');
-                return;
-            }
+    // 1-2. Website Scan → 아래 API 연동 코드에서 처리
 
-            // UX 피드백
-            const originalText = btnScanWebsite.innerHTML;
-            btnScanWebsite.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Scanning...';
-            btnScanWebsite.disabled = true;
 
-            // 모의 스캔(비동기 지연)
-            setTimeout(() => {
-                let mockName = 'Motiverse';
-                try {
-                    const parsedUrl = new URL(url);
-                    mockName = parsedUrl.hostname.replace('www.', '').split('.')[0];
-                    mockName = mockName.charAt(0).toUpperCase() + mockName.slice(1);
-                } catch (e) { }
-
-                if (brandName) brandName.value = mockName;
-                if (brandColor1) brandColor1.value = '#0f172a';
-                if (brandColor2) brandColor2.value = '#3b82f6';
-
-                alert(`[${mockName}] 사이트 스캔 완료! 로고와 브랜드 컬러가 추출되었습니다.`);
-
-                btnScanWebsite.innerHTML = originalText;
-                btnScanWebsite.disabled = false;
-            }, 1500);
-        });
-    }
 
     // 1-3. Custom Font Load
     if (brandCustomFont && brandCustomFontLabel) {
@@ -466,124 +433,237 @@ document.addEventListener("DOMContentLoaded", () => {
         updateSizeOptionsByPlatform('naver');
     }
 
-    // === Brand Save/Load (localStorage) ===
+    // ═══════════════════════════════════════════════════════
+    // Step 1: Website Scan → /api/v1/scan-brand
+    // ═══════════════════════════════════════════════════════
+    const btnScanWebsite = document.getElementById('btnScanWebsite');
+    if (btnScanWebsite) {
+        btnScanWebsite.addEventListener('click', async () => {
+            const urlInput = document.getElementById('brandWebsiteUrl');
+            const url = urlInput?.value?.trim();
+            if (!url) { alert('웹사이트 URL을 입력하세요.'); return; }
+
+            btnScanWebsite.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 스캔 중...';
+            btnScanWebsite.disabled = true;
+
+            try {
+                const res = await fetch('/api/v1/scan-brand', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+                const json = await res.json();
+                if (json.status === 'success' && json.data) {
+                    const d = json.data;
+                    if (d.brand_name && document.getElementById('brandName')) {
+                        document.getElementById('brandName').value = d.brand_name;
+                    }
+                    if (d.color1 && document.getElementById('brandColor1')) {
+                        document.getElementById('brandColor1').value = d.color1;
+                    }
+                    if (d.color2 && document.getElementById('brandColor2')) {
+                        document.getElementById('brandColor2').value = d.color2;
+                    }
+                    // 스캔 결과 간단 표시
+                    const info = [];
+                    if (d.brand_name) info.push(`브랜드: ${d.brand_name}`);
+                    if (d.color1) info.push(`메인컬러: ${d.color1}`);
+                    if (d.domain) info.push(`도메인: ${d.domain}`);
+                    alert(`웹사이트 스캔 완료!\n${info.join('\n')}`);
+                } else {
+                    alert(json.message || '스캔 실패');
+                }
+            } catch (e) {
+                alert('스캔 오류: ' + e.message);
+            } finally {
+                btnScanWebsite.innerHTML = '<i class="fa-solid fa-globe" style="margin-right: 0.3rem;"></i> 스캔';
+                btnScanWebsite.disabled = false;
+            }
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // Step 1: Brand Save/Load → /api/v1/brands + localStorage fallback
+    // ═══════════════════════════════════════════════════════
     const savedBrandSelect = document.getElementById('savedBrandSelect');
     const btnSaveBrand = document.getElementById('btnSaveBrand');
 
-    function loadSavedBrandsList() {
+    async function loadSavedBrandsList() {
         if (!savedBrandSelect) return;
-        const brands = JSON.parse(localStorage.getItem('savedBrands') || '[]');
         savedBrandSelect.innerHTML = '<option value="">저장된 브랜드 불러오기</option>';
+
+        // Supabase API 시도 → 실패 시 localStorage fallback
+        if (window._motiverseSession) {
+            try {
+                const res = await fetch('/api/v1/brands', { headers: window.getAuthHeaders?.() || {} });
+                const json = await res.json();
+                if (json.data && json.data.length > 0) {
+                    json.data.forEach(b => {
+                        const opt = document.createElement('option');
+                        opt.value = b.id;
+                        opt.dataset.source = 'api';
+                        opt.dataset.brandData = JSON.stringify(b);
+                        opt.textContent = `${b.name} (${b.url || 'API 저장'})`;
+                        savedBrandSelect.appendChild(opt);
+                    });
+                    return;
+                }
+            } catch (e) { console.warn('API 브랜드 로드 실패, localStorage 사용:', e); }
+        }
+
+        // localStorage fallback
+        const brands = JSON.parse(localStorage.getItem('savedBrands') || '[]');
         brands.forEach((b, i) => {
             const opt = document.createElement('option');
-            opt.value = i;
-            opt.textContent = `${b.name} (${b.url || '직접 입력'})`;
+            opt.value = `local_${i}`;
+            opt.dataset.source = 'local';
+            opt.dataset.brandData = JSON.stringify(b);
+            opt.textContent = `${b.name} (${b.url || '로컬'})`;
             savedBrandSelect.appendChild(opt);
         });
     }
 
     if (btnSaveBrand) {
-        btnSaveBrand.addEventListener('click', () => {
+        btnSaveBrand.addEventListener('click', async () => {
             const name = document.getElementById('brandName')?.value?.trim();
             if (!name) { alert('브랜드명을 입력해주세요.'); return; }
-            const brands = JSON.parse(localStorage.getItem('savedBrands') || '[]');
-            const brand = {
+
+            const brandData = {
                 name,
                 url: document.getElementById('brandWebsiteUrl')?.value || '',
                 color1: document.getElementById('brandColor1')?.value || '#0f172a',
                 color2: document.getElementById('brandColor2')?.value || '#3b82f6',
-                savedAt: new Date().toISOString()
             };
-            // 중복 체크
+
+            btnSaveBrand.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            btnSaveBrand.disabled = true;
+
+            try {
+                // Supabase 저장 시도
+                if (window._motiverseSession) {
+                    const res = await fetch('/api/v1/brands', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', ...(window.getAuthHeaders?.() || {}) },
+                        body: JSON.stringify(brandData)
+                    });
+                    const json = await res.json();
+                    if (json.status === 'success') {
+                        await loadSavedBrandsList();
+                        alert(`"${name}" 브랜드가 서버에 저장되었습니다!`);
+                        btnSaveBrand.innerHTML = '<i class="fa-solid fa-floppy-disk" style="margin-right: 0.3rem;"></i> 저장';
+                        btnSaveBrand.disabled = false;
+                        return;
+                    }
+                }
+            } catch (e) { console.warn('API 저장 실패, localStorage 사용:', e); }
+
+            // localStorage fallback
+            const brands = JSON.parse(localStorage.getItem('savedBrands') || '[]');
             const existing = brands.findIndex(b => b.name === name);
-            if (existing >= 0) {
-                brands[existing] = brand;
-            } else {
-                brands.push(brand);
-            }
+            if (existing >= 0) brands[existing] = { ...brandData, savedAt: new Date().toISOString() };
+            else brands.push({ ...brandData, savedAt: new Date().toISOString() });
             localStorage.setItem('savedBrands', JSON.stringify(brands));
-            loadSavedBrandsList();
-            alert(`"${name}" 브랜드가 저장되었습니다!`);
+            await loadSavedBrandsList();
+            alert(`"${name}" 브랜드가 로컬에 저장되었습니다!`);
+
+            btnSaveBrand.innerHTML = '<i class="fa-solid fa-floppy-disk" style="margin-right: 0.3rem;"></i> 저장';
+            btnSaveBrand.disabled = false;
         });
     }
 
     if (savedBrandSelect) {
         savedBrandSelect.addEventListener('change', (e) => {
-            const idx = e.target.value;
-            if (idx === '') return;
-            const brands = JSON.parse(localStorage.getItem('savedBrands') || '[]');
-            const brand = brands[parseInt(idx)];
-            if (!brand) return;
-            if (document.getElementById('brandName')) document.getElementById('brandName').value = brand.name;
-            if (document.getElementById('brandWebsiteUrl')) document.getElementById('brandWebsiteUrl').value = brand.url || '';
-            if (document.getElementById('brandColor1')) document.getElementById('brandColor1').value = brand.color1;
-            if (document.getElementById('brandColor2')) document.getElementById('brandColor2').value = brand.color2;
+            const selected = e.target.selectedOptions[0];
+            if (!selected || !selected.dataset.brandData) return;
+            try {
+                const brand = JSON.parse(selected.dataset.brandData);
+                if (document.getElementById('brandName')) document.getElementById('brandName').value = brand.name || '';
+                if (document.getElementById('brandWebsiteUrl')) document.getElementById('brandWebsiteUrl').value = brand.url || '';
+                if (document.getElementById('brandColor1')) document.getElementById('brandColor1').value = brand.color1 || '#0f172a';
+                if (document.getElementById('brandColor2')) document.getElementById('brandColor2').value = brand.color2 || '#3b82f6';
+            } catch (err) { console.error('브랜드 데이터 파싱 실패:', err); }
             savedBrandSelect.value = '';
         });
         loadSavedBrandsList();
     }
 
-    // === Reference Load from Monitoring Data ===
+    // ═══════════════════════════════════════════════════════
+    // Step 2: Reference Load → /api/v1/monitor-alerts (실제 API)
+    // ═══════════════════════════════════════════════════════
     const btnLoadReferences = document.getElementById('btnLoadReferences');
     const referenceList = document.getElementById('referenceList');
+    window._selectedReferences = []; // 선택된 레퍼런스 광고 데이터
 
     if (btnLoadReferences && referenceList) {
-        btnLoadReferences.addEventListener('click', () => {
-            // 모니터링 데이터에서 광고 가져오기
-            const monitorData = JSON.parse(localStorage.getItem('monitorCompanies') || '[]');
-            if (monitorData.length === 0) {
-                referenceList.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 1rem;"><i class="fa-solid fa-circle-info" style="margin-right: 0.3rem;"></i> 등록된 모니터링 경쟁사가 없습니다. 먼저 경쟁사를 등록하세요.</div>';
-                return;
-            }
-
+        btnLoadReferences.addEventListener('click', async () => {
             btnLoadReferences.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 불러오는 중...';
             btnLoadReferences.disabled = true;
 
-            setTimeout(() => {
-                // 모니터링 데이터의 최근 알림에서 광고 이미지 생성 (모의)
+            try {
+                // 실제 모니터링 알림 API 호출
+                const headers = window.getAuthHeaders?.() || {};
+                const res = await fetch('/api/v1/monitor-alerts', { headers });
+                const json = await res.json();
+
                 referenceList.innerHTML = '';
+                window._selectedReferences = [];
+                updateSelectedCount();
+
+                if (!json.data || json.data.length === 0) {
+                    referenceList.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 1rem;"><i class="fa-solid fa-circle-info" style="margin-right: 0.3rem;"></i> 모니터링 알림이 없습니다. 먼저 경쟁사를 등록하고 체크해주세요.</div>';
+                    return;
+                }
+
+                // 알림에서 광고 추출해서 그리드로 표시
                 let totalAds = 0;
+                json.data.forEach(alert => {
+                    const adsData = alert.ads_data || [];
+                    adsData.forEach((ad, i) => {
+                        totalAds++;
+                        const card = document.createElement('div');
+                        card.className = 'ref-card';
+                        card.dataset.adData = JSON.stringify(ad);
+                        card.style.cssText = 'border-radius: 8px; overflow: hidden; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; position: relative;';
 
-                monitorData.forEach(company => {
-                    const companyName = company.name || company.brandName || '경쟁사';
-                    const platforms = company.platforms || [company.platform || 'Meta'];
-                    const platformList = Array.isArray(platforms) ? platforms : [platforms];
+                        const mediaUrl = ad.media_url || '';
+                        const isVideo = ad.media_type === 'video';
+                        const brandName = ad.brand || alert.brand_name || '';
+                        const platform = ad.platform || '';
 
-                    platformList.forEach(platform => {
-                        // 각 플랫폼별 모의 광고 3개씩
-                        for (let i = 1; i <= 3; i++) {
-                            totalAds++;
-                            const card = document.createElement('div');
-                            card.className = 'ref-card';
-                            card.style.cssText = 'border-radius: 8px; overflow: hidden; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; position: relative;';
-                            card.innerHTML = `
-                                <div style="aspect-ratio: 1; background: linear-gradient(135deg, ${getRandomGradient()}); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: white; font-weight: 600; text-align: center; padding: 0.5rem;">
-                                    ${companyName}<br><span style="font-size: 0.65rem; opacity: 0.8;">${platform} #${i}</span>
-                                </div>
-                                <div style="position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 50%; background: white; border: 2px solid #cbd5e1; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: transparent;" class="ref-check">
-                                    <i class="fa-solid fa-check"></i>
-                                </div>
-                            `;
-                            card.addEventListener('click', () => {
-                                card.classList.toggle('selected');
-                                const check = card.querySelector('.ref-check');
-                                if (card.classList.contains('selected')) {
-                                    card.style.borderColor = 'var(--accent-blue)';
-                                    card.style.boxShadow = '0 0 0 1px var(--accent-blue)';
-                                    check.style.background = 'var(--accent-blue)';
-                                    check.style.borderColor = 'var(--accent-blue)';
-                                    check.style.color = 'white';
-                                } else {
-                                    card.style.borderColor = 'transparent';
-                                    card.style.boxShadow = 'none';
-                                    check.style.background = 'white';
-                                    check.style.borderColor = '#cbd5e1';
-                                    check.style.color = 'transparent';
-                                }
-                                updateSelectedCount();
-                            });
-                            referenceList.appendChild(card);
-                        }
+                        // 실제 이미지가 있으면 표시, 없으면 그라디언트
+                        const mediaHtml = mediaUrl && !isVideo
+                            ? `<img src="${mediaUrl}" style="width:100%;aspect-ratio:1;object-fit:cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" /><div style="aspect-ratio:1;background:linear-gradient(135deg,${getRandomGradient()});display:none;align-items:center;justify-content:center;font-size:0.75rem;color:white;font-weight:600;text-align:center;padding:0.5rem;">${brandName}<br><span style="font-size:0.65rem;opacity:0.8;">${platform}</span></div>`
+                            : `<div style="aspect-ratio:1;background:linear-gradient(135deg,${getRandomGradient()});display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:white;font-weight:600;text-align:center;padding:0.5rem;">${brandName}${isVideo ? '<br><span style="font-size:0.65rem;opacity:0.8;"><i class="fa-solid fa-video"></i> Video</span>' : `<br><span style="font-size:0.65rem;opacity:0.8;">${platform}</span>`}</div>`;
+
+                        card.innerHTML = `
+                            ${mediaHtml}
+                            <div style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:white;border:2px solid #cbd5e1;display:flex;align-items:center;justify-content:center;font-size:0.6rem;color:transparent;" class="ref-check">
+                                <i class="fa-solid fa-check"></i>
+                            </div>
+                            <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.6);color:white;padding:3px 6px;font-size:0.65rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${brandName}</div>
+                        `;
+
+                        card.addEventListener('click', () => {
+                            card.classList.toggle('selected');
+                            const check = card.querySelector('.ref-check');
+                            if (card.classList.contains('selected')) {
+                                card.style.borderColor = 'var(--accent-blue)';
+                                card.style.boxShadow = '0 0 0 1px var(--accent-blue)';
+                                check.style.background = 'var(--accent-blue)';
+                                check.style.borderColor = 'var(--accent-blue)';
+                                check.style.color = 'white';
+                                window._selectedReferences.push(ad);
+                            } else {
+                                card.style.borderColor = 'transparent';
+                                card.style.boxShadow = 'none';
+                                check.style.background = 'white';
+                                check.style.borderColor = '#cbd5e1';
+                                check.style.color = 'transparent';
+                                window._selectedReferences = window._selectedReferences.filter(r => r !== ad);
+                            }
+                            updateSelectedCount();
+                        });
+                        referenceList.appendChild(card);
                     });
                 });
 
@@ -591,14 +671,18 @@ document.addEventListener("DOMContentLoaded", () => {
                     referenceList.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 1rem;">광고 데이터를 찾을 수 없습니다.</div>';
                 }
 
+            } catch (e) {
+                console.error('레퍼런스 로드 실패:', e);
+                referenceList.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: #ef4444; font-size: 0.9rem; padding: 1rem;">로드 실패: ${e.message}</div>`;
+            } finally {
                 btnLoadReferences.innerHTML = '<i class="fa-solid fa-rotate" style="margin-right: 0.3rem;"></i> 모니터링 데이터에서 불러오기';
                 btnLoadReferences.disabled = false;
-            }, 800);
+            }
         });
     }
 
     function updateSelectedCount() {
-        const count = document.querySelectorAll('#referenceList .ref-card.selected').length;
+        const count = window._selectedReferences?.length || 0;
         const el = document.getElementById('selectedRefCount');
         if (el) el.textContent = count;
     }
@@ -612,5 +696,133 @@ document.addEventListener("DOMContentLoaded", () => {
         ];
         return gradients[Math.floor(Math.random() * gradients.length)];
     }
+
+    // ═══════════════════════════════════════════════════════
+    // Step 2: AI Strategy Generation → /api/v1/generate-strategy
+    // ═══════════════════════════════════════════════════════
+    const btnGenerateAI = document.getElementById('btnGenerateAI');
+    if (btnGenerateAI) {
+        btnGenerateAI.addEventListener('click', async () => {
+            const brandName = document.getElementById('brandName')?.value?.trim() || '';
+            const brandColor1 = document.getElementById('brandColor1')?.value || '#0f172a';
+            const brandColor2 = document.getElementById('brandColor2')?.value || '#3b82f6';
+
+            btnGenerateAI.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right: 0.3rem;"></i> AI 전략 생성 중...';
+            btnGenerateAI.disabled = true;
+
+            // 결과 영역 준비
+            const strategyResult = document.getElementById('strategyResult');
+            if (strategyResult) {
+                strategyResult.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted);"><i class="fa-solid fa-wand-magic-sparkles fa-2x fa-beat-fade" style="color:var(--accent-blue);"></i><p style="margin-top:1rem;">AI가 브랜드와 레퍼런스를 분석하여 최적의 전략을 생성하고 있습니다...</p></div>';
+                strategyResult.classList.remove('hidden');
+            }
+
+            try {
+                const payload = {
+                    brand_name: brandName,
+                    brand_color1: brandColor1,
+                    brand_color2: brandColor2,
+                    reference_ads: (window._selectedReferences || []).slice(0, 5)
+                };
+
+                const res = await fetch('/api/v1/generate-strategy', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', ...(window.getAuthHeaders?.() || {}) },
+                    body: JSON.stringify(payload)
+                });
+                const json = await res.json();
+
+                if (json.status === 'success' && json.data) {
+                    const s = json.data;
+
+                    // Step 2 결과 표시
+                    if (strategyResult) {
+                        strategyResult.innerHTML = `
+                            <div style="background: linear-gradient(135deg, #f0f9ff, #ede9fe); border-radius: 12px; padding: 1.2rem; margin-bottom: 1rem;">
+                                <h4 style="margin: 0 0 0.5rem; color: var(--text-main); font-size: 1rem;"><i class="fa-solid fa-lightbulb" style="color: #f59e0b; margin-right: 0.3rem;"></i> 전략 요약</h4>
+                                <p style="margin: 0; font-size: 0.9rem; color: var(--text-sub); line-height: 1.6;">${s.strategy_summary || ''}</p>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-bottom: 1rem;">
+                                <div style="background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.8rem;">
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.3rem;">타겟 오디언스</div>
+                                    <div style="font-size: 0.85rem; color: var(--text-main);">${s.target_audience || ''}</div>
+                                </div>
+                                <div style="background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.8rem;">
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.3rem;">톤 앤 매너</div>
+                                    <div style="font-size: 0.85rem; color: var(--text-main);">${s.tone_and_manner || ''}</div>
+                                </div>
+                                <div style="background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.8rem;">
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.3rem;">레이아웃 추천</div>
+                                    <div style="font-size: 0.85rem; color: var(--text-main);">${s.layout_recommendation || ''}</div>
+                                </div>
+                                <div style="background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.8rem;">
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.3rem;">컬러 전략</div>
+                                    <div style="font-size: 0.85rem; color: var(--text-main);">${s.color_strategy || ''}</div>
+                                </div>
+                            </div>
+                            <div style="background: var(--accent-blue); color: white; border-radius: 10px; padding: 1rem; margin-bottom: 0.8rem;">
+                                <div style="font-size: 0.75rem; opacity: 0.8; margin-bottom: 0.3rem;">AI 생성 메인 카피</div>
+                                <div style="font-size: 1.3rem; font-weight: 700;">${s.main_headline || ''}</div>
+                                <div style="font-size: 0.9rem; margin-top: 0.3rem; opacity: 0.9;">${s.sub_copy || ''}</div>
+                                <div style="margin-top: 0.5rem;"><span style="background: white; color: var(--accent-blue); padding: 4px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600;">${s.cta_text || 'CTA'}</span></div>
+                            </div>
+                            ${s.alternative_headlines?.length > 0 ? `
+                                <div style="background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.8rem;">
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.4rem;"><i class="fa-solid fa-shuffle" style="margin-right: 0.3rem;"></i> 대안 헤드라인</div>
+                                    ${s.alternative_headlines.map((h, i) => `<div style="font-size: 0.85rem; color: var(--text-main); padding: 0.3rem 0; border-bottom: 1px solid #f1f5f9; cursor: pointer;" class="alt-headline" data-text="${h?.replace?.(/"/g, '&quot;') || ''}" title="클릭하면 메인 카피에 적용">• ${h}</div>`).join('')}
+                                </div>
+                            ` : ''}
+                        `;
+
+                        // 대안 헤드라인 클릭 시 메인에 적용
+                        strategyResult.querySelectorAll('.alt-headline').forEach(el => {
+                            el.addEventListener('click', () => {
+                                const text = el.dataset.text;
+                                if (document.getElementById('copyMain')) document.getElementById('copyMain').value = text;
+                            });
+                        });
+                    }
+
+                    // Step 3 On Image Texts에 자동 입력
+                    if (s.main_headline && document.getElementById('copyMain')) {
+                        document.getElementById('copyMain').value = s.main_headline;
+                    }
+                    if (s.sub_copy && document.getElementById('copySub')) {
+                        document.getElementById('copySub').value = s.sub_copy;
+                    }
+                    if (s.cta_text && document.getElementById('copyCta')) {
+                        document.getElementById('copyCta').value = s.cta_text;
+                    }
+
+                    // 전역에 저장 (Step 3에서 활용)
+                    window._aiStrategy = s;
+
+                } else {
+                    if (strategyResult) {
+                        strategyResult.innerHTML = `<div style="text-align:center;padding:1rem;color:#ef4444;">${json.message || 'AI 전략 생성 실패'}</div>`;
+                    }
+                }
+            } catch (e) {
+                console.error('AI 전략 생성 오류:', e);
+                if (strategyResult) {
+                    strategyResult.innerHTML = `<div style="text-align:center;padding:1rem;color:#ef4444;">오류: ${e.message}</div>`;
+                }
+            } finally {
+                btnGenerateAI.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles" style="margin-right: 0.3rem;"></i> AI 전략 생성';
+                btnGenerateAI.disabled = false;
+            }
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // Step 3: Image Type Selection Toggle
+    // ═══════════════════════════════════════════════════════
+    document.querySelectorAll('.img-type-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.img-type-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            window._selectedImgType = btn.dataset.type;
+        });
+    });
 
 });

@@ -842,6 +842,264 @@ async def analyze_landing_page(req: LandingPageRequest):
         return {"status": "error", "message": str(e), "data": None}
 
 
+# ═══════════════════════════════════════════════════════
+# Creative Studio APIs
+# ═══════════════════════════════════════════════════════
+
+class ScanBrandRequest(BaseModel):
+    url: str
+
+class GenerateStrategyRequest(BaseModel):
+    brand_name: str = ""
+    brand_color1: str = "#0f172a"
+    brand_color2: str = "#3b82f6"
+    reference_ads: list = []  # [{media_url, brand, body, platform}, ...]
+
+class BrandSaveRequest(BaseModel):
+    name: str
+    url: str = ""
+    color1: str = "#0f172a"
+    color2: str = "#3b82f6"
+    logo_url: str = ""
+
+
+@app.post("/api/v1/scan-brand")
+async def scan_brand(req: ScanBrandRequest):
+    """웹사이트를 스캔하여 브랜드 정보(이름, 컬러, 로고)를 추출합니다."""
+    import requests as req_lib
+    import re
+    from urllib.parse import urlparse, urljoin
+
+    url = req.url.strip()
+    if not url:
+        return {"status": "error", "message": "URL이 필요합니다."}
+    if not url.startswith("http"):
+        url = "https://" + url
+
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        }
+        resp = req_lib.get(url, headers=headers, timeout=10, allow_redirects=True)
+        html = resp.text[:80000]
+        parsed = urlparse(str(resp.url))
+        domain = parsed.netloc.replace("www.", "")
+        base_url = f"{parsed.scheme}://{parsed.netloc}"
+
+        # 1. 브랜드명 추출 (og:site_name → <title> → domain)
+        brand_name = ""
+        site_name_match = re.search(r'<meta\s+(?:property|name)=["\']og:site_name["\']\s+content=["\']([^"\']*)["\']', html, re.IGNORECASE)
+        if site_name_match:
+            brand_name = site_name_match.group(1).strip()
+        if not brand_name:
+            title_match = re.search(r'<title[^>]*>([^<]*)</title>', html, re.IGNORECASE)
+            if title_match:
+                brand_name = title_match.group(1).strip().split(" - ")[0].split(" | ")[0].strip()
+        if not brand_name:
+            brand_name = domain.split(".")[0].capitalize()
+
+        # 2. 로고 추출
+        logo_url = ""
+        logo_patterns = [
+            r'<link[^>]+rel=["\'](?:icon|shortcut icon|apple-touch-icon)["\'][^>]+href=["\']([^"\']+)["\']',
+            r'<img[^>]+(?:class|id)=["\'][^"\']*logo[^"\']*["\'][^>]+src=["\']([^"\']+)["\']',
+            r'<img[^>]+src=["\']([^"\']+)["\'][^>]+(?:class|id)=["\'][^"\']*logo[^"\']*["\']',
+        ]
+        for pattern in logo_patterns:
+            match = re.search(pattern, html, re.IGNORECASE)
+            if match:
+                logo_url = match.group(1).strip()
+                if not logo_url.startswith("http"):
+                    logo_url = urljoin(base_url, logo_url)
+                break
+
+        # 3. 주요 컬러 추출 (CSS 변수, theme-color 등)
+        colors = []
+        theme_match = re.search(r'<meta\s+name=["\']theme-color["\']\s+content=["\']([^"\']+)["\']', html, re.IGNORECASE)
+        if theme_match:
+            colors.append(theme_match.group(1).strip())
+        
+        # CSS에서 자주 쓰이는 primary 컬러 패턴
+        css_color_matches = re.findall(r'(?:--primary|--brand|--main)[^:]*:\s*(#[0-9a-fA-F]{3,8})', html)
+        colors.extend(css_color_matches[:3])
+
+        # 링크/버튼 배경색
+        bg_matches = re.findall(r'background(?:-color)?:\s*(#[0-9a-fA-F]{3,8})', html)
+        unique_bgs = list(dict.fromkeys(bg_matches))
+        # 흰/검 제외
+        filtered = [c for c in unique_bgs if c.lower() not in ('#fff', '#ffffff', '#000', '#000000', '#f8f8f8', '#f5f5f5', '#fafafa', '#eee', '#eeeeee')]
+        colors.extend(filtered[:2])
+
+        color1 = colors[0] if len(colors) > 0 else "#0f172a"
+        color2 = colors[1] if len(colors) > 1 else "#3b82f6"
+
+        return {
+            "status": "success",
+            "data": {
+                "brand_name": brand_name,
+                "logo_url": logo_url,
+                "color1": color1,
+                "color2": color2,
+                "domain": domain,
+                "final_url": str(resp.url),
+            }
+        }
+    except Exception as e:
+        logger.error(f"브랜드 스캔 실패: {e}")
+        return {"status": "error", "message": f"스캔 실패: {str(e)}"}
+
+
+@app.post("/api/v1/generate-strategy")
+async def generate_strategy(req: GenerateStrategyRequest, authorization: str = Header(default="")):
+    """선택한 레퍼런스와 브랜드 정보를 기반으로 AI 광고 전략 및 카피를 생성합니다."""
+    try:
+        import openai
+        client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+        # 레퍼런스 광고 요약
+        ref_summary = ""
+        if req.reference_ads:
+            ref_items = []
+            for i, ad in enumerate(req.reference_ads[:5], 1):
+                parts = [f"레퍼런스 {i}:"]
+                if ad.get("brand"): parts.append(f"브랜드: {ad['brand']}")
+                if ad.get("body"): parts.append(f"카피: {ad['body'][:150]}")
+                if ad.get("platform"): parts.append(f"플랫폼: {ad['platform']}")
+                ref_items.append(" | ".join(parts))
+            ref_summary = "\n".join(ref_items)
+
+        prompt = f"""당신은 대한민국 최고의 퍼포먼스 마케팅 전략가입니다.
+
+아래 브랜드 정보와 경쟁사 레퍼런스 광고를 분석하여, 이 브랜드를 위한 광고 크리에이티브 전략과 카피를 생성하세요.
+
+== 브랜드 정보 ==
+- 브랜드명: {req.brand_name or '미입력'}
+- 메인컬러: {req.brand_color1}
+- 보조컬러: {req.brand_color2}
+
+== 경쟁사 레퍼런스 광고 ==
+{ref_summary if ref_summary else '없음 (브랜드 정보만으로 생성)'}
+
+== 출력 형식 (JSON) ==
+아래 JSON 형식으로만 답변하세요. 마크다운이나 코드블록 없이 순수 JSON만 반환하세요:
+{{
+  "strategy_summary": "2-3줄의 전략 요약",
+  "target_audience": "타겟 오디언스 설명",
+  "tone_and_manner": "톤앤매너 키워드 3-5개",
+  "main_headline": "메인 헤드라인 카피 (15자 내외, 한국어)",
+  "sub_copy": "서브 카피 (25자 내외, 한국어)",
+  "cta_text": "CTA 버튼 텍스트 (5자 내외, 한국어)",
+  "alternative_headlines": ["대안 헤드라인1", "대안 헤드라인2", "대안 헤드라인3"],
+  "layout_recommendation": "레이아웃 추천 (예: 상단 헤드라인 + 중앙 제품 + 하단 CTA)",
+  "color_strategy": "컬러 활용 전략"
+}}"""
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.8,
+            max_tokens=1000,
+        )
+
+        result_text = response.choices[0].message.content.strip()
+
+        # JSON 파싱 시도
+        import json as json_lib
+        # 마크다운 코드블록 제거
+        if result_text.startswith("```"):
+            result_text = result_text.split("\n", 1)[1] if "\n" in result_text else result_text[3:]
+            if result_text.endswith("```"):
+                result_text = result_text[:-3]
+            result_text = result_text.strip()
+
+        try:
+            strategy = json_lib.loads(result_text)
+        except json_lib.JSONDecodeError:
+            # JSON 부분만 추출 시도
+            json_match = re.search(r'\{[\s\S]*\}', result_text)
+            if json_match:
+                strategy = json_lib.loads(json_match.group())
+            else:
+                strategy = {"raw_response": result_text}
+
+        return {"status": "success", "data": strategy}
+
+    except Exception as e:
+        logger.error(f"AI 전략 생성 실패: {e}")
+        return {"status": "error", "message": f"AI 전략 생성 중 오류: {str(e)}"}
+
+
+# ─── 브랜드 CRUD API ───────────────────────────────────
+@app.post("/api/v1/brands")
+async def save_brand(req: BrandSaveRequest, authorization: str = Header(default="")):
+    """브랜드 정보를 저장합니다."""
+    user_id = get_user_id_from_token(authorization)
+    if not user_id:
+        return {"status": "error", "message": "로그인이 필요합니다."}
+    try:
+        # 같은 이름 브랜드가 있으면 업데이트
+        existing = supabase_admin.table("user_brands")\
+            .select("id")\
+            .eq("user_id", user_id)\
+            .eq("name", req.name)\
+            .execute()
+
+        brand_data = {
+            "user_id": user_id,
+            "name": req.name,
+            "url": req.url,
+            "color1": req.color1,
+            "color2": req.color2,
+            "logo_url": req.logo_url,
+        }
+
+        if existing.data:
+            result = supabase_admin.table("user_brands")\
+                .update(brand_data)\
+                .eq("id", existing.data[0]["id"])\
+                .execute()
+        else:
+            result = supabase_admin.table("user_brands")\
+                .insert(brand_data)\
+                .execute()
+
+        return {"status": "success", "data": result.data[0] if result.data else {}}
+    except Exception as e:
+        logger.error(f"브랜드 저장 실패: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+@app.get("/api/v1/brands")
+async def list_brands(authorization: str = Header(default="")):
+    """사용자의 저장된 브랜드 목록을 반환합니다."""
+    user_id = get_user_id_from_token(authorization)
+    if not user_id:
+        return {"status": "error", "message": "로그인이 필요합니다.", "data": []}
+    try:
+        result = supabase_admin.table("user_brands")\
+            .select("*")\
+            .eq("user_id", user_id)\
+            .order("created_at", desc=True)\
+            .execute()
+        return {"status": "success", "data": result.data}
+    except Exception as e:
+        return {"status": "error", "message": str(e), "data": []}
+
+
+@app.delete("/api/v1/brands/{brand_id}")
+async def delete_brand(brand_id: str, authorization: str = Header(default="")):
+    """저장된 브랜드를 삭제합니다."""
+    user_id = get_user_id_from_token(authorization)
+    if not user_id:
+        return {"status": "error", "message": "로그인이 필요합니다."}
+    try:
+        supabase_admin.table("user_brands")\
+            .delete().eq("id", brand_id).eq("user_id", user_id).execute()
+        return {"status": "success"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)

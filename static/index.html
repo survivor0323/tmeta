@@ -259,7 +259,8 @@
                                     <div style="display: flex; gap: 1rem; align-items: center;">
                                         <div id="brandLogoPreview"
                                             style="width: 45px; height: 45px; flex-shrink: 0; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; font-size: 1.2rem; color: #cbd5e1;">
-                                            <i class="fa-solid fa-image"></i></div>
+                                            <i class="fa-solid fa-image"></i>
+                                        </div>
                                         <input type="file" id="brandLogo" accept="image/*"
                                             style="flex: 1; min-width: 0; padding: 0.6rem; border: 1px dashed #94a3b8; border-radius: 8px; font-size: 0.85rem; background: white;" />
                                     </div>
@@ -313,7 +314,8 @@
                                     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                                     <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 0;">
                                         <i class="fa-solid fa-images"
-                                            style="margin-right: 0.5rem; color: var(--accent-blue);"></i> 레퍼런스 선택</h4>
+                                            style="margin-right: 0.5rem; color: var(--accent-blue);"></i> 레퍼런스 선택
+                                    </h4>
                                     <button class="btn" id="btnLoadReferences"
                                         style="background: white; color: var(--text-main); border: 1px solid var(--border-color); padding: 0.5rem 1rem; font-size: 0.85rem;">
                                         <i class="fa-solid fa-rotate" style="margin-right: 0.3rem;"></i> 모니터링 데이터에서 불러오기
@@ -327,7 +329,8 @@
                                 </div>
                                 <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-muted);">선택된 레퍼런스:
                                     <span id="selectedRefCount"
-                                        style="font-weight: 700; color: var(--accent-blue);">0</span>개</div>
+                                        style="font-weight: 700; color: var(--accent-blue);">0</span>개
+                                </div>
                             </div>
 
                             <!-- AI 전략 생성 배너 -->
@@ -336,7 +339,8 @@
                                 <div style="display: flex; align-items: center; gap: 1rem;">
                                     <div
                                         style="width: 48px; height: 48px; background: var(--text-main); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
-                                        <i class="fa-solid fa-robot" style="font-size: 1.5rem;"></i></div>
+                                        <i class="fa-solid fa-robot" style="font-size: 1.5rem;"></i>
+                                    </div>
                                     <div>
                                         <div
                                             style="font-weight: 700; color: var(--text-main); font-size: 1.1rem; font-family: var(--font-heading);">
@@ -347,8 +351,12 @@
                                 </div>
                                 <button class="btn" id="btnGenerateAI"
                                     style="background: var(--text-main); color: white; white-space: nowrap;"><i
-                                        class="fa-solid fa-bolt text-gradient"></i> Generate AI Strategy</button>
+                                        class="fa-solid fa-wand-magic-sparkles" style="margin-right: 0.3rem;"></i> AI 전략
+                                    생성</button>
                             </div>
+
+                            <!-- AI 전략 생성 결과 영역 -->
+                            <div id="strategyResult" class="hidden" style="margin-top: 1.5rem;"></div>
 
                             <!-- 이전/다음 버튼 -->
                             <div style="display: flex; justify-content: space-between; margin-top: 2rem;">
@@ -689,7 +697,7 @@
             <script src="/static/auth.js?v=24"></script>
             <script src="/static/script.js?v=24"></script>
             <script src="/static/features.js?v=2"></script>
-            <script src="/static/creative.js?v=2"></script>
+            <script src="/static/creative.js?v=3"></script>
 </body>
 
 </html>
