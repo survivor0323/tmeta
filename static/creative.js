@@ -91,7 +91,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 tab.classList.add('active');
 
                 const platform = tab.dataset.platform;
-                // updateSizeOptionsByPlatform(platform);
+                updateSizeOptionsByPlatform(platform);
             });
         });
     }
@@ -118,6 +118,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 <option value="1200x1800">세로형 피드 (1200x1800)</option>
             `;
             warningEl.innerHTML = '<i class="fa-solid fa-circle-exclamation" style="margin-right:0.4rem;"></i> <span>텍스트 면적 20% 이내 (단색 배경 불가)</span>';
+            warningEl.style.background = '#fff1f2';
+            warningEl.style.color = '#e11d48';
+            warningEl.style.borderColor = '#ffe4e6';
         } else if (platform === 'kakao') {
             options = `
                 <option value="1200x600">와이드 피드 (1200x600)</option>
@@ -126,17 +129,23 @@ document.addEventListener("DOMContentLoaded", () => {
                 <option value="800x1000">세로형 (800x1000)</option>
             `;
             warningEl.innerHTML = '<i class="fa-solid fa-circle-exclamation" style="margin-right:0.4rem;"></i> <span>Safe Zone 침범 주의 (투명도 불가)</span>';
+            warningEl.style.background = '#fffbeb';
+            warningEl.style.color = '#d97706';
+            warningEl.style.borderColor = '#fef3c7';
         } else if (platform === 'meta') {
             options = `
                 <option value="1080x1080">스퀘어 (1080x1080)</option>
                 <option value="1080x1350">세로형 피드 (1080x1350)</option>
                 <option value="1080x1920">스토리/릴스 (1080x1920)</option>
             `;
-            warningEl.innerHTML = '<i class="fa-solid fa-info-circle" style="margin-right:0.4rem; color: #3b82f6;"></i> <span style="color: #3b82f6;">상하단 릴스 UI 가려짐 주의 (Safe Zone)</span>';
+            warningEl.innerHTML = '<i class="fa-solid fa-info-circle" style="margin-right:0.4rem;"></i> <span>상하단 릴스 UI 가려짐 주의 (Safe Zone)</span>';
             warningEl.style.background = '#eff6ff';
+            warningEl.style.color = '#2563eb';
+            warningEl.style.borderColor = '#dbeafe';
         }
 
         selectEl.innerHTML = options;
+
 
         // 첫 번째 사이즈로 변경 유도
         const [w, h] = selectEl.value.split('x').map(Number);
@@ -257,5 +266,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 window.currentBrandFont = null;
             }
         });
+    }
+
+    // Initialize default platform on load
+    if (document.getElementById('canvasSizeSelect')) {
+        updateSizeOptionsByPlatform('naver');
     }
 });

@@ -1396,3 +1396,19 @@ body {
     padding: 1.25rem;
     box-shadow: var(--shadow-sm);
 }
+/* Creative Studio Platform Cards */
+.platform-card {
+    background: white;
+    color: var(--text-main);
+    border-radius: 8px;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s;
+}
+
+.platform-card.active {
+    background: var(--text-main);
+    color: white;
+    border: 2px solid var(--text-main);
+}
