@@ -1130,10 +1130,13 @@ async def generate_creative_image(req: GenerateImageRequest, authorization: str 
                 b64_img = res_json['predictions'][0].get('bytesBase64Encoded', '')
                 if b64_img:
                     return {"status": "success", "data": {"image_b64": f"data:image/jpeg;base64,{b64_img}"}}
-            return {"status": "error", "message": str(res_json)}
+            
+            # 실패 시 상세 메시지 전달
+            error_details = res_json.get("error", {}).get("message", str(res_json))
+            return {"status": "error", "message": f"API 상태({resp.status_code}): {error_details}"}
     except Exception as e:
         logger.error(f"이미지 생성 에러: {e}")
-        return {"status": "error", "message": str(e)}
+        return {"status": "error", "message": f"서버 예외 발생: {str(e)}"}
 
 
 if __name__ == "__main__":

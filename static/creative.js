@@ -889,6 +889,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                 } catch (apiErr) {
                     console.error('API Error:', apiErr);
+                    alert('AI 이미지 생성에 실패했습니다.\n\n에러 내용: ' + apiErr.message);
+
                     // 실패 시 기존 그라디언트 Fallback
                     fc.setBackgroundColor(
                         new fabric.Gradient({
