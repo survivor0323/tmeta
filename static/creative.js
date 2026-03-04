@@ -83,24 +83,32 @@ document.addEventListener("DOMContentLoaded", () => {
     const platformTabs = document.querySelectorAll('#creativePlatformTabs .tab-chip');
     const sizeSelect = document.getElementById('canvasSizeSelect');
 
-    platformTabs.forEach(tab => {
-        tab.addEventListener('click', (e) => {
-            // 활성 탭 디자인 변경
-            platformTabs.forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
+    if (platformTabs && platformTabs.length > 0) {
+        platformTabs.forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                // 활성 탭 디자인 변경
+                platformTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
 
-            const platform = tab.dataset.platform;
-            updateSizeOptionsByPlatform(platform);
+                const platform = tab.dataset.platform;
+                // updateSizeOptionsByPlatform(platform);
+            });
         });
-    });
+    }
 
-    sizeSelect.addEventListener('change', (e) => {
-        const [w, h] = e.target.value.split('x').map(Number);
-        updateCanvasResolution(w, h);
-    });
+    if (sizeSelect) {
+        sizeSelect.addEventListener('change', (e) => {
+            const [w, h] = e.target.value.split('x').map(Number);
+            updateCanvasResolution(w, h);
+        });
+    }
 
     function updateSizeOptionsByPlatform(platform) {
         // 플랫폼별 옵션 동적 갱신
+        const selectEl = document.getElementById('canvasSizeSelect');
+        const warningEl = document.getElementById('creativeRuleWarning');
+        if (!selectEl || !warningEl) return;
+
         let options = '';
         if (platform === 'naver') {
             options = `
@@ -109,7 +117,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <option value="342x228">PC 스마트채널 (342x228)</option>
                 <option value="1200x1800">세로형 피드 (1200x1800)</option>
             `;
-            document.getElementById('creativeRuleWarning').innerHTML = '<i class="fa-solid fa-circle-exclamation" style="margin-right:0.4rem;"></i> <span>텍스트 면적 20% 이내 (단색 배경 불가)</span>';
+            warningEl.innerHTML = '<i class="fa-solid fa-circle-exclamation" style="margin-right:0.4rem;"></i> <span>텍스트 면적 20% 이내 (단색 배경 불가)</span>';
         } else if (platform === 'kakao') {
             options = `
                 <option value="1200x600">와이드 피드 (1200x600)</option>
@@ -117,18 +125,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 <option value="720x1280">풀스크린 (720x1280)</option>
                 <option value="800x1000">세로형 (800x1000)</option>
             `;
-            document.getElementById('creativeRuleWarning').innerHTML = '<i class="fa-solid fa-circle-exclamation" style="margin-right:0.4rem;"></i> <span>Safe Zone 침범 주의 (투명도 불가)</span>';
+            warningEl.innerHTML = '<i class="fa-solid fa-circle-exclamation" style="margin-right:0.4rem;"></i> <span>Safe Zone 침범 주의 (투명도 불가)</span>';
         } else if (platform === 'meta') {
             options = `
                 <option value="1080x1080">스퀘어 (1080x1080)</option>
                 <option value="1080x1350">세로형 피드 (1080x1350)</option>
                 <option value="1080x1920">스토리/릴스 (1080x1920)</option>
             `;
-            document.getElementById('creativeRuleWarning').innerHTML = '<i class="fa-solid fa-info-circle" style="margin-right:0.4rem; color: #3b82f6;"></i> <span style="color: #3b82f6;">상하단 릴스 UI 가려짐 주의 (Safe Zone)</span>';
-            document.getElementById('creativeRuleWarning').style.background = '#eff6ff';
+            warningEl.innerHTML = '<i class="fa-solid fa-info-circle" style="margin-right:0.4rem; color: #3b82f6;"></i> <span style="color: #3b82f6;">상하단 릴스 UI 가려짐 주의 (Safe Zone)</span>';
+            warningEl.style.background = '#eff6ff';
         }
 
-        const selectEl = document.getElementById('canvasSizeSelect');
         selectEl.innerHTML = options;
 
         // 첫 번째 사이즈로 변경 유도
