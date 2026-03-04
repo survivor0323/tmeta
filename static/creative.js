@@ -465,4 +465,152 @@ document.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById('canvasSizeSelect')) {
         updateSizeOptionsByPlatform('naver');
     }
+
+    // === Brand Save/Load (localStorage) ===
+    const savedBrandSelect = document.getElementById('savedBrandSelect');
+    const btnSaveBrand = document.getElementById('btnSaveBrand');
+
+    function loadSavedBrandsList() {
+        if (!savedBrandSelect) return;
+        const brands = JSON.parse(localStorage.getItem('savedBrands') || '[]');
+        savedBrandSelect.innerHTML = '<option value="">저장된 브랜드 불러오기</option>';
+        brands.forEach((b, i) => {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = `${b.name} (${b.url || '직접 입력'})`;
+            savedBrandSelect.appendChild(opt);
+        });
+    }
+
+    if (btnSaveBrand) {
+        btnSaveBrand.addEventListener('click', () => {
+            const name = document.getElementById('brandName')?.value?.trim();
+            if (!name) { alert('브랜드명을 입력해주세요.'); return; }
+            const brands = JSON.parse(localStorage.getItem('savedBrands') || '[]');
+            const brand = {
+                name,
+                url: document.getElementById('brandWebsiteUrl')?.value || '',
+                color1: document.getElementById('brandColor1')?.value || '#0f172a',
+                color2: document.getElementById('brandColor2')?.value || '#3b82f6',
+                savedAt: new Date().toISOString()
+            };
+            // 중복 체크
+            const existing = brands.findIndex(b => b.name === name);
+            if (existing >= 0) {
+                brands[existing] = brand;
+            } else {
+                brands.push(brand);
+            }
+            localStorage.setItem('savedBrands', JSON.stringify(brands));
+            loadSavedBrandsList();
+            alert(`"${name}" 브랜드가 저장되었습니다!`);
+        });
+    }
+
+    if (savedBrandSelect) {
+        savedBrandSelect.addEventListener('change', (e) => {
+            const idx = e.target.value;
+            if (idx === '') return;
+            const brands = JSON.parse(localStorage.getItem('savedBrands') || '[]');
+            const brand = brands[parseInt(idx)];
+            if (!brand) return;
+            if (document.getElementById('brandName')) document.getElementById('brandName').value = brand.name;
+            if (document.getElementById('brandWebsiteUrl')) document.getElementById('brandWebsiteUrl').value = brand.url || '';
+            if (document.getElementById('brandColor1')) document.getElementById('brandColor1').value = brand.color1;
+            if (document.getElementById('brandColor2')) document.getElementById('brandColor2').value = brand.color2;
+            savedBrandSelect.value = '';
+        });
+        loadSavedBrandsList();
+    }
+
+    // === Reference Load from Monitoring Data ===
+    const btnLoadReferences = document.getElementById('btnLoadReferences');
+    const referenceList = document.getElementById('referenceList');
+
+    if (btnLoadReferences && referenceList) {
+        btnLoadReferences.addEventListener('click', () => {
+            // 모니터링 데이터에서 광고 가져오기
+            const monitorData = JSON.parse(localStorage.getItem('monitorCompanies') || '[]');
+            if (monitorData.length === 0) {
+                referenceList.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 1rem;"><i class="fa-solid fa-circle-info" style="margin-right: 0.3rem;"></i> 등록된 모니터링 경쟁사가 없습니다. 먼저 경쟁사를 등록하세요.</div>';
+                return;
+            }
+
+            btnLoadReferences.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 불러오는 중...';
+            btnLoadReferences.disabled = true;
+
+            setTimeout(() => {
+                // 모니터링 데이터의 최근 알림에서 광고 이미지 생성 (모의)
+                referenceList.innerHTML = '';
+                let totalAds = 0;
+
+                monitorData.forEach(company => {
+                    const companyName = company.name || company.brandName || '경쟁사';
+                    const platforms = company.platforms || [company.platform || 'Meta'];
+                    const platformList = Array.isArray(platforms) ? platforms : [platforms];
+
+                    platformList.forEach(platform => {
+                        // 각 플랫폼별 모의 광고 3개씩
+                        for (let i = 1; i <= 3; i++) {
+                            totalAds++;
+                            const card = document.createElement('div');
+                            card.className = 'ref-card';
+                            card.style.cssText = 'border-radius: 8px; overflow: hidden; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; position: relative;';
+                            card.innerHTML = `
+                                <div style="aspect-ratio: 1; background: linear-gradient(135deg, ${getRandomGradient()}); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: white; font-weight: 600; text-align: center; padding: 0.5rem;">
+                                    ${companyName}<br><span style="font-size: 0.65rem; opacity: 0.8;">${platform} #${i}</span>
+                                </div>
+                                <div style="position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 50%; background: white; border: 2px solid #cbd5e1; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: transparent;" class="ref-check">
+                                    <i class="fa-solid fa-check"></i>
+                                </div>
+                            `;
+                            card.addEventListener('click', () => {
+                                card.classList.toggle('selected');
+                                const check = card.querySelector('.ref-check');
+                                if (card.classList.contains('selected')) {
+                                    card.style.borderColor = 'var(--accent-blue)';
+                                    card.style.boxShadow = '0 0 0 1px var(--accent-blue)';
+                                    check.style.background = 'var(--accent-blue)';
+                                    check.style.borderColor = 'var(--accent-blue)';
+                                    check.style.color = 'white';
+                                } else {
+                                    card.style.borderColor = 'transparent';
+                                    card.style.boxShadow = 'none';
+                                    check.style.background = 'white';
+                                    check.style.borderColor = '#cbd5e1';
+                                    check.style.color = 'transparent';
+                                }
+                                updateSelectedCount();
+                            });
+                            referenceList.appendChild(card);
+                        }
+                    });
+                });
+
+                if (totalAds === 0) {
+                    referenceList.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 1rem;">광고 데이터를 찾을 수 없습니다.</div>';
+                }
+
+                btnLoadReferences.innerHTML = '<i class="fa-solid fa-rotate" style="margin-right: 0.3rem;"></i> 모니터링 데이터에서 불러오기';
+                btnLoadReferences.disabled = false;
+            }, 800);
+        });
+    }
+
+    function updateSelectedCount() {
+        const count = document.querySelectorAll('#referenceList .ref-card.selected').length;
+        const el = document.getElementById('selectedRefCount');
+        if (el) el.textContent = count;
+    }
+
+    function getRandomGradient() {
+        const gradients = [
+            '#667eea, #764ba2', '#f093fb, #f5576c', '#4facfe, #00f2fe',
+            '#43e97b, #38f9d7', '#fa709a, #fee140', '#a18cd1, #fbc2eb',
+            '#ffecd2, #fcb69f', '#89f7fe, #66a6ff', '#c471f5, #fa71cd',
+            '#48c6ef, #6f86d6', '#feada6, #f5efef', '#a1c4fd, #c2e9fb'
+        ];
+        return gradients[Math.floor(Math.random() * gradients.length)];
+    }
+
 });

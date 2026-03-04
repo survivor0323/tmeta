@@ -214,44 +214,57 @@
                     </div>
 
                     <!-- ===== STEP 1: Brand ===== -->
-                    <div class="wizard-panel" id="wizardStep1" style="max-width: 800px; margin: 0 auto;">
+                    <div class="wizard-panel" id="wizardStep1" style="max-width: 1000px; margin: 0 auto;">
                         <div class="panel-box" style="padding: 2rem;">
-                            <h2
-                                style="font-family: var(--font-heading); font-size: 1.5rem; color: var(--text-main); margin-bottom: 0.5rem;">
-                                Create Your Brand</h2>
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <h2
+                                    style="font-family: var(--font-heading); font-size: 1.5rem; color: var(--text-main); margin: 0;">
+                                    Create Your Brand</h2>
+                                <div style="display: flex; gap: 0.8rem; align-items: center;">
+                                    <select id="savedBrandSelect"
+                                        style="padding: 0.6rem 1rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.85rem; outline: none; cursor: pointer; min-width: 160px;">
+                                        <option value="">저장된 브랜드 불러오기</option>
+                                    </select>
+                                    <button class="btn" id="btnSaveBrand"
+                                        style="background: #10b981; color: white; padding: 0.6rem 1rem; font-size: 0.85rem; white-space: nowrap;">
+                                        <i class="fa-solid fa-floppy-disk" style="margin-right: 0.3rem;"></i> 브랜드 저장
+                                    </button>
+                                </div>
+                            </div>
                             <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem;">브랜드 정보를 입력하면
                                 AI가 최적의 광고 전략을 생성합니다.</p>
 
                             <div
                                 style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; background: #f8fafc; padding: 2rem; border-radius: 12px; border: 1px solid var(--border-color);">
-                                <div>
+                                <div style="min-width: 0;">
                                     <label
                                         style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">브랜드
                                         사이트 로드 (AI 자동 스캔)</label>
                                     <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
                                         <input type="text" id="brandWebsiteUrl" placeholder="https://example.com"
-                                            style="flex: 1; padding: 0.8rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none;" />
+                                            style="flex: 1; min-width: 0; padding: 0.8rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none;" />
                                         <button class="btn" id="btnScanWebsite"
-                                            style="background: var(--text-main); color: white;">Scan Website</button>
+                                            style="background: var(--text-main); color: white; white-space: nowrap;">Scan
+                                            Website</button>
                                     </div>
                                     <label
                                         style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">브랜드
                                         명</label>
                                     <input type="text" id="brandName" placeholder="Brand Name"
-                                        style="width: 100%; padding: 0.8rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none; margin-bottom: 1.5rem;" />
+                                        style="width: 100%; padding: 0.8rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none; margin-bottom: 1.5rem; box-sizing: border-box;" />
                                     <label
                                         style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">로고
                                         업로드</label>
                                     <div style="display: flex; gap: 1rem; align-items: center;">
                                         <div id="brandLogoPreview"
-                                            style="width: 45px; height: 45px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; font-size: 1.2rem; color: #cbd5e1;">
-                                            <i class="fa-solid fa-image"></i>
-                                        </div>
+                                            style="width: 45px; height: 45px; flex-shrink: 0; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; font-size: 1.2rem; color: #cbd5e1;">
+                                            <i class="fa-solid fa-image"></i></div>
                                         <input type="file" id="brandLogo" accept="image/*"
-                                            style="flex: 1; padding: 0.6rem; border: 1px dashed #94a3b8; border-radius: 8px; font-size: 0.85rem; background: white;" />
+                                            style="flex: 1; min-width: 0; padding: 0.6rem; border: 1px dashed #94a3b8; border-radius: 8px; font-size: 0.85rem; background: white;" />
                                     </div>
                                 </div>
-                                <div>
+                                <div style="min-width: 0;">
                                     <label
                                         style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">브랜드
                                         메인 컬러</label>
@@ -265,11 +278,12 @@
                                         style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">대표
                                         폰트 (TTF/OTF 업로드)</label>
                                     <div
-                                        style="display: flex; gap: 0.5rem; align-items: center; background: white; border: 1px solid #cbd5e1; padding: 0.6rem; border-radius: 8px;">
+                                        style="display: flex; gap: 0.5rem; align-items: center; background: white; border: 1px solid #cbd5e1; padding: 0.6rem; border-radius: 8px; overflow: hidden;">
                                         <input type="file" id="brandCustomFont" accept=".ttf,.otf"
-                                            style="flex: 1; font-size: 0.85rem;" />
+                                            style="flex: 1; min-width: 0; font-size: 0.85rem;" />
                                         <span id="brandCustomFontLabel"
-                                            style="font-size: 0.8rem; color: #94a3b8;">Default (Pretendard)</span>
+                                            style="font-size: 0.8rem; color: #94a3b8; white-space: nowrap;">Default
+                                            (Pretendard)</span>
                                     </div>
                                 </div>
                             </div>
@@ -285,31 +299,53 @@
                     </div>
 
                     <!-- ===== STEP 2: AI Strategy ===== -->
-                    <div class="wizard-panel hidden" id="wizardStep2" style="max-width: 800px; margin: 0 auto;">
+                    <div class="wizard-panel hidden" id="wizardStep2" style="max-width: 1000px; margin: 0 auto;">
                         <div class="panel-box" style="padding: 2rem;">
                             <h2
                                 style="font-family: var(--font-heading); font-size: 1.5rem; color: var(--text-main); margin-bottom: 0.5rem;">
                                 AI Strategy & Copy</h2>
-                            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem;">AI가 브랜드에 맞는 광고
-                                카피와 전략을 자동 생성합니다.</p>
+                            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem;">레퍼런스를 선택하고 AI가
+                                브랜드에 맞는 광고 카피와 전략을 자동 생성합니다.</p>
+
+                            <!-- 레퍼런스 가져오기 -->
+                            <div style="margin-bottom: 2rem;">
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                    <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 0;">
+                                        <i class="fa-solid fa-images"
+                                            style="margin-right: 0.5rem; color: var(--accent-blue);"></i> 레퍼런스 선택</h4>
+                                    <button class="btn" id="btnLoadReferences"
+                                        style="background: white; color: var(--text-main); border: 1px solid var(--border-color); padding: 0.5rem 1rem; font-size: 0.85rem;">
+                                        <i class="fa-solid fa-rotate" style="margin-right: 0.3rem;"></i> 모니터링 데이터에서 불러오기
+                                    </button>
+                                </div>
+                                <div id="referenceList"
+                                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.8rem; background: #f8fafc; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); min-height: 80px;">
+                                    <div
+                                        style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 1rem;">
+                                        모니터링 데이터에서 레퍼런스 광고를 불러와 선택하세요.</div>
+                                </div>
+                                <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-muted);">선택된 레퍼런스:
+                                    <span id="selectedRefCount"
+                                        style="font-weight: 700; color: var(--accent-blue);">0</span>개</div>
+                            </div>
 
                             <!-- AI 전략 생성 배너 -->
                             <div
-                                style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 1.5rem; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                                style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 1.5rem; border-radius: 12px; display: flex; justify-content: space-between; align-items: center;">
                                 <div style="display: flex; align-items: center; gap: 1rem;">
                                     <div
                                         style="width: 48px; height: 48px; background: var(--text-main); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
-                                        <i class="fa-solid fa-robot" style="font-size: 1.5rem;"></i>
-                                    </div>
+                                        <i class="fa-solid fa-robot" style="font-size: 1.5rem;"></i></div>
                                     <div>
                                         <div
                                             style="font-weight: 700; color: var(--text-main); font-size: 1.1rem; font-family: var(--font-heading);">
                                             Generate strategy & texts with AI</div>
-                                        <div style="font-size: 0.9rem; color: var(--text-muted);">업로드된 레퍼런스와 내 브랜드를 분석하여
+                                        <div style="font-size: 0.9rem; color: var(--text-muted);">선택한 레퍼런스와 내 브랜드를 분석하여
                                             고효율 카피와 레이아웃 전략을 추천합니다.</div>
                                     </div>
                                 </div>
-                                <button class="btn"
+                                <button class="btn" id="btnGenerateAI"
                                     style="background: var(--text-main); color: white; white-space: nowrap;"><i
                                         class="fa-solid fa-bolt text-gradient"></i> Generate AI Strategy</button>
                             </div>
