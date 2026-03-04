@@ -159,7 +159,103 @@ document.addEventListener("DOMContentLoaded", () => {
     function updateSafeZoneGuide(width, height) {
         // TODO: 사이즈별 여백/규칙에 따른 세이프존 렌더링 로직 연동
         const overlay = document.getElementById('safeZoneOverlay');
-        // 임시
-        overlay.style.display = 'none';
+        if (overlay) {
+            // 임시
+            overlay.style.display = 'none';
+        }
+    }
+
+    // === Step 1: Create Brand Logic ===
+    const brandLogoInput = document.getElementById('brandLogo');
+    const brandLogoPreview = document.getElementById('brandLogoPreview');
+    const btnScanWebsite = document.getElementById('btnScanWebsite');
+    const brandWebsiteUrl = document.getElementById('brandWebsiteUrl');
+    const brandName = document.getElementById('brandName');
+    const brandCustomFont = document.getElementById('brandCustomFont');
+    const brandCustomFontLabel = document.getElementById('brandCustomFontLabel');
+    const brandColor1 = document.getElementById('brandColor1');
+    const brandColor2 = document.getElementById('brandColor2');
+
+    // 1-1. Logo Preview
+    if (brandLogoInput && brandLogoPreview) {
+        brandLogoInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    brandLogoPreview.innerHTML = `<img src="${event.target.result}" style="max-width: 100%; max-height: 100%; object-fit: contain;" />`;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                brandLogoPreview.innerHTML = '<i class="fa-solid fa-image"></i>';
+            }
+        });
+    }
+
+    // 1-2. Website Scan (Mock)
+    if (btnScanWebsite && brandWebsiteUrl) {
+        btnScanWebsite.addEventListener('click', () => {
+            const url = brandWebsiteUrl.value.trim();
+            if (!url) {
+                alert('스캔할 웹사이트 URL을 입력해주세요.');
+                return;
+            }
+
+            // UX 피드백
+            const originalText = btnScanWebsite.innerHTML;
+            btnScanWebsite.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Scanning...';
+            btnScanWebsite.disabled = true;
+
+            // 모의 스캔(비동기 지연)
+            setTimeout(() => {
+                let mockName = 'Motiverse';
+                try {
+                    const parsedUrl = new URL(url);
+                    mockName = parsedUrl.hostname.replace('www.', '').split('.')[0];
+                    mockName = mockName.charAt(0).toUpperCase() + mockName.slice(1);
+                } catch (e) { }
+
+                if (brandName) brandName.value = mockName;
+                if (brandColor1) brandColor1.value = '#0f172a';
+                if (brandColor2) brandColor2.value = '#3b82f6';
+
+                alert(`[${mockName}] 사이트 스캔 완료! 로고와 브랜드 컬러가 추출되었습니다.`);
+
+                btnScanWebsite.innerHTML = originalText;
+                btnScanWebsite.disabled = false;
+            }, 1500);
+        });
+    }
+
+    // 1-3. Custom Font Load
+    if (brandCustomFont && brandCustomFontLabel) {
+        brandCustomFont.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = async function (event) {
+                    try {
+                        const fontName = 'CustomBrandFont_' + Date.now();
+                        const font = new FontFace(fontName, event.target.result);
+                        await font.load();
+                        document.fonts.add(font);
+
+                        brandCustomFontLabel.textContent = file.name;
+                        brandCustomFontLabel.style.color = '#10b981';
+                        // 글로벌 객체나 상태에 저장하여 Fabric.js 에서 사용 가능하도록 할 수 있음
+                        window.currentBrandFont = fontName;
+                        alert('커스텀 폰트가 성공적으로 로드되었습니다. 텍스트 요소에 적용됩니다.');
+                    } catch (err) {
+                        console.error('폰트 로드 실패:', err);
+                        alert('폰트 파일을 로드하는데 실패했습니다.');
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                brandCustomFontLabel.textContent = 'Default (Pretendard)';
+                brandCustomFontLabel.style.color = '#94a3b8';
+                window.currentBrandFont = null;
+            }
+        });
     }
 });
