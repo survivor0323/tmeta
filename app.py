@@ -1100,6 +1100,42 @@ async def delete_brand(brand_id: str, authorization: str = Header(default="")):
         return {"status": "error", "message": str(e)}
 
 
+class GenerateImageRequest(BaseModel):
+    prompt: str
+    aspect_ratio: Optional[str] = "16:9"
+
+@app.post("/api/v1/generate-creative-image")
+async def generate_creative_image(req: GenerateImageRequest, authorization: str = Header(default="")):
+    """Gemini API (imagen-4.0-generate-001)를 사용하여 기획 데이터를 바탕으로 소재 이미지를 생성합니다."""
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return {"status": "error", "message": "GEMINI_API_KEY가 설정되지 않았습니다."}
+        
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key={api_key}"
+    payload = {
+        "instances": [{"prompt": req.prompt}],
+        "parameters": {
+            "sampleCount": 1,
+            "aspectRatio": req.aspect_ratio  # 1:1, 3:4, 4:3, 9:16, 16:9 지원
+        }
+    }
+    
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=45.0) as client:
+            resp = await client.post(url, json=payload)
+            res_json = resp.json()
+            
+            if resp.status_code == 200 and 'predictions' in res_json:
+                b64_img = res_json['predictions'][0].get('bytesBase64Encoded', '')
+                if b64_img:
+                    return {"status": "success", "data": {"image_b64": f"data:image/jpeg;base64,{b64_img}"}}
+            return {"status": "error", "message": str(res_json)}
+    except Exception as e:
+        logger.error(f"이미지 생성 에러: {e}")
+        return {"status": "error", "message": str(e)}
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)

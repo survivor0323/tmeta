@@ -839,22 +839,67 @@ document.addEventListener("DOMContentLoaded", () => {
                 fc.setWidth(cw);
                 fc.setHeight(ch);
 
-                // 브랜드 컬러
+                // 브랜드 컬러 (나중 텍스트 배치에 사용됨)
                 const color1 = document.getElementById('brandColor1')?.value || '#0f172a';
                 const color2 = document.getElementById('brandColor2')?.value || '#3b82f6';
 
-                // 배경 그라디언트
-                fc.setBackgroundColor(
-                    new fabric.Gradient({
-                        type: 'linear',
-                        coords: { x1: 0, y1: 0, x2: cw, y2: ch },
-                        colorStops: [
-                            { offset: 0, color: color1 },
-                            { offset: 1, color: color2 }
-                        ]
-                    }),
-                    fc.renderAll.bind(fc)
-                );
+                // 캔버스 사이즈에 맞는 Aspect Ratio 계산하여 전달
+                let ar = "1:1";
+                const ratio = cw / ch;
+                if (ratio > 1.3) ar = "16:9";
+                else if (ratio < 0.75) ar = "9:16";
+                else if (ratio > 1.1) ar = "4:3";
+                else if (ratio < 0.9) ar = "3:4";
+
+                const promptInput = document.getElementById('creativePrompt')?.value || '멋진 브랜드 라이프스타일 이미지';
+
+                try {
+                    btnPreviewRender.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right: 0.3rem;"></i> AI 생성 중 (10~20초)...';
+                    const imgRes = await fetch('/api/v1/generate-creative-image', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ prompt: promptInput, aspect_ratio: ar })
+                    });
+                    const imgJson = await imgRes.json();
+
+                    if (imgJson.status === 'success' && imgJson.data?.image_b64) {
+                        await new Promise((resolve) => {
+                            fabric.Image.fromURL(imgJson.data.image_b64, (img) => {
+                                // 캔버스를 덮도록 스케일링
+                                const scale = Math.max(cw / img.width, ch / img.height);
+                                img.set({
+                                    scaleX: scale,
+                                    scaleY: scale,
+                                    originX: 'center',
+                                    originY: 'center',
+                                    left: cw / 2,
+                                    top: ch / 2
+                                });
+                                // 텍스트 가독성을 위한 어두운 오버레이
+                                const overlay = new fabric.Rect({
+                                    left: 0, top: 0, width: cw, height: ch, fill: 'rgba(0,0,0,0.3)', selectable: false
+                                });
+                                fc.setBackgroundImage(img, fc.renderAll.bind(fc));
+                                fc.add(overlay);
+                                resolve();
+                            });
+                        });
+                    } else {
+                        throw new Error(imgJson.message || '이미지 생성 실패');
+                    }
+                } catch (apiErr) {
+                    console.error('API Error:', apiErr);
+                    // 실패 시 기존 그라디언트 Fallback
+                    fc.setBackgroundColor(
+                        new fabric.Gradient({
+                            type: 'linear',
+                            coords: { x1: 0, y1: 0, x2: cw, y2: ch },
+                            colorStops: [{ offset: 0, color: color1 }, { offset: 1, color: color2 }]
+                        }),
+                        fc.renderAll.bind(fc)
+                    );
+                }
+
 
                 // 제품 이미지가 있으면 배치
                 if (window._productImages && window._productImages.length > 0) {
