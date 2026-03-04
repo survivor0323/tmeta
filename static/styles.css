@@ -1386,3 +1386,12 @@ body {
     font-weight: 600;
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
+
+/* ====== Creative Studio ====== */
+.panel-box {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: var(--shadow-sm);
+}
