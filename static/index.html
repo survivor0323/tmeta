@@ -245,7 +245,8 @@
                                     <div style="display: flex; gap: 1rem; align-items: center;">
                                         <div id="brandLogoPreview"
                                             style="width: 45px; height: 45px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; font-size: 1.2rem; color: #cbd5e1;">
-                                            <i class="fa-solid fa-image"></i></div>
+                                            <i class="fa-solid fa-image"></i>
+                                        </div>
                                         <input type="file" id="brandLogo" accept="image/*"
                                             style="flex: 1; padding: 0.6rem; border: 1px dashed #94a3b8; border-radius: 8px; font-size: 0.85rem; background: white;" />
                                     </div>
@@ -298,7 +299,8 @@
                                 <div style="display: flex; align-items: center; gap: 1rem;">
                                     <div
                                         style="width: 48px; height: 48px; background: var(--text-main); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
-                                        <i class="fa-solid fa-robot" style="font-size: 1.5rem;"></i></div>
+                                        <i class="fa-solid fa-robot" style="font-size: 1.5rem;"></i>
+                                    </div>
                                     <div>
                                         <div
                                             style="font-weight: 700; color: var(--text-main); font-size: 1.1rem; font-family: var(--font-heading);">
@@ -310,50 +312,6 @@
                                 <button class="btn"
                                     style="background: var(--text-main); color: white; white-space: nowrap;"><i
                                         class="fa-solid fa-bolt text-gradient"></i> Generate AI Strategy</button>
-                            </div>
-
-                            <!-- On Image Texts -->
-                            <h4
-                                style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem;">
-                                On Image Texts</h4>
-                            <div
-                                style="display: flex; flex-direction: column; gap: 1.2rem; background: #f8fafc; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
-                                <div>
-                                    <label
-                                        style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.5rem; display: block;">메인
-                                        카피 (Main Headline)</label>
-                                    <div
-                                        style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
-                                        <input type="text" id="copyMain" value="압도적인 퍼포먼스, 새로운 차원의 경험"
-                                            style="border: none; outline: none; width: 100%; font-weight: 600; color: var(--text-main); font-size: 0.95rem;" />
-                                        <i class="fa-solid fa-dice text-gradient"
-                                            style="cursor: pointer; padding-left: 0.5rem;"></i>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label
-                                        style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.5rem; display: block;">서브
-                                        카피 (Punchline / Sub)</label>
-                                    <div
-                                        style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
-                                        <input type="text" id="copySub" value="지금 사전예약하고 특별한 혜택을 누리세요."
-                                            style="border: none; outline: none; width: 100%; font-weight: 500; color: var(--text-main); font-size: 0.95rem;" />
-                                        <i class="fa-solid fa-dice text-gradient"
-                                            style="cursor: pointer; padding-left: 0.5rem;"></i>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label
-                                        style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.5rem; display: block;">콜투액션
-                                        (Call to Action)</label>
-                                    <div
-                                        style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
-                                        <input type="text" id="copyCta" value="자세히 알아보기"
-                                            style="border: none; outline: none; width: 100%; font-weight: 600; color: var(--text-main); font-size: 0.95rem;" />
-                                        <i class="fa-solid fa-dice text-gradient"
-                                            style="cursor: pointer; padding-left: 0.5rem;"></i>
-                                    </div>
-                                </div>
                             </div>
 
                             <!-- 이전/다음 버튼 -->
@@ -489,23 +447,48 @@
                             <!-- 우측: On Image Texts + Live Preview -->
                             <div
                                 style="display: flex; flex-direction: column; gap: 1.5rem; position: sticky; top: 1rem;">
-                                <!-- On Image Texts (요약) -->
+                                <!-- On Image Texts (편집) -->
                                 <div class="panel-box" style="padding: 1.5rem;">
                                     <label
                                         style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; display: block;">On
                                         Image Texts</label>
                                     <div
-                                        style="display: flex; flex-direction: column; gap: 0.8rem; background: #f8fafc; padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.9rem;">
-                                        <div><span style="color: var(--text-muted); font-weight: 600;">메인:</span> <span
-                                                id="previewCopyMain"
-                                                style="color: var(--text-main); font-weight: 600;">압도적인 퍼포먼스, 새로운 차원의
-                                                경험</span></div>
-                                        <div><span style="color: var(--text-muted); font-weight: 600;">서브:</span> <span
-                                                id="previewCopySub" style="color: var(--text-main);">지금 사전예약하고 특별한 혜택을
-                                                누리세요.</span></div>
-                                        <div><span style="color: var(--text-muted); font-weight: 600;">CTA:</span> <span
-                                                id="previewCopyCta"
-                                                style="color: var(--accent-blue); font-weight: 600;">자세히 알아보기</span>
+                                        style="display: flex; flex-direction: column; gap: 1.2rem; background: #f8fafc; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                                        <div>
+                                            <label
+                                                style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.5rem; display: block;">메인
+                                                카피 (Main Headline)</label>
+                                            <div
+                                                style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
+                                                <input type="text" id="copyMain" value="압도적인 퍼포먼스, 새로운 차원의 경험"
+                                                    style="border: none; outline: none; width: 100%; font-weight: 600; color: var(--text-main); font-size: 0.95rem;" />
+                                                <i class="fa-solid fa-dice text-gradient"
+                                                    style="cursor: pointer; padding-left: 0.5rem;"></i>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label
+                                                style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.5rem; display: block;">서브
+                                                카피 (Punchline / Sub)</label>
+                                            <div
+                                                style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
+                                                <input type="text" id="copySub" value="지금 사전예약하고 특별한 혜택을 누리세요."
+                                                    style="border: none; outline: none; width: 100%; font-weight: 500; color: var(--text-main); font-size: 0.95rem;" />
+                                                <i class="fa-solid fa-dice text-gradient"
+                                                    style="cursor: pointer; padding-left: 0.5rem;"></i>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label
+                                                style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.5rem; display: block;">콜투액션
+                                                (Call to Action)</label>
+                                            <div
+                                                style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
+                                                <input type="text" id="copyCta" value="자세히 알아보기"
+                                                    style="border: none; outline: none; width: 100%; font-weight: 600; color: var(--text-main); font-size: 0.95rem;" />
+                                                <i class="fa-solid fa-dice text-gradient"
+                                                    style="cursor: pointer; padding-left: 0.5rem;"></i>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -528,7 +511,8 @@
                                                 style="display: none; position: absolute; z-index: 2; pointer-events: none; border: 2px dashed rgba(239, 68, 68, 0.7); box-shadow: inset 0 0 0 1000px rgba(239, 68, 68, 0.1);">
                                                 <div
                                                     style="position: absolute; top: -25px; left: 0; background: rgba(239, 68, 68, 0.9); color: white; padding: 2px 8px; font-size: 0.7rem; border-radius: 4px; font-weight: bold;">
-                                                    <i class="fa-solid fa-triangle-exclamation"></i> Danger Zone</div>
+                                                    <i class="fa-solid fa-triangle-exclamation"></i> Danger Zone
+                                                </div>
                                             </div>
                                             <div id="canvasEmptyState"
                                                 style="text-align: center; color: var(--text-muted); z-index: 0;">
