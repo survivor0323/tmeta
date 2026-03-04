@@ -24,125 +24,159 @@
     <!-- 상단 배경 그라데이션 -->
     <div class="top-gradient"></div>
 
-    <div class="dashboard-container">
-        <!-- 1. Header Area -->
-        <header class="navbar">
-            <div class="navbar-right">
-                <!-- 모니터링 아이콘 (로그인 후 표시) -->
-                <button class="icon-btn hidden" id="monitorBtn" title="경쟁사 모니터링">
-                    <i class="fa-solid fa-satellite-dish"></i>
-                    <span class="alert-dot hidden" id="alertDot"></span>
-                </button>
-                <!-- 보드 아이콘 (로그인 후 표시) -->
-                <button class="icon-btn hidden" id="boardsBtn" title="보드/컬렉션">
-                    <i class="fa-solid fa-folder-open"></i>
-                </button>
-                <!-- 히스토리 아이콘 (로그인 후 표시) -->
-                <button class="icon-btn hidden" id="historyBtn" title="검색 히스토리">
-                    <i class="fa-solid fa-clock-rotate-left"></i>
-                </button>
-                <!-- 북마크 아이콘 (로그인 후 표시) -->
-                <button class="icon-btn hidden" id="bookmarkBtn" title="북마크">
-                    <i class="fa-solid fa-bookmark"></i>
-                </button>
-                <!-- 관리자용 (Admin) 메뉴 (권한 시 노출) -->
-                <button class="icon-btn hidden" id="adminBtn" title="관리자 대시보드">
-                    <i class="fa-solid fa-user-shield"></i>
-                </button>
-                <!-- 로그인 버튼 -->
-                <button class="btn-login" id="loginBtn">
-                    <i class="fa-brands fa-google"></i> Google 로그인
-                </button>
-                <!-- 로그인 후 사용자 정보 -->
-                <div class="user-info hidden" id="userInfo">
-                    <img src="" alt="avatar" id="userAvatar" class="user-avatar">
-                    <span id="userName"></span>
-                    <button class="btn-logout" id="logoutBtn" title="로그아웃">
-                        <i class="fa-solid fa-right-from-bracket"></i>
-                    </button>
-                </div>
+    <div class="app-layout">
+        <!-- 좌측 사이드 네비게이션 -->
+        <nav class="side-nav">
+            <div class="nav-brand">
+                <span class="brand-text">Motiverse AI</span>
             </div>
-        </header>
 
-        <!-- 2. Main Hero & Search -->
-        <main class="content-area">
-            <section class="hero-section">
-                <div class="hero-label">경쟁사 광고 트렌드와 레퍼런스 검색을 쉽게</div>
-                <h1>Motiverse AI <span class="text-gradient">레퍼런스 검색</span></h1>
-                <p>브랜드명, 상품명, 원하는 분위기, 스타일을 입력하면 AI가 가장 적합한 위닝 소재를 찾아 분석해 드립니다.</p>
+            <ul class="nav-menu">
+                <li class="nav-item active">
+                    <a href="#" class="nav-link" id="navReference">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <span>레퍼런스</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" id="navCreative">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>크리에이티브</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
 
-                <div class="search-wrapper">
-                    <div class="search-container">
-                        <input type="text" id="competitorInput" placeholder="LG유플러스, 자동차광고, 생명보험, 편안한 의자..." />
-                        <button class="btn-search" id="analyzeBtn">
-                            검색
+        <!-- 메인 콘텐츠 영역 -->
+        <div class="main-content-wrapper">
+            <div class="dashboard-container">
+                <!-- 1. Header Area -->
+                <header class="navbar">
+                    <div class="navbar-right">
+                        <!-- 모니터링 아이콘 (로그인 후 표시) -->
+                        <button class="icon-btn hidden" id="monitorBtn" title="경쟁사 모니터링">
+                            <i class="fa-solid fa-satellite-dish"></i>
+                            <span class="alert-dot hidden" id="alertDot"></span>
                         </button>
+                        <!-- 보드 아이콘 (로그인 후 표시) -->
+                        <button class="icon-btn hidden" id="boardsBtn" title="보드/컬렉션">
+                            <i class="fa-solid fa-folder-open"></i>
+                        </button>
+                        <!-- 히스토리 아이콘 (로그인 후 표시) -->
+                        <button class="icon-btn hidden" id="historyBtn" title="검색 히스토리">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                        </button>
+                        <!-- 북마크 아이콘 (로그인 후 표시) -->
+                        <button class="icon-btn hidden" id="bookmarkBtn" title="북마크">
+                            <i class="fa-solid fa-bookmark"></i>
+                        </button>
+                        <!-- 관리자용 (Admin) 메뉴 (권한 시 노출) -->
+                        <button class="icon-btn hidden" id="adminBtn" title="관리자 대시보드">
+                            <i class="fa-solid fa-user-shield"></i>
+                        </button>
+                        <!-- 로그인 버튼 -->
+                        <button class="btn-login" id="loginBtn">
+                            <i class="fa-brands fa-google"></i> Google 로그인
+                        </button>
+                        <!-- 로그인 후 사용자 정보 -->
+                        <div class="user-info hidden" id="userInfo">
+                            <img src="" alt="avatar" id="userAvatar" class="user-avatar">
+                            <span id="userName"></span>
+                            <button class="btn-logout" id="logoutBtn" title="로그아웃">
+                                <i class="fa-solid fa-right-from-bracket"></i>
+                            </button>
+                        </div>
                     </div>
+                </header>
 
-                    <!-- 마케터용 검색 팁 -->
-                    <div class="search-tips-box hidden">
-                        <div class="tip-title"><i class="fa-solid fa-lightbulb"></i> 마케터 검색 꿀팁</div>
-                        <ul class="tip-list">
-                            <li><strong>🎯 Meta & IG:</strong> "20대 여성 스트릿 패션"처럼 느낌을 검색해도 AI가 찰떡 브랜드를 찾아드려요!</li>
-                            <li><strong>⚡ TikTok & Google:</strong> 구체적인 브랜드명이나 "수분크림" 같은 제품명을 입력하면 결과가 더 정확해요.</li>
-                        </ul>
-                    </div>
+                <!-- 2. Main Hero & Search -->
+                <main class="content-area">
+                    <section class="hero-section">
+                        <div class="hero-label">경쟁사 광고 트렌드와 레퍼런스 검색을 쉽게</div>
+                        <h1>Motiverse AI <span class="text-gradient">레퍼런스 검색</span></h1>
+                        <p>브랜드명, 상품명, 원하는 분위기, 스타일을 입력하면 AI가 가장 적합한 위닝 소재를 찾아 분석해 드립니다.</p>
 
-                    <!-- 최근 검색어 (로그인 시 표시) -->
-                    <div class="recent-search-bar hidden" id="recentSearchBar">
-                        <!-- JS로 채워집니다 -->
-                    </div>
-                </div>
+                        <div class="search-wrapper">
+                            <div class="search-container">
+                                <input type="text" id="competitorInput" placeholder="LG유플러스, 자동차광고, 생명보험, 편안한 의자..." />
+                                <button class="btn-search" id="analyzeBtn">
+                                    검색
+                                </button>
+                            </div>
 
-                <!-- 플랫폼 필터 및 AI 추천 검색어 칩 -->
-                <div class="filter-tabs" id="platformFilters">
-                    <div class="tab-chip active" data-platform="meta"><i class="fa-brands fa-meta"></i> Meta 광고</div>
-                    <div class="tab-chip" data-platform="instagram"><i class="fa-brands fa-instagram"></i> Instagram
-                    </div>
-                    <div class="tab-chip" data-platform="google"><i class="fa-brands fa-google"></i> Google Ads</div>
-                    <div class="tab-chip" data-platform="tiktok"><i class="fa-brands fa-tiktok"></i> TikTok</div>
-                </div>
+                            <!-- 마케터용 검색 팁 -->
+                            <div class="search-tips-box hidden">
+                                <div class="tip-title"><i class="fa-solid fa-lightbulb"></i> 마케터 검색 꿀팁</div>
+                                <ul class="tip-list">
+                                    <li><strong>🎯 Meta & IG:</strong> "20대 여성 스트릿 패션"처럼 느낌을 검색해도 AI가 찰떡 브랜드를 찾아드려요!
+                                    </li>
+                                    <li><strong>⚡ TikTok & Google:</strong> 구체적인 브랜드명이나 "수분크림" 같은 제품명을 입력하면 결과가 더 정확해요.
+                                    </li>
+                                </ul>
+                            </div>
 
-                <div class="advanced-filters"
-                    style="margin-top: 1rem; display: flex; gap: 10px; justify-content: center; align-items: center;">
-                    <select id="countryFilter" class="filter-select"
-                        style="padding: 0.5rem 1rem; border-radius: 20px; border: 1px solid #e2e8f0; outline: none; font-family: 'Inter', sans-serif;">
-                        <option value="KR" selected>대한민국 (KR)</option>
-                        <option value="US">미국 (US)</option>
-                        <option value="JP">일본 (JP)</option>
-                        <option value="CN">중국 (CN)</option>
-                        <option value="">글로벌 (All)</option>
-                    </select>
-                    <select id="tiktokSearchType" class="filter-select hidden"
-                        style="padding: 0.5rem 1rem; border-radius: 20px; border: 1px solid #e2e8f0; outline: none; font-family: 'Inter', sans-serif;">
-                        <option value="keyword" selected>Keyword 검색</option>
-                        <option value="hashtag">Hashtag 검색</option>
-                    </select>
-                </div>
+                            <!-- 최근 검색어 (로그인 시 표시) -->
+                            <div class="recent-search-bar hidden" id="recentSearchBar">
+                                <!-- JS로 채워집니다 -->
+                            </div>
+                        </div>
 
-                <div class="ai-recommendations hidden" id="aiRecommendations">
-                    <span class="ai-recommend-label"><i class="fa-solid fa-wand-magic-sparkles"></i> AI 추천 검색어</span>
-                    <!-- 칩이 자바스크립트에 의해 채워집니다 -->
-                </div>
-            </section>
+                        <!-- 플랫폼 필터 및 AI 추천 검색어 칩 -->
+                        <div class="filter-tabs" id="platformFilters">
+                            <div class="tab-chip active" data-platform="meta"><i class="fa-brands fa-meta"></i> Meta 광고
+                            </div>
+                            <div class="tab-chip" data-platform="instagram"><i class="fa-brands fa-instagram"></i>
+                                Instagram
+                            </div>
+                            <div class="tab-chip" data-platform="google"><i class="fa-brands fa-google"></i> Google Ads
+                            </div>
+                            <div class="tab-chip" data-platform="tiktok"><i class="fa-brands fa-tiktok"></i> TikTok
+                            </div>
+                        </div>
 
-            <!-- 3. 결과 표시 컨테이너 (로딩 및 그리드) -->
-            <section class="results-section hidden" id="resultsSection">
-                <div class="loading-state hidden" id="loadingState">
-                    <div class="spinner"></div>
-                    <p class="pulsing-text">AI 에이전트가 완벽한 레퍼런스를 탐색하고 있습니다...</p>
-                </div>
+                        <div class="advanced-filters"
+                            style="margin-top: 1rem; display: flex; gap: 10px; justify-content: center; align-items: center;">
+                            <select id="countryFilter" class="filter-select"
+                                style="padding: 0.5rem 1rem; border-radius: 20px; border: 1px solid #e2e8f0; outline: none; font-family: 'Inter', sans-serif;">
+                                <option value="KR" selected>대한민국 (KR)</option>
+                                <option value="US">미국 (US)</option>
+                                <option value="JP">일본 (JP)</option>
+                                <option value="CN">중국 (CN)</option>
+                                <option value="">글로벌 (All)</option>
+                            </select>
+                            <select id="tiktokSearchType" class="filter-select hidden"
+                                style="padding: 0.5rem 1rem; border-radius: 20px; border: 1px solid #e2e8f0; outline: none; font-family: 'Inter', sans-serif;">
+                                <option value="keyword" selected>Keyword 검색</option>
+                                <option value="hashtag">Hashtag 검색</option>
+                            </select>
+                        </div>
 
-                <!-- 4. 광고 카드 그리드 영역 -->
-                <div class="ad-grid" id="adGrid">
-                    <!-- 스크립트에 의해 카드들이 렌더링 됩니다 -->
-                </div>
+                        <div class="ai-recommendations hidden" id="aiRecommendations">
+                            <span class="ai-recommend-label"><i class="fa-solid fa-wand-magic-sparkles"></i> AI 추천
+                                검색어</span>
+                            <!-- 칩이 자바스크립트에 의해 채워집니다 -->
+                        </div>
+                    </section>
 
-                <div id="loadMoreBtnContainer" class="hidden" style="text-align: center;">
-                    <button class="btn" id="loadMoreBtn">레퍼런스 더 불러오기</button>
-                </div>
-            </section>
-        </main>
+                    <!-- 3. 결과 표시 컨테이너 (로딩 및 그리드) -->
+                    <section class="results-section hidden" id="resultsSection">
+                        <div class="loading-state hidden" id="loadingState">
+                            <div class="spinner"></div>
+                            <p class="pulsing-text">AI 에이전트가 완벽한 레퍼런스를 탐색하고 있습니다...</p>
+                        </div>
+
+                        <!-- 4. 광고 카드 그리드 영역 -->
+                        <div class="ad-grid" id="adGrid">
+                            <!-- 스크립트에 의해 카드들이 렌더링 됩니다 -->
+                        </div>
+
+                        <div id="loadMoreBtnContainer" class="hidden" style="text-align: center;">
+                            <button class="btn" id="loadMoreBtn">레퍼런스 더 불러오기</button>
+                        </div>
+                    </section>
+                </main>
+            </div>
+        </div>
     </div>
 
     <!-- AI Analysis Modal (팝업) -->
@@ -239,8 +273,8 @@
     </div>
 
     <!-- 자바스크립트 -->
-    <script src="/static/auth.js?v=22"></script>
-    <script src="/static/script.js?v=22"></script>
+    <script src="/static/auth.js?v=23"></script>
+    <script src="/static/script.js?v=23"></script>
     <script src="/static/features.js?v=1"></script>
 </body>
 
