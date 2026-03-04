@@ -81,7 +81,8 @@ body {
 /* ====== Hero & Search Area ====== */
 .hero-section {
     text-align: center;
-    margin: 3rem 0;
+    margin: 0.5rem 0 1.5rem;
+    /* 위쪽 공백을 확 줄임 */
 }
 
 .hero-label {
@@ -1396,6 +1397,7 @@ body {
     padding: 1.25rem;
     box-shadow: var(--shadow-sm);
 }
+
 /* Creative Studio Platform Cards */
 .platform-card {
     background: white;
