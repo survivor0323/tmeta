@@ -311,122 +311,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-    // === Step 3: Render Preview ===
-    const btnPreviewRender = document.getElementById('btnPreviewRender');
+    // Step 3: Render Preview → 아래 Generate Creative에서 처리
 
-    if (btnPreviewRender) {
-        btnPreviewRender.addEventListener('click', () => {
-            const canvas = window.creativeCanvasInstance;
-            if (!canvas) {
-                alert('캔버스가 초기화되지 않았습니다.');
-                return;
-            }
 
-            // 숨겨져있던 캔버스 표시
-            document.getElementById('creativeCanvas').style.display = 'block';
-            document.getElementById('canvasEmptyState').style.display = 'none';
-            // 표시 크기 다시 조율
-            resizeCanvasToDisplaySize();
-
-            const cWidth = canvas.getWidth();
-            const cHeight = canvas.getHeight();
-
-            // Clear canvas
-            canvas.clear();
-
-            // Background Color
-            const bgHex = document.getElementById('brandColor1')?.value || '#0f172a';
-            const accentHex = document.getElementById('brandColor2')?.value || '#3b82f6';
-
-            // Set Background
-            const bgRect = new fabric.Rect({
-                left: 0,
-                top: 0,
-                width: cWidth,
-                height: cHeight,
-                fill: bgHex,
-                selectable: false
-            });
-            canvas.add(bgRect);
-
-            // Fetch texts
-            const fontFam = window.currentBrandFont || 'Pretendard, Arial, sans-serif';
-            const mainText = document.getElementById('copyMain')?.value || 'Main Headline';
-            const subText = document.getElementById('copySub')?.value || 'Sub Copy';
-            const ctaText = document.getElementById('copyCta')?.value || 'Learn More';
-
-            // Add Top left Logo/BrandName placeholder if small or big
-            const brandText = document.getElementById('brandName')?.value || 'Motiverse';
-            const brandLabel = new fabric.Text(brandText, {
-                left: 40,
-                top: 40,
-                fontFamily: fontFam,
-                fontSize: Math.min(cWidth * 0.04, 30),
-                fill: '#ffffff',
-                opacity: 0.7,
-                selectable: true
-            });
-            canvas.add(brandLabel);
-
-            // Add Main Headline
-            const headLabel = new fabric.Textbox(mainText, {
-                left: 40,
-                top: cHeight * 0.25,
-                width: cWidth * 0.8,
-                fontFamily: fontFam,
-                fontSize: Math.min(cWidth * 0.08, 90),
-                fill: '#ffffff',
-                fontWeight: 'bold',
-                lineHeight: 1.2,
-                selectable: true
-            });
-            canvas.add(headLabel);
-
-            // Add Sub Copy
-            const sbLabel = new fabric.Textbox(subText, {
-                left: 40,
-                top: headLabel.top + headLabel.height + (cHeight * 0.05),
-                width: cWidth * 0.8,
-                fontFamily: fontFam,
-                fontSize: Math.min(cWidth * 0.04, 40),
-                fill: '#e2e8f0',
-                lineHeight: 1.4,
-                selectable: true
-            });
-            canvas.add(sbLabel);
-
-            // Add CTA Button Shape
-            const ctaGroup = new fabric.Group([
-                new fabric.Rect({
-                    originX: 'center',
-                    originY: 'center',
-                    fill: accentHex,
-                    width: Math.min(cWidth * 0.4, 400),
-                    height: Math.min(cHeight * 0.1, 80),
-                    rx: Math.min(cHeight * 0.05, 40),
-                    ry: Math.min(cHeight * 0.05, 40)
-                }),
-                new fabric.Text(ctaText, {
-                    originX: 'center',
-                    originY: 'center',
-                    fontFamily: fontFam,
-                    fontSize: Math.min(cWidth * 0.035, 30),
-                    fill: '#ffffff',
-                    fontWeight: 'bold'
-                })
-            ], {
-                left: 40,
-                top: sbLabel.top + sbLabel.height + (cHeight * 0.1),
-                selectable: true,
-                hoverCursor: 'pointer'
-            });
-            canvas.add(ctaGroup);
-
-            // Update Safe zone bounds
-            const currentPlatform = document.querySelector('#creativePlatformTabs .active')?.dataset?.platform || 'naver';
-            updateSafeZoneGuide(cWidth, cHeight, currentPlatform);
-        });
-    }
 
     // Initialize default platform on load
     if (document.getElementById('canvasSizeSelect')) {
@@ -815,13 +702,284 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ═══════════════════════════════════════════════════════
-    // Step 3: Image Type Selection Toggle
+    // Step 3: Image Type Selection Toggle (스타일 동적 변경)
     // ═══════════════════════════════════════════════════════
+    window._selectedImgType = 'lifestyle';
+
     document.querySelectorAll('.img-type-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            document.querySelectorAll('.img-type-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.img-type-btn').forEach(b => {
+                b.classList.remove('active');
+                b.style.background = '#f4f6f9';
+                b.style.color = '#475569';
+                b.style.fontWeight = '500';
+                b.style.boxShadow = 'none';
+            });
             btn.classList.add('active');
+            btn.style.background = '#3b82f6';
+            btn.style.color = 'white';
+            btn.style.fontWeight = '600';
+            btn.style.boxShadow = '0 4px 6px -1px rgba(59, 130, 246, 0.3)';
             window._selectedImgType = btn.dataset.type;
+        });
+    });
+
+    // ═══════════════════════════════════════════════════════
+    // Step 3: Product Image Upload
+    // ═══════════════════════════════════════════════════════
+    const productImageInput = document.getElementById('productImageInput');
+    window._productImages = [];
+
+    if (productImageInput) {
+        productImageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                window._productImages.push({
+                    name: file.name,
+                    dataUrl: ev.target.result,
+                    file: file
+                });
+
+                // 썸네일 표시
+                const previewArea = document.getElementById('productPreviewArea');
+                const thumbnails = document.getElementById('productThumbnails');
+                const emptyMsg = document.getElementById('productEmptyMsg');
+
+                if (previewArea) previewArea.classList.remove('hidden');
+                if (emptyMsg) emptyMsg.classList.add('hidden');
+
+                if (thumbnails) {
+                    const thumb = document.createElement('div');
+                    thumb.style.cssText = 'position: relative; width: 60px; height: 60px; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;';
+                    thumb.innerHTML = `
+                        <img src="${ev.target.result}" style="width: 100%; height: 100%; object-fit: cover;" />
+                        <div style="position: absolute; top: -4px; right: -4px; width: 18px; height: 18px; background: #ef4444; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; cursor: pointer;" 
+                             onclick="this.parentElement.remove(); window._productImages.pop();">
+                            <i class="fa-solid fa-xmark"></i>
+                        </div>
+                    `;
+                    thumbnails.appendChild(thumb);
+                }
+            };
+            reader.readAsDataURL(file);
+            productImageInput.value = ''; // 같은 파일 재업로드 가능하게
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // Step 3: AI Auto Prompt
+    // ═══════════════════════════════════════════════════════
+    const btnAutoPrompt = document.getElementById('btnAutoPrompt');
+    if (btnAutoPrompt) {
+        btnAutoPrompt.addEventListener('click', () => {
+            const brandName = document.getElementById('brandName')?.value?.trim() || '';
+            const imgType = window._selectedImgType || 'lifestyle';
+            const strategy = window._aiStrategy || {};
+
+            const typeLabels = {
+                'realistic': '실사형 장면',
+                'product': '제품 모형',
+                'banner': '배너형 광고',
+                'hero': '브랜드 히어로',
+                'lifestyle': '라이프스타일',
+                'event': '이벤트/프로모션'
+            };
+
+            const prompts = {
+                'realistic': `${brandName} 제품이 자연광이 들어오는 세련된 공간에 자연스럽게 놓여 있는 실사 사진. 부드러운 그림자와 따뜻한 톤의 조명. 고급스러운 느낌.`,
+                'product': `${brandName} 제품을 깨끗한 배경에서 상업용 사진 스타일로 촬영한 모습. 제품 디테일이 선명하게 보이는 스튜디오 라이팅.`,
+                'banner': `${brandName}의 온라인 배너 광고. ${strategy.tone_and_manner || '모던하고 세련된'} 느낌. 주목도 높은 컬러 대비와 깔끔한 레이아웃.`,
+                'hero': `${brandName} 브랜드의 히어로 이미지. 브랜드 아이덴티티를 강하게 전달하는 임팩트 있는 비주얼. 시네마틱한 구도와 조명.`,
+                'lifestyle': `${brandName} 제품을 사용하는 사람들의 라이프스타일 장면. 자연스럽고 따뜻한 분위기. ${strategy.target_audience || '2030 세대'}가 공감할 수 있는 일상.`,
+                'event': `${brandName}의 특별 할인 이벤트 프로모션 배너. 눈에 띄는 ${strategy.tone_and_manner || '역동적인'} 디자인. 긴급감과 혜택이 강조된 구성.`
+            };
+
+            const prompt = prompts[imgType] || prompts['lifestyle'];
+            const promptEl = document.getElementById('creativePrompt');
+            if (promptEl) {
+                promptEl.value = prompt;
+                promptEl.style.transition = 'box-shadow 0.3s';
+                promptEl.style.boxShadow = '0 0 0 2px var(--accent-blue)';
+                setTimeout(() => { promptEl.style.boxShadow = 'none'; }, 1500);
+            }
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // Step 3: Generate Creative (Fabric.js 캔버스 렌더링)
+    // ═══════════════════════════════════════════════════════
+    const btnPreviewRender = document.getElementById('btnPreviewRender');
+    if (btnPreviewRender) {
+        btnPreviewRender.addEventListener('click', async () => {
+            const canvas = window.creativeCanvasInstance;
+            if (!canvas && window.fabric) {
+                // 캔버스가 아직 없으면 초기화
+                if (typeof initCreativeCanvas === 'function') initCreativeCanvas();
+            }
+
+            const fc = window.creativeCanvasInstance;
+            if (!fc) {
+                alert('캔버스를 초기화할 수 없습니다. Fabric.js를 확인해주세요.');
+                return;
+            }
+
+            btnPreviewRender.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right: 0.3rem;"></i> 생성 중...';
+            btnPreviewRender.disabled = true;
+
+            try {
+                // 캔버스 클리어
+                fc.clear();
+
+                // 사이즈 가져오기
+                const sizeSelect = document.getElementById('canvasSizeSelect');
+                const [cw, ch] = (sizeSelect?.value || '1200x628').split('x').map(Number);
+                fc.setWidth(cw);
+                fc.setHeight(ch);
+
+                // 브랜드 컬러
+                const color1 = document.getElementById('brandColor1')?.value || '#0f172a';
+                const color2 = document.getElementById('brandColor2')?.value || '#3b82f6';
+
+                // 배경 그라디언트
+                fc.setBackgroundColor(
+                    new fabric.Gradient({
+                        type: 'linear',
+                        coords: { x1: 0, y1: 0, x2: cw, y2: ch },
+                        colorStops: [
+                            { offset: 0, color: color1 },
+                            { offset: 1, color: color2 }
+                        ]
+                    }),
+                    fc.renderAll.bind(fc)
+                );
+
+                // 제품 이미지가 있으면 배치
+                if (window._productImages && window._productImages.length > 0) {
+                    const imgData = window._productImages[0].dataUrl;
+                    await new Promise((resolve) => {
+                        fabric.Image.fromURL(imgData, (img) => {
+                            const maxW = cw * 0.4;
+                            const maxH = ch * 0.6;
+                            const scale = Math.min(maxW / img.width, maxH / img.height);
+                            img.set({
+                                scaleX: scale,
+                                scaleY: scale,
+                                left: cw * 0.55,
+                                top: ch * 0.2,
+                                shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.3)', blur: 20, offsetX: 5, offsetY: 5 })
+                            });
+                            fc.add(img);
+                            resolve();
+                        });
+                    });
+                }
+
+                // 텍스트 배치
+                const mainText = document.getElementById('copyMain')?.value || '';
+                const subText = document.getElementById('copySub')?.value || '';
+                const ctaText = document.getElementById('copyCta')?.value || '';
+
+                if (mainText) {
+                    const mainObj = new fabric.Text(mainText, {
+                        left: cw * 0.05,
+                        top: ch * 0.2,
+                        fontFamily: 'Pretendard, sans-serif',
+                        fontSize: Math.max(cw * 0.035, 24),
+                        fontWeight: '800',
+                        fill: 'white',
+                        textAlign: 'left',
+                        shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.5)', blur: 4, offsetX: 1, offsetY: 1 })
+                    });
+                    // 텍스트가 너무 넓으면 줄바꿈
+                    if (mainObj.width > cw * 0.45) {
+                        mainObj.set({ width: cw * 0.45 });
+                    }
+                    fc.add(mainObj);
+                }
+
+                if (subText) {
+                    fc.add(new fabric.Text(subText, {
+                        left: cw * 0.05,
+                        top: ch * 0.45,
+                        fontFamily: 'Pretendard, sans-serif',
+                        fontSize: Math.max(cw * 0.02, 16),
+                        fontWeight: '400',
+                        fill: 'rgba(255,255,255,0.9)',
+                        textAlign: 'left',
+                        shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.3)', blur: 3, offsetX: 1, offsetY: 1 })
+                    }));
+                }
+
+                if (ctaText) {
+                    // CTA 버튼 (Rect + Text 그룹)
+                    const ctaLabel = new fabric.Text(ctaText, {
+                        fontFamily: 'Pretendard, sans-serif',
+                        fontSize: Math.max(cw * 0.018, 14),
+                        fontWeight: '700',
+                        fill: color1,
+                        textAlign: 'center'
+                    });
+                    const ctaBg = new fabric.Rect({
+                        width: ctaLabel.width + 40,
+                        height: ctaLabel.height + 16,
+                        rx: 6,
+                        ry: 6,
+                        fill: 'white',
+                        shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.2)', blur: 8, offsetX: 0, offsetY: 2 })
+                    });
+                    const ctaGroup = new fabric.Group([ctaBg, ctaLabel], {
+                        left: cw * 0.05,
+                        top: ch * 0.6
+                    });
+                    fc.add(ctaGroup);
+                }
+
+                // 캔버스 보이기
+                const canvasEl = document.getElementById('creativeCanvas');
+                if (canvasEl) canvasEl.style.display = 'block';
+                const emptyState = document.getElementById('canvasEmptyState');
+                if (emptyState) emptyState.style.display = 'none';
+
+                fc.renderAll();
+
+                // 리사이즈 맞추기
+                if (typeof resizeCanvasToDisplaySize === 'function') {
+                    setTimeout(resizeCanvasToDisplaySize, 100);
+                }
+
+            } catch (err) {
+                console.error('크리에이티브 생성 오류:', err);
+                alert('크리에이티브 생성 중 오류가 발생했습니다: ' + err.message);
+            } finally {
+                btnPreviewRender.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles" style="margin-right: 0.3rem;"></i> Generate Creative';
+                btnPreviewRender.disabled = false;
+            }
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // Step 3: On Image Text 실시간 프리뷰 (dice 아이콘 → 랜덤)
+    // ═══════════════════════════════════════════════════════
+    document.querySelectorAll('.fa-dice').forEach(dice => {
+        dice.addEventListener('click', () => {
+            const input = dice.parentElement.querySelector('input');
+            if (!input) return;
+            const strategy = window._aiStrategy;
+            if (!strategy) return;
+
+            const id = input.id;
+            if (id === 'copyMain' && strategy.alternative_headlines?.length) {
+                const random = strategy.alternative_headlines[Math.floor(Math.random() * strategy.alternative_headlines.length)];
+                input.value = random;
+            } else if (id === 'copySub') {
+                input.value = strategy.sub_copy || input.value;
+            } else if (id === 'copyCta') {
+                const ctas = ['지금 확인하기', '자세히 보기', '무료 체험하기', '시작하기', '지금 구매하기', '알아보기'];
+                input.value = ctas[Math.floor(Math.random() * ctas.length)];
+            }
         });
     });
 

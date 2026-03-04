@@ -383,23 +383,23 @@
                                     <label
                                         style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 1.2rem; display: block;">이미지
                                         생성 타입</label>
-                                    <div style="display: flex; flex-wrap: wrap; gap: 0.6rem;">
-                                        <button
-                                            style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer;">실사형
+                                    <div style="display: flex; flex-wrap: wrap; gap: 0.6rem;" id="imgTypeBtns">
+                                        <button class="img-type-btn" data-type="realistic"
+                                            style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">실사형
                                             장면</button>
-                                        <button
-                                            style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer;">제품
-                                            모형 및 상업용 사진</button>
-                                        <button
-                                            style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer;">배너형
+                                        <button class="img-type-btn" data-type="product"
+                                            style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">제품
+                                            모형</button>
+                                        <button class="img-type-btn" data-type="banner"
+                                            style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">배너형
                                             광고</button>
-                                        <button
-                                            style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer;">브랜드
+                                        <button class="img-type-btn" data-type="hero"
+                                            style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">브랜드
                                             히어로</button>
-                                        <button
-                                            style="padding: 0.7rem 1.2rem; background: #3b82f6; color: white; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);">라이프스타일</button>
-                                        <button
-                                            style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer;">이벤트/프로모션</button>
+                                        <button class="img-type-btn active" data-type="lifestyle"
+                                            style="padding: 0.7rem 1.2rem; background: #3b82f6; color: white; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3); transition: all 0.2s;">라이프스타일</button>
+                                        <button class="img-type-btn" data-type="event"
+                                            style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">이벤트/프로모션</button>
                                     </div>
                                 </div>
 
@@ -407,8 +407,15 @@
                                 <div class="panel-box" style="padding: 1.5rem;">
                                     <label
                                         style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; display: block;">프롬프트</label>
-                                    <textarea placeholder="예: 상품을(를) 햇살이 비치는 욕실 선반 위에 자연스럽게 배치해줘."
+                                    <textarea id="creativePrompt" placeholder="예: 상품을(를) 햇살이 비치는 욕실 선반 위에 자연스럽게 배치해줘."
                                         style="width: 100%; padding: 1.2rem; border: none; background: #f4f6f9; border-radius: 6px; font-size: 0.95rem; color: #334155; resize: vertical; min-height: 80px; outline: none; font-family: inherit; font-weight: 500; box-sizing: border-box;"></textarea>
+                                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                                        <button class="btn" id="btnAutoPrompt"
+                                            style="background: white; border: 1px solid #e2e8f0; color: var(--text-sub); font-size: 0.8rem; padding: 0.4rem 0.8rem; border-radius: 6px;">
+                                            <i class="fa-solid fa-wand-magic-sparkles"
+                                                style="margin-right: 0.3rem; color: var(--accent-blue);"></i> AI 자동 프롬프트
+                                        </button>
+                                    </div>
                                     <div
                                         style="background: #eff6ff; border-left: 3px solid #3b82f6; padding: 1rem; border-radius: 0 6px 6px 0; display: flex; gap: 0.8rem; align-items: start; margin-top: 0.8rem;">
                                         <i class="fa-regular fa-lightbulb"
@@ -425,14 +432,22 @@
                                     <label
                                         style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; display: block;">내
                                         제품</label>
-                                    <div style="background: #f8fafc; border-radius: 6px; padding: 1.2rem; text-align: center; cursor: pointer; transition: background 0.2s; border: 1px dashed #cbd5e1;"
+                                    <input type="file" id="productImageInput" accept="image/*" style="display: none;" />
+                                    <div id="productUploadArea"
+                                        style="background: #f8fafc; border-radius: 6px; padding: 1.2rem; text-align: center; cursor: pointer; transition: background 0.2s; border: 1px dashed #cbd5e1;"
+                                        onclick="document.getElementById('productImageInput').click();"
                                         onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#94a3b8';"
                                         onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#cbd5e1';">
                                         <span style="color: #64748b; font-size: 0.95rem; font-weight: 600;"><i
                                                 class="fa-solid fa-plus"
                                                 style="margin-right:0.5rem; font-size: 0.8rem;"></i> 제품 이미지 업로드</span>
                                     </div>
-                                    <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.8rem;">업로드된
+                                    <div id="productPreviewArea" style="margin-top: 0.8rem;" class="hidden">
+                                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;"
+                                            id="productThumbnails"></div>
+                                    </div>
+                                    <div id="productEmptyMsg"
+                                        style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.8rem;">업로드된
                                         제품이 없습니다.</div>
                                 </div>
 
@@ -504,10 +519,10 @@
                                                 카피 (Main Headline)</label>
                                             <div
                                                 style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
-                                                <input type="text" id="copyMain" value="압도적인 퍼포먼스, 새로운 차원의 경험"
+                                                <input type="text" id="copyMain" value="" placeholder="AI 전략에서 자동 입력됩니다"
                                                     style="border: none; outline: none; width: 100%; font-weight: 600; color: var(--text-main); font-size: 0.95rem;" />
                                                 <i class="fa-solid fa-dice text-gradient"
-                                                    style="cursor: pointer; padding-left: 0.5rem;"></i>
+                                                    style="cursor: pointer; padding-left: 0.5rem;" title="랜덤 변형"></i>
                                             </div>
                                         </div>
                                         <div>
@@ -516,10 +531,10 @@
                                                 카피 (Punchline / Sub)</label>
                                             <div
                                                 style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
-                                                <input type="text" id="copySub" value="지금 사전예약하고 특별한 혜택을 누리세요."
+                                                <input type="text" id="copySub" value="" placeholder="AI 전략에서 자동 입력됩니다"
                                                     style="border: none; outline: none; width: 100%; font-weight: 500; color: var(--text-main); font-size: 0.95rem;" />
                                                 <i class="fa-solid fa-dice text-gradient"
-                                                    style="cursor: pointer; padding-left: 0.5rem;"></i>
+                                                    style="cursor: pointer; padding-left: 0.5rem;" title="랜덤 변형"></i>
                                             </div>
                                         </div>
                                         <div>
@@ -528,10 +543,10 @@
                                                 (Call to Action)</label>
                                             <div
                                                 style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
-                                                <input type="text" id="copyCta" value="자세히 알아보기"
+                                                <input type="text" id="copyCta" value="" placeholder="AI 전략에서 자동 입력됩니다"
                                                     style="border: none; outline: none; width: 100%; font-weight: 600; color: var(--text-main); font-size: 0.95rem;" />
                                                 <i class="fa-solid fa-dice text-gradient"
-                                                    style="cursor: pointer; padding-left: 0.5rem;"></i>
+                                                    style="cursor: pointer; padding-left: 0.5rem;" title="랜덤 변형"></i>
                                             </div>
                                         </div>
                                     </div>
@@ -562,7 +577,7 @@
                                                 style="text-align: center; color: var(--text-muted); z-index: 0;">
                                                 <i class="fa-solid fa-laptop-code"
                                                     style="font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5;"></i><br>
-                                                <span style="font-size: 0.9rem;">Generate 버튼을 눌러 에셋을 생성하세요</span>
+                                                <span style="font-size: 0.9rem;">아래 Generate 버튼을 눌러 에셋을 생성하세요</span>
                                             </div>
                                         </div>
                                     </div>
@@ -575,13 +590,10 @@
                                         <i class="fa-solid fa-arrow-left" style="margin-right: 0.5rem;"></i> 이전
                                     </button>
                                     <div style="display: flex; gap: 1rem;">
-                                        <select
-                                            style="padding: 0.8rem 1.5rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; font-weight: 600;">
-                                            <option>Save to Project</option>
-                                        </select>
                                         <button class="btn" id="btnPreviewRender"
                                             style="background: var(--accent-blue); color: white; padding: 0.8rem 2.5rem; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); font-size: 1rem;">
-                                            <i class="fa-solid fa-bolt"></i> Preview Render
+                                            <i class="fa-solid fa-wand-magic-sparkles"
+                                                style="margin-right: 0.3rem;"></i> Generate Creative
                                         </button>
                                     </div>
                                 </div>
@@ -697,7 +709,7 @@
             <script src="/static/auth.js?v=24"></script>
             <script src="/static/script.js?v=24"></script>
             <script src="/static/features.js?v=2"></script>
-            <script src="/static/creative.js?v=3"></script>
+            <script src="/static/creative.js?v=4"></script>
 </body>
 
 </html>
