@@ -631,25 +631,21 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (strategyResult) {
                         strategyResult.innerHTML = `
                             <div style="background: linear-gradient(135deg, #f0f9ff, #ede9fe); border-radius: 12px; padding: 1.2rem; margin-bottom: 1rem;">
-                                <h4 style="margin: 0 0 0.5rem; color: var(--text-main); font-size: 1rem;"><i class="fa-solid fa-lightbulb" style="color: #f59e0b; margin-right: 0.3rem;"></i> 전략 요약</h4>
+                                <h4 style="margin: 0 0 0.5rem; color: var(--text-main); font-size: 1rem;"><i class="fa-solid fa-lightbulb" style="color: #f59e0b; margin-right: 0.3rem;"></i> 전략 요약 (15년차 CD 인사이트)</h4>
                                 <p style="margin: 0; font-size: 0.9rem; color: var(--text-sub); line-height: 1.6;">${s.strategy_summary || ''}</p>
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-bottom: 1rem;">
                                 <div style="background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.8rem;">
                                     <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.3rem;">타겟 오디언스</div>
-                                    <div style="font-size: 0.85rem; color: var(--text-main);">${s.target_audience || ''}</div>
+                                    <div style="font-size: 0.85rem; color: var(--text-main); line-height: 1.4;">${s.target_audience || ''}</div>
                                 </div>
                                 <div style="background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.8rem;">
                                     <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.3rem;">톤 앤 매너</div>
-                                    <div style="font-size: 0.85rem; color: var(--text-main);">${s.tone_and_manner || ''}</div>
+                                    <div style="font-size: 0.85rem; color: var(--text-main); line-height: 1.4;">${s.tone_and_manner || ''}</div>
                                 </div>
-                                <div style="background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.8rem;">
-                                    <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.3rem;">레이아웃 추천</div>
-                                    <div style="font-size: 0.85rem; color: var(--text-main);">${s.layout_recommendation || ''}</div>
-                                </div>
-                                <div style="background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.8rem;">
-                                    <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.3rem;">컬러 전략</div>
-                                    <div style="font-size: 0.85rem; color: var(--text-main);">${s.color_strategy || ''}</div>
+                                <div style="background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.8rem; grid-column: 1 / -1;">
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.3rem;">비주얼 가이드 & 레이아웃</div>
+                                    <div style="font-size: 0.85rem; color: var(--text-main); line-height: 1.4;">${s.visual_guide || ''}</div>
                                 </div>
                             </div>
                             <div style="background: var(--accent-blue); color: white; border-radius: 10px; padding: 1rem; margin-bottom: 0.8rem;">
@@ -684,6 +680,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                     if (s.cta_text && document.getElementById('copyCta')) {
                         document.getElementById('copyCta').value = s.cta_text;
+                    }
+                    // AI 이미지 생성 프롬프트 자동 입력
+                    if (s.ai_image_prompt && document.getElementById('creativePrompt')) {
+                        document.getElementById('creativePrompt').value = s.ai_image_prompt;
                     }
 
                     // 전역에 저장 (Step 3에서 활용)
@@ -908,20 +908,37 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
 
-                // 제품 이미지가 있으면 배치
-                if (window._productImages && window._productImages.length > 0) {
+                // ============================================
+                // 15년차 CD 크리에이티브 시각화 로직 적용 구역 
+                // ============================================
+                const hasProduct = (window._productImages && window._productImages.length > 0);
+
+                const mainFont = 'Pretendard, sans-serif';
+                const mainFontSize = hasProduct ? Math.max(cw * 0.045, 32) : Math.max(cw * 0.06, 44);
+                const subFontSize = hasProduct ? Math.max(cw * 0.02, 16) : Math.max(cw * 0.022, 20);
+
+                const leftOffset = hasProduct ? cw * 0.06 : cw * 0.5;
+                const textOrigin = hasProduct ? 'left' : 'center';
+                const textAlign = hasProduct ? 'left' : 'center';
+                const textBoxWidth = hasProduct ? cw * 0.42 : cw * 0.8;
+
+                // 1. 제품 이미지가 있으면 오른쪽에 큼직하게 배치
+                if (hasProduct) {
                     const imgData = window._productImages[0].dataUrl;
                     await new Promise((resolve) => {
                         fabric.Image.fromURL(imgData, (img) => {
-                            const maxW = cw * 0.4;
-                            const maxH = ch * 0.6;
+                            const maxW = cw * 0.45;
+                            const maxH = ch * 0.75;
                             const scale = Math.min(maxW / img.width, maxH / img.height);
                             img.set({
                                 scaleX: scale,
                                 scaleY: scale,
-                                left: cw * 0.55,
-                                top: ch * 0.2,
-                                shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.3)', blur: 20, offsetX: 5, offsetY: 5 })
+                                originX: 'right',
+                                originY: 'center',
+                                left: cw * 0.95,
+                                top: ch * 0.5,
+                                // 고급스러운 하이라이트 그림자 패키지
+                                shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.6)', blur: 30, offsetX: -5, offsetY: 15 })
                             });
                             fc.add(img);
                             resolve();
@@ -929,62 +946,85 @@ document.addEventListener("DOMContentLoaded", () => {
                     });
                 }
 
-                // 텍스트 배치
+                // 2. 텍스트 정보 불러오기
                 const mainText = document.getElementById('copyMain')?.value || '';
                 const subText = document.getElementById('copySub')?.value || '';
                 const ctaText = document.getElementById('copyCta')?.value || '';
 
+                // 타이포그래피 동적 Y축 스택 조정
+                let currentY = hasProduct ? ch * 0.25 : ch * 0.35;
+
+                // 메인 카피 (Slogan)
                 if (mainText) {
-                    const mainObj = new fabric.Text(mainText, {
-                        left: cw * 0.05,
-                        top: ch * 0.2,
-                        fontFamily: 'Pretendard, sans-serif',
-                        fontSize: Math.max(cw * 0.035, 24),
-                        fontWeight: '800',
-                        fill: 'white',
-                        textAlign: 'left',
-                        shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.5)', blur: 4, offsetX: 1, offsetY: 1 })
+                    const mainObj = new fabric.Textbox(mainText, {
+                        left: leftOffset,
+                        top: currentY,
+                        originX: textOrigin,
+                        originY: 'top',
+                        width: textBoxWidth,
+                        fontFamily: mainFont,
+                        fontSize: mainFontSize,
+                        fontWeight: '900',  // 아주 강렬하게
+                        fill: '#ffffff',
+                        textAlign: textAlign,
+                        lineHeight: 1.15,
+                        charSpacing: -20,   // 자간을 좁혀 응집력을 높임
+                        // 텍스트를 배경과 완벽히 분리하는 다중 그림자 효과 (블러 처리)
+                        shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.9)', blur: 18, offsetX: 2, offsetY: 4 })
                     });
-                    // 텍스트가 너무 넓으면 줄바꿈
-                    if (mainObj.width > cw * 0.45) {
-                        mainObj.set({ width: cw * 0.45 });
-                    }
                     fc.add(mainObj);
+                    currentY += (mainObj.height * mainObj.scaleY) + (hasProduct ? 20 : 30);
                 }
 
+                // 서브 카피 (Rationale)
                 if (subText) {
-                    fc.add(new fabric.Text(subText, {
-                        left: cw * 0.05,
-                        top: ch * 0.45,
-                        fontFamily: 'Pretendard, sans-serif',
-                        fontSize: Math.max(cw * 0.02, 16),
-                        fontWeight: '400',
-                        fill: 'rgba(255,255,255,0.9)',
-                        textAlign: 'left',
-                        shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.3)', blur: 3, offsetX: 1, offsetY: 1 })
-                    }));
+                    const subObj = new fabric.Textbox(subText, {
+                        left: leftOffset,
+                        top: currentY,
+                        originX: textOrigin,
+                        originY: 'top',
+                        width: textBoxWidth,
+                        fontFamily: mainFont,
+                        fontSize: subFontSize,
+                        fontWeight: '400',  // 부드럽게
+                        fill: 'rgba(255,255,255,0.95)',
+                        textAlign: textAlign,
+                        lineHeight: 1.45,
+                        charSpacing: 20,    // 자간을 늘려 세련미를 더함
+                        shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.8)', blur: 8, offsetX: 1, offsetY: 2 })
+                    });
+                    fc.add(subObj);
+                    currentY += (subObj.height * subObj.scaleY) + (hasProduct ? 40 : 50);
                 }
 
+                // CTA 버튼 (Action)
                 if (ctaText) {
-                    // CTA 버튼 (Rect + Text 그룹)
                     const ctaLabel = new fabric.Text(ctaText, {
-                        fontFamily: 'Pretendard, sans-serif',
-                        fontSize: Math.max(cw * 0.018, 14),
-                        fontWeight: '700',
-                        fill: color1,
-                        textAlign: 'center'
+                        fontFamily: mainFont,
+                        fontSize: Math.max(cw * 0.016, 16),
+                        fontWeight: '800',
+                        fill: color1, // 브랜드 컬러 흡수
+                        originX: 'center',
+                        originY: 'center',
                     });
                     const ctaBg = new fabric.Rect({
-                        width: ctaLabel.width + 40,
-                        height: ctaLabel.height + 16,
-                        rx: 6,
-                        ry: 6,
-                        fill: 'white',
-                        shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.2)', blur: 8, offsetX: 0, offsetY: 2 })
+                        width: ctaLabel.width + 70,
+                        height: ctaLabel.height + 28,
+                        rx: 24, // 트렌디한 둥근 알약(Pill) 형태
+                        ry: 24,
+                        fill: '#ffffff',
+                        originX: 'center',
+                        originY: 'center',
+                        shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.4)', blur: 12, offsetX: 0, offsetY: 5 })
                     });
+
+                    const ctaGroupX = hasProduct ? leftOffset + (ctaBg.width / 2) : cw * 0.5;
                     const ctaGroup = new fabric.Group([ctaBg, ctaLabel], {
-                        left: cw * 0.05,
-                        top: ch * 0.6
+                        left: ctaGroupX,
+                        top: currentY,
+                        originX: 'center',
+                        originY: 'top',
+                        hoverCursor: 'pointer'
                     });
                     fc.add(ctaGroup);
                 }

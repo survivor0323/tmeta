@@ -985,37 +985,53 @@ async def generate_strategy(req: GenerateStrategyRequest, authorization: str = H
                 ref_items.append(" | ".join(parts))
             ref_summary = "\n".join(ref_items)
 
-        prompt = f"""당신은 대한민국 최고의 퍼포먼스 마케팅 전략가입니다.
+        prompt = f"""[Persona 설정]
+"너는 칸 라이언즈(Cannes Lions)와 스파이크스 아시아에서 다수의 수상 경력을 가진 15년 차 시니어 광고 기획자(AE)이자 크리에이티브 디렉터(CD)야. 데이터 뒤에 숨겨진 소비자의 결핍(Unmet Needs)을 찾아내고, 경쟁사의 크리에이티브 전략을 해부하는 데 탁월한 통찰력을 가지고 있어."
 
-아래 브랜드 정보와 경쟁사 레퍼런스 광고를 분석하여, 이 브랜드를 위한 광고 크리에이티브 전략과 카피를 생성하세요.
+[Task 1: 경쟁사 및 크리에이티브 심층 분석]
+아래 제공된 [경쟁사/레퍼런스]의 최근 광고 캠페인을 분석해줘.
+- 경쟁사 분석: 타겟팅하는 핵심 페르소나와 소구점(USP)은 무엇인가?
+- 크리에이티브 디코딩: 비주얼 문법(색감, 구도, 폰트)과 톤앤매너로 심어주려는 '브랜드 이미지'는?
+- Gap 분석: 경쟁사가 놓치고 있는 시장의 빈틈이나 소비자의 피로도는 어디에 있는가?
 
-== 브랜드 정보 ==
-- 브랜드명: {req.brand_name or '미입력'}
-- 메인컬러: {req.brand_color1}
-- 보조컬러: {req.brand_color2}
+[Task 2: 자사 브랜드('{req.brand_name or '우리 브랜드'}') 광고 전략 및 컨셉 도출]
+- Big Idea: 앞선 분석을 바탕으로, 경쟁사를 압도할 수 있는 파괴적인 크리에이티브 컨셉 제안.
+- 메시지 설계: 소비자의 감정을 자극할 수 있는 '한 줄의 메인 카피(Slogan)'와 '서브 카피', 그리고 그 이유(Rationale).
+- 비주얼 가이드: 브랜드를 시각적으로 상징화할 수 있는 아트워크 방향성 제시.
 
-== 경쟁사 레퍼런스 광고 ==
-{ref_summary if ref_summary else '없음 (브랜드 정보만으로 생성)'}
+[Task 3: AI 이미지 생성을 위한 고해상도 프롬프트 작성]
+위에서 도출된 최적의 컨셉을 바탕으로, Imagen 모델이 완벽한 광고 이미지를 생성할 수 있도록 전문가 수준의 "영문 이미지 생성 프롬프트"를 작성해줘.
+반드시 아래 디테일을 포함해야 함:
+- Lighting: (예: 시네마틱 조명, 골든 아워의 자연광 등)
+- Composition: (예: 황금비율, 로우 앵글, 클로즈업 등)
+- Texture & Style: (예: 프리미엄 질감, 하이퍼 리얼리즘, 8k 해상도, 최상급 렌즈 사용 등)
+- Mood: (예: 신뢰감 있는, 파격적인, 미니멀한 등)
+
+== 입력 데이터 ==
+- 자사 브랜드: {req.brand_name or '미입력'}
+- 브랜드 메인컬러: {req.brand_color1} / 서브컬러: {req.brand_color2}
+- 레퍼런스 광고 요약:
+{ref_summary if ref_summary else '없음 (브랜드 정보만으로 유추하여 혁신적인 제안을 할 것)'}
 
 == 출력 형식 (JSON) ==
-아래 JSON 형식으로만 답변하세요. 마크다운이나 코드블록 없이 순수 JSON만 반환하세요:
+아래 JSON 형식의 키 값들을 정확히 지켜서 평문 텍스트 없이 JSON만 반환해:
 {{
-  "strategy_summary": "2-3줄의 전략 요약",
-  "target_audience": "타겟 오디언스 설명",
-  "tone_and_manner": "톤앤매너 키워드 3-5개",
-  "main_headline": "메인 헤드라인 카피 (15자 내외, 한국어)",
-  "sub_copy": "서브 카피 (25자 내외, 한국어)",
-  "cta_text": "CTA 버튼 텍스트 (5자 내외, 한국어)",
-  "alternative_headlines": ["대안 헤드라인1", "대안 헤드라인2", "대안 헤드라인3"],
-  "layout_recommendation": "레이아웃 추천 (예: 상단 헤드라인 + 중앙 제품 + 하단 CTA)",
-  "color_strategy": "컬러 활용 전략"
+  "strategy_summary": "[1단계 분석] 경쟁사 Gap과 이를 파고들 Big Idea 요약",
+  "target_audience": "도출된 핵심 타겟 오디언스",
+  "tone_and_manner": "톤앤매너 키워드 3~5개",
+  "main_headline": "메인 헤드라인 카피 (15자 내외, 시선 강탈)",
+  "sub_copy": "서브 카피 (25자 내외, 설득력 있는 부연 설명)",
+  "cta_text": "CTA 버튼 텍스트 (예: 지금 바로 알아보기)",
+  "alternative_headlines": ["대안 메인 카피1", "대안 메인 카피2", "대안 메인 카피3"],
+  "visual_guide": "비주얼 가이드 및 레이아웃 제안 (한국어)",
+  "ai_image_prompt": "Imagen 3 모델에 넣을 고퀄리티 영문 이미지 프롬프트 (Lighting, Composition, Texture, Mood 포함)"
 }}"""
 
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.8,
-            max_tokens=1000,
+            max_tokens=1500,
         )
 
         result_text = response.choices[0].message.content.strip()
