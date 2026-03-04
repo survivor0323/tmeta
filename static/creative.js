@@ -356,9 +356,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (d.brand_name) info.push(`브랜드: ${d.brand_name}`);
                     if (d.color1) info.push(`메인컬러: ${d.color1}`);
                     if (d.domain) info.push(`도메인: ${d.domain}`);
-                    alert(`웹사이트 스캔 완료!\n${info.join('\n')}`);
+
+                    let alertMsg = `웹사이트 스캔 완료!\n${info.join('\n')}`;
+                    if (json.message) {
+                        alertMsg += `\n\n* 참고: ${json.message}`;
+                    }
+                    alert(alertMsg);
                 } else {
-                    alert(json.message || '스캔 실패');
+                    alert('스캔에 문제가 발생했습니다: ' + (json.message || '알 수 없는 오류'));
                 }
             } catch (e) {
                 alert('스캔 오류: ' + e.message);

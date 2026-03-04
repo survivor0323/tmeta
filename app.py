@@ -945,8 +945,25 @@ async def scan_brand(req: ScanBrandRequest):
             }
         }
     except Exception as e:
-        logger.error(f"브랜드 스캔 실패: {e}")
-        return {"status": "error", "message": f"스캔 실패: {str(e)}"}
+        logger.error(f"브랜드 스캔 실패(접속 차단/타임아웃 등): {e}")
+        # 일부 보안이 강한 사이트(예: 통신사, 은행 등)나 타임아웃 시에도 사용자가 다음 스텝으로 넘어갈 수 있도록 기본 정보 반환
+        from urllib.parse import urlparse
+        parsed = urlparse(url)
+        domain = parsed.netloc.replace("www.", "")
+        brand_name = domain.split(".")[0].capitalize()
+        
+        return {
+            "status": "success",
+            "message": f"웹사이트에서 상세 정보를 가져오지 못했습니다(보안 차단 또는 응답 지연). 기본 정보를 표시합니다. (사유: {str(e)})",
+            "data": {
+                "brand_name": brand_name,
+                "logo_url": "",
+                "color1": "#0f172a",
+                "color2": "#3b82f6",
+                "domain": domain,
+                "final_url": url,
+            }
+        }
 
 
 @app.post("/api/v1/generate-strategy")
