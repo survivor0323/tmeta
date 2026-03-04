@@ -140,12 +140,11 @@ document.addEventListener("DOMContentLoaded", () => {
         // 컨테이너/캔버스의 CSS 표시 속성만 변경
         const canvasEl = document.querySelector('.canvas-container');
         if (canvasEl) {
-            canvasEl.style.transform = `scale(${scale})`;
-            canvasEl.style.transformOrigin = 'center center';
-            // CSS 위치 중앙 정렬
             canvasEl.style.position = 'absolute';
-            canvasEl.style.left = `calc(50% - ${(baseWidth * scale) / 2}px)`;
-            canvasEl.style.top = `calc(50% - ${(baseHeight * scale) / 2}px)`;
+            canvasEl.style.left = '50%';
+            canvasEl.style.top = '50%';
+            canvasEl.style.transform = `translate(-50%, -50%) scale(${scale})`;
+            canvasEl.style.transformOrigin = 'center center';
         }
 
         document.getElementById('canvasEmptyState').style.display = 'none';
