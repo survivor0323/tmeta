@@ -867,199 +867,22 @@ document.addEventListener("DOMContentLoaded", () => {
                     const imgJson = await imgRes.json();
 
                     if (imgJson.status === 'success' && imgJson.data?.image_b64) {
-                        await new Promise((resolve) => {
-                            fabric.Image.fromURL(imgJson.data.image_b64, (img) => {
-                                // 캔버스를 덮도록 스케일링
-                                const scale = Math.max(cw / img.width, ch / img.height);
-                                img.set({
-                                    scaleX: scale,
-                                    scaleY: scale,
-                                    originX: 'center',
-                                    originY: 'center',
-                                    left: cw / 2,
-                                    top: ch / 2
-                                });
-                                // 텍스트 가독성을 위한 어두운 오버레이
-                                const overlay = new fabric.Rect({
-                                    left: 0, top: 0, width: cw, height: ch, fill: 'rgba(0,0,0,0.3)', selectable: false
-                                });
-                                fc.setBackgroundImage(img, fc.renderAll.bind(fc));
-                                fc.add(overlay);
-                                resolve();
-                            });
-                        });
+                        if (!window._creativeHistory) window._creativeHistory = [];
+                        const newThumb = { id: Date.now(), b64: imgJson.data.image_b64, prompt: promptInput };
+                        window._creativeHistory.push(newThumb);
+                        window._currentActiveImageId = newThumb.id;
+                        window._currentActiveImageB64 = newThumb.b64;
+                        if (typeof window.renderCreativeThumbnailHistory === 'function') {
+                            window.renderCreativeThumbnailHistory();
+                        }
+                        await window.applyCreativeCanvasLayout(window._currentActiveImageB64);
                     } else {
                         throw new Error(imgJson.message || '이미지 생성 실패');
                     }
                 } catch (apiErr) {
                     console.error('API Error:', apiErr);
                     alert('AI 이미지 생성에 실패했습니다.\n\n에러 내용: ' + apiErr.message);
-
-                    // 실패 시 기존 그라디언트 Fallback
-                    fc.setBackgroundColor(
-                        new fabric.Gradient({
-                            type: 'linear',
-                            coords: { x1: 0, y1: 0, x2: cw, y2: ch },
-                            colorStops: [{ offset: 0, color: color1 }, { offset: 1, color: color2 }]
-                        }),
-                        fc.renderAll.bind(fc)
-                    );
-                }
-
-
-                // ============================================
-                // 15년차 CD 크리에이티브 시각화 로직 적용 구역 
-                // ============================================
-                const hasProduct = (window._productImages && window._productImages.length > 0);
-
-                const mainFont = 'Pretendard, sans-serif';
-                const mainFontSize = Math.max(cw * 0.06, 44);
-                const subFontSize = Math.max(cw * 0.022, 20);
-
-                const leftOffset = cw * 0.5;
-                const textOrigin = 'center';
-                const textAlign = 'center';
-                const textBoxWidth = cw * 0.8;
-
-                // 🌟 브랜드 로고가 업로드되어 있다면, 좌측 상단(또는 우측 상단)에 배치
-                const logoImgEl = document.querySelector('#brandLogoPreview img');
-                if (logoImgEl && logoImgEl.src) {
-                    await new Promise((resolve) => {
-                        fabric.Image.fromURL(logoImgEl.src, (img) => {
-                            const logoMaxH = ch * 0.1; // 캔버스 높이의 10%
-                            const logoScale = logoMaxH / img.height;
-                            img.set({
-                                scaleX: logoScale,
-                                scaleY: logoScale,
-                                originX: 'left',
-                                originY: 'top',
-                                left: cw * 0.04,
-                                top: ch * 0.05,
-                                shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.3)', blur: 10, offsetX: 0, offsetY: 2 })
-                            });
-                            fc.add(img);
-                            resolve();
-                        });
-                    });
-                }
-
-                // 1. 제품 이미지가 있다면 (가운데로 배치 요청 반영)
-                if (hasProduct) {
-                    const imgData = window._productImages[0].dataUrl;
-                    await new Promise((resolve) => {
-                        fabric.Image.fromURL(imgData, (img) => {
-                            const maxW = cw * 0.5;
-                            const maxH = ch * 0.6;
-                            const scale = Math.min(maxW / img.width, maxH / img.height);
-                            img.set({
-                                scaleX: scale,
-                                scaleY: scale,
-                                originX: 'center',
-                                originY: 'center',
-                                left: cw * 0.5,
-                                top: ch * 0.5,
-                                // 피사체를 강조하는 하이라이트 그림자
-                                shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.6)', blur: 30, offsetX: 0, offsetY: 15 })
-                            });
-                            fc.add(img);
-                            resolve();
-                        });
-                    });
-                }
-
-                // 2. 텍스트 정보 불러오기
-                const mainText = document.getElementById('copyMain')?.value || '';
-                const subText = document.getElementById('copySub')?.value || '';
-                const ctaText = document.getElementById('copyCta')?.value || '';
-
-                // 타이포그래피 동적 Y축 스택 조정
-                let currentY = hasProduct ? ch * 0.25 : ch * 0.35;
-
-                // 메인 카피 (Slogan)
-                if (mainText) {
-                    const mainObj = new fabric.Textbox(mainText, {
-                        left: leftOffset,
-                        top: currentY,
-                        originX: textOrigin,
-                        originY: 'top',
-                        width: textBoxWidth,
-                        fontFamily: mainFont,
-                        fontSize: mainFontSize,
-                        fontWeight: '900',  // 아주 강렬하게
-                        fill: '#ffffff',
-                        textAlign: textAlign,
-                        lineHeight: 1.15,
-                        charSpacing: -20,   // 자간을 좁혀 응집력을 높임
-                        // 텍스트를 배경과 완벽히 분리하는 다중 그림자 효과 (블러 처리)
-                        shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.9)', blur: 18, offsetX: 2, offsetY: 4 })
-                    });
-                    fc.add(mainObj);
-                    currentY += (mainObj.height * mainObj.scaleY) + (hasProduct ? 20 : 30);
-                }
-
-                // 서브 카피 (Rationale)
-                if (subText) {
-                    const subObj = new fabric.Textbox(subText, {
-                        left: leftOffset,
-                        top: currentY,
-                        originX: textOrigin,
-                        originY: 'top',
-                        width: textBoxWidth,
-                        fontFamily: mainFont,
-                        fontSize: subFontSize,
-                        fontWeight: '400',  // 부드럽게
-                        fill: 'rgba(255,255,255,0.95)',
-                        textAlign: textAlign,
-                        lineHeight: 1.45,
-                        charSpacing: 20,    // 자간을 늘려 세련미를 더함
-                        shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.8)', blur: 8, offsetX: 1, offsetY: 2 })
-                    });
-                    fc.add(subObj);
-                    currentY += (subObj.height * subObj.scaleY) + (hasProduct ? 40 : 50);
-                }
-
-                // CTA 버튼 (Action)
-                if (ctaText) {
-                    const ctaLabel = new fabric.Text(ctaText, {
-                        fontFamily: mainFont,
-                        fontSize: Math.max(cw * 0.016, 16),
-                        fontWeight: '800',
-                        fill: color1, // 브랜드 컬러 흡수
-                        originX: 'center',
-                        originY: 'center',
-                    });
-                    const ctaBg = new fabric.Rect({
-                        width: ctaLabel.width + 70,
-                        height: ctaLabel.height + 28,
-                        rx: 24, // 트렌디한 둥근 알약(Pill) 형태
-                        ry: 24,
-                        fill: '#ffffff',
-                        originX: 'center',
-                        originY: 'center',
-                        shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.4)', blur: 12, offsetX: 0, offsetY: 5 })
-                    });
-
-                    const ctaGroup = new fabric.Group([ctaBg, ctaLabel], {
-                        left: cw * 0.5,
-                        top: currentY,
-                        originX: 'center',
-                        originY: 'top',
-                        hoverCursor: 'pointer'
-                    });
-                    fc.add(ctaGroup);
-                }
-
-                // 캔버스 보이기
-                const canvasEl = document.getElementById('creativeCanvas');
-                if (canvasEl) canvasEl.style.display = 'block';
-                const emptyState = document.getElementById('canvasEmptyState');
-                if (emptyState) emptyState.style.display = 'none';
-
-                fc.renderAll();
-
-                // 리사이즈 맞추기
-                if (typeof resizeCanvasToDisplaySize === 'function') {
-                    setTimeout(resizeCanvasToDisplaySize, 100);
+                    await window.applyCreativeCanvasLayout(null);
                 }
 
             } catch (err) {
@@ -1096,3 +919,240 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
 });
+
+// ============================================
+// Thumbnails & Layout Drawing Logic
+// ============================================
+window._creativeHistory = [];
+window._currentActiveImageId = null;
+window._currentActiveImageB64 = null;
+
+window.renderCreativeThumbnailHistory = function () {
+    const container = document.getElementById('creativeThumbnailContainer');
+    if (!container) return;
+    if (window._creativeHistory.length === 0) {
+        container.style.display = 'none';
+        return;
+    }
+    container.style.display = 'flex';
+    container.innerHTML = window._creativeHistory.map(item => `
+        <div class="thumb-item" style="cursor: pointer; border: 3px solid ${window._currentActiveImageId === item.id ? 'var(--accent-blue)' : 'transparent'}; border-radius: 8px; overflow: hidden; min-width: 100px; max-width: 100px; height: 60px; box-shadow: var(--shadow-sm); position: relative; transition: all 0.2s;" onclick="loadCreativeThumbnail(${item.id})">
+            <img src="${item.b64}" style="width: 100%; height: 100%; object-fit: cover;" />
+        </div>
+    `).join('');
+};
+
+window.loadCreativeThumbnail = async function (id) {
+    const item = window._creativeHistory.find(x => x.id === id);
+    if (!item) return;
+    window._currentActiveImageId = id;
+    window._currentActiveImageB64 = item.b64;
+
+    // update prompt input nicely
+    const promptInput = document.getElementById('creativePrompt');
+    if (promptInput && item.prompt) promptInput.value = item.prompt;
+
+    window.renderCreativeThumbnailHistory();
+    if (typeof window.applyCreativeCanvasLayout === 'function') {
+        await window.applyCreativeCanvasLayout(item.b64);
+    }
+};
+
+window.applyCreativeCanvasLayout = async function (imgB64) {
+    const fc = window.creativeCanvasInstance;
+    if (!fc) return;
+
+    // 캔버스 클리어 및 리사이즈
+    fc.clear();
+    const sizeSelect = document.getElementById('canvasSizeSelect');
+    const [cw, ch] = (sizeSelect?.value || '1200x628').split('x').map(Number);
+    fc.setWidth(cw);
+    fc.setHeight(ch);
+
+    const color1 = document.getElementById('brandColor1')?.value || '#0f172a';
+    const color2 = document.getElementById('brandColor2')?.value || '#3b82f6';
+
+    // 1) 배경 이미지 셋업
+    if (imgB64) {
+        await new Promise((resolve) => {
+            fabric.Image.fromURL(imgB64, (img) => {
+                const scale = Math.max(cw / img.width, ch / img.height);
+                img.set({
+                    scaleX: scale,
+                    scaleY: scale,
+                    originX: 'center',
+                    originY: 'center',
+                    left: cw / 2,
+                    top: ch / 2
+                });
+                const overlay = new fabric.Rect({
+                    left: 0, top: 0, width: cw, height: ch, fill: 'rgba(0,0,0,0.3)', selectable: false
+                });
+                fc.setBackgroundImage(img, fc.renderAll.bind(fc));
+                fc.add(overlay);
+                resolve();
+            });
+        });
+    } else {
+        fc.setBackgroundColor(
+            new fabric.Gradient({
+                type: 'linear',
+                coords: { x1: 0, y1: 0, x2: cw, y2: ch },
+                colorStops: [{ offset: 0, color: color1 }, { offset: 1, color: color2 }]
+            }),
+            fc.renderAll.bind(fc)
+        );
+    }
+
+    // ============================================
+    // 15년차 CD 크리에이티브 시각화 로직 적용 구역 
+    // ============================================
+    const hasProduct = (window._productImages && window._productImages.length > 0);
+
+    const mainFont = 'Pretendard, sans-serif';
+    const mainFontSize = Math.max(cw * 0.06, 44);
+    const subFontSize = Math.max(cw * 0.022, 20);
+
+    const leftOffset = cw * 0.5;
+    const textOrigin = 'center';
+    const textAlign = 'center';
+    const textBoxWidth = cw * 0.8;
+
+    // 🌟 브랜드 로고가 업로드되어 있다면 처리
+    const logoImgEl = document.querySelector('#brandLogoPreview img');
+    if (logoImgEl && logoImgEl.src) {
+        await new Promise((resolve) => {
+            fabric.Image.fromURL(logoImgEl.src, (img) => {
+                const logoMaxH = ch * 0.1;
+                const logoScale = logoMaxH / img.height;
+                img.set({
+                    scaleX: logoScale,
+                    scaleY: logoScale,
+                    originX: 'left',
+                    originY: 'top',
+                    left: cw * 0.04,
+                    top: ch * 0.05,
+                    shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.3)', blur: 10, offsetX: 0, offsetY: 2 })
+                });
+                fc.add(img);
+                resolve();
+            });
+        });
+    }
+
+    // 1. 제품 이미지가 있다면 (가운데로 배치 요청 반영)
+    if (hasProduct) {
+        const imgData = window._productImages[0].dataUrl;
+        await new Promise((resolve) => {
+            fabric.Image.fromURL(imgData, (img) => {
+                const maxW = cw * 0.5;
+                const maxH = ch * 0.6;
+                const scale = Math.min(maxW / img.width, maxH / img.height);
+                img.set({
+                    scaleX: scale,
+                    scaleY: scale,
+                    originX: 'center',
+                    originY: 'center',
+                    left: cw * 0.5,
+                    top: ch * 0.5,
+                    shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.6)', blur: 30, offsetX: 0, offsetY: 15 })
+                });
+                fc.add(img);
+                resolve();
+            });
+        });
+    }
+
+    // 2. 텍스트 정보 불러오기
+    const mainText = document.getElementById('copyMain')?.value || '';
+    const subText = document.getElementById('copySub')?.value || '';
+    const ctaText = document.getElementById('copyCta')?.value || '';
+
+    let currentY = hasProduct ? ch * 0.25 : ch * 0.35;
+
+    // 메인 카피 (Slogan)
+    if (mainText) {
+        const mainObj = new fabric.Textbox(mainText, {
+            left: leftOffset,
+            top: currentY,
+            originX: textOrigin,
+            originY: 'top',
+            width: textBoxWidth,
+            fontFamily: mainFont,
+            fontSize: mainFontSize,
+            fontWeight: '900',
+            fill: '#ffffff',
+            textAlign: textAlign,
+            lineHeight: 1.15,
+            charSpacing: -20,
+            shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.9)', blur: 18, offsetX: 2, offsetY: 4 })
+        });
+        fc.add(mainObj);
+        currentY += (mainObj.height * mainObj.scaleY) + (hasProduct ? 20 : 30);
+    }
+
+    // 서브 카피 (Rationale)
+    if (subText) {
+        const subObj = new fabric.Textbox(subText, {
+            left: leftOffset,
+            top: currentY,
+            originX: textOrigin,
+            originY: 'top',
+            width: textBoxWidth,
+            fontFamily: mainFont,
+            fontSize: subFontSize,
+            fontWeight: '400',
+            fill: 'rgba(255,255,255,0.95)',
+            textAlign: textAlign,
+            lineHeight: 1.45,
+            charSpacing: 20,
+            shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.8)', blur: 8, offsetX: 1, offsetY: 2 })
+        });
+        fc.add(subObj);
+        currentY += (subObj.height * subObj.scaleY) + (hasProduct ? 40 : 50);
+    }
+
+    // CTA 버튼 (Action)
+    if (ctaText) {
+        const ctaLabel = new fabric.Text(ctaText, {
+            fontFamily: mainFont,
+            fontSize: Math.max(cw * 0.016, 16),
+            fontWeight: '800',
+            fill: color1,
+            originX: 'center',
+            originY: 'center',
+        });
+        const ctaBg = new fabric.Rect({
+            width: ctaLabel.width + 70,
+            height: ctaLabel.height + 28,
+            rx: 24,
+            ry: 24,
+            fill: '#ffffff',
+            originX: 'center',
+            originY: 'center',
+            shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.4)', blur: 12, offsetX: 0, offsetY: 5 })
+        });
+
+        const ctaGroup = new fabric.Group([ctaBg, ctaLabel], {
+            left: cw * 0.5,
+            top: currentY,
+            originX: 'center',
+            originY: 'top',
+            hoverCursor: 'pointer'
+        });
+        fc.add(ctaGroup);
+    }
+
+    // 캔버스 보이기
+    const canvasEl = document.getElementById('creativeCanvas');
+    if (canvasEl) canvasEl.style.display = 'block';
+    const emptyState = document.getElementById('canvasEmptyState');
+    if (emptyState) emptyState.style.display = 'none';
+
+    fc.renderAll();
+
+    // 리사이즈 맞추기
+    if (typeof window.resizeCanvasToDisplaySize === 'function') {
+        setTimeout(window.resizeCanvasToDisplaySize, 100);
+    }
+};

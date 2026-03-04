@@ -582,43 +582,48 @@
                                                 style="text-align: center; color: var(--text-muted); z-index: 0;">
                                                 <i class="fa-solid fa-laptop-code"
                                                     style="font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5;"></i><br>
-                                                <span style="font-size: 0.9rem;">아래 Generate 버튼을 눌러 에셋을 생성하세요</span>
+                                            </div>
+
+                                            <!-- 생성된 이미지 썸네일 히스토리 -->
+                                            <div id="creativeThumbnailContainer"
+                                                style="display: none; gap: 0.8rem; margin-top: 1rem; overflow-x: auto; padding-bottom: 0.5rem; min-height: 70px;">
+                                                <!-- 자바스크립트에 의해 채워짐 -->
                                             </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <!-- 크리에이티브 프롬프트 입력창 (수정/지시용) -->
-                                <div
-                                    style="margin-top: 1.5rem; margin-bottom: 2rem; background: #fdf8f6; border: 1px solid #fed7aa; border-radius: 12px; padding: 1.2rem; display: flex; flex-direction: column; gap: 0.6rem;">
-                                    <label
-                                        style="font-size: 0.95rem; font-weight: 700; color: #ea580c; display: flex; align-items: center; gap: 0.5rem;"><i
-                                            class="fa-solid fa-wand-magic-sparkles text-gradient"></i> AI 프롬프트 지시창 (생성물
-                                        및 톤 수정)</label>
-                                    <span style="font-size: 0.8rem; color: #f97316;">* AI가 생성해준 기존 프롬프트를 편집하거나 새로운
-                                        지시사항(예: 피사체를 정중앙에 배치, 배경 더 밝게)을 넣어주시면 캔버스가 다시 생성됩니다.</span>
-                                    <textarea id="creativePrompt"
-                                        placeholder="AI 전략 단계에서 프롬프트가 자동으로 채워집니다. 변경사항을 원하시면 지시어를 입력하고 Generate 버튼을 다시 눌러주세요."
-                                        style="width: 100%; padding: 0.8rem; border: 1px solid #fdba74; border-radius: 8px; font-size: 0.9rem; outline: none; resize: vertical; min-height: 80px; font-family: 'Pretendard', sans-serif; box-sizing: border-box; background: white;"></textarea>
-                                </div>
+                                    <!-- 크리에이티브 프롬프트 입력창 (수정/지시용) -->
+                                    <div
+                                        style="margin-top: 1.5rem; margin-bottom: 2rem; background: #fdf8f6; border: 1px solid #fed7aa; border-radius: 12px; padding: 1.2rem; display: flex; flex-direction: column; gap: 0.6rem;">
+                                        <label
+                                            style="font-size: 0.95rem; font-weight: 700; color: #ea580c; display: flex; align-items: center; gap: 0.5rem;"><i
+                                                class="fa-solid fa-wand-magic-sparkles text-gradient"></i> AI 프롬프트 지시창
+                                            (생성물
+                                            및 톤 수정)</label>
+                                        <span style="font-size: 0.8rem; color: #f97316;">* AI가 생성해준 기존 프롬프트를 편집하거나 새로운
+                                            지시사항(예: 피사체를 정중앙에 배치, 배경 더 밝게)을 넣어주시면 캔버스가 다시 생성됩니다.</span>
+                                        <textarea id="creativePrompt"
+                                            placeholder="AI 전략 단계에서 프롬프트가 자동으로 채워집니다. 변경사항을 원하시면 지시어를 입력하고 Generate 버튼을 다시 눌러주세요."
+                                            style="width: 100%; padding: 0.8rem; border: 1px solid #fdba74; border-radius: 8px; font-size: 0.9rem; outline: none; resize: vertical; min-height: 80px; font-family: 'Pretendard', sans-serif; box-sizing: border-box; background: white;"></textarea>
+                                    </div>
 
-                                <!-- 하단 버튼 -->
-                                <div style="display: flex; justify-content: space-between; gap: 1rem;">
-                                    <button class="btn" onclick="goWizardStep(2)"
-                                        style="background: white; color: var(--text-main); border: 1px solid var(--border-color); padding: 0.8rem 2.5rem; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s;">
-                                        <i class="fa-solid fa-arrow-left" style="margin-right: 0.5rem;"></i> 이전
-                                    </button>
-                                    <div style="display: flex; gap: 1rem;">
-                                        <button class="btn" id="btnPreviewRender"
-                                            style="background: var(--accent-blue); color: white; padding: 0.8rem 2.5rem; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); font-size: 1rem; border: none; cursor: pointer; transition: all 0.2s;">
-                                            <i class="fa-solid fa-wand-magic-sparkles"
-                                                style="margin-right: 0.3rem;"></i> Generate Creative
+                                    <!-- 하단 버튼 -->
+                                    <div style="display: flex; justify-content: space-between; gap: 1rem;">
+                                        <button class="btn" onclick="goWizardStep(2)"
+                                            style="background: white; color: var(--text-main); border: 1px solid var(--border-color); padding: 0.8rem 2.5rem; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s;">
+                                            <i class="fa-solid fa-arrow-left" style="margin-right: 0.5rem;"></i> 이전
                                         </button>
+                                        <div style="display: flex; gap: 1rem;">
+                                            <button class="btn" id="btnPreviewRender"
+                                                style="background: var(--accent-blue); color: white; padding: 0.8rem 2.5rem; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); font-size: 1rem; border: none; cursor: pointer; transition: all 0.2s;">
+                                                <i class="fa-solid fa-wand-magic-sparkles"
+                                                    style="margin-right: 0.3rem;"></i> Generate Creative
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
                 </main>
             </div>
