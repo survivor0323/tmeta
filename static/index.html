@@ -353,18 +353,74 @@
                                             </div>
                                         </div>
 
-                                        <!-- 레퍼런스 스타일 전이 (생성 모드) -->
-                                        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 0.5rem 0;" />
+                                        <!-- AI 이미지 생성 타입 및 프롬프트 섹션 -->
+                                        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 1.5rem 0;" />
+
+                                        <!-- 이미지 생성 타입 -->
                                         <div>
                                             <label
-                                                style="font-size: 0.85rem; color: var(--accent-blue); font-weight: 600; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;"><i
-                                                    class="fa-solid fa-image"></i> AI 레퍼런스 스타일 전이 배경</label>
-                                            <p
-                                                style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">
-                                                Motiverse 검색에서 가져온 레퍼런스의 배경과 톤을 내 제품에 맞게 합성합니다.</p>
-                                            <button class="btn"
-                                                style="width: 100%; text-align: center; justify-content: center; background: white; border: 1px solid #cbd5e1; color: var(--text-main);"><i
-                                                    class="fa-solid fa-plus"></i> 레퍼런스 선택 및 제품 컷 업로드</button>
+                                                style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 1.2rem; display: block;">이미지
+                                                생성 타입</label>
+                                            <div
+                                                style="display: flex; flex-wrap: wrap; gap: 0.6rem; padding-bottom: 2rem; border-bottom: 1px solid #f1f5f9;">
+                                                <button
+                                                    style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer;">실사형
+                                                    장면</button>
+                                                <button
+                                                    style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer;">제품
+                                                    모형 및 상업용 사진</button>
+                                                <button
+                                                    style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer;">배너형
+                                                    광고</button>
+                                                <button
+                                                    style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer;">브랜드
+                                                    히어로</button>
+                                                <button
+                                                    style="padding: 0.7rem 1.2rem; background: #3b82f6; color: white; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);">라이프스타일</button>
+                                                <button
+                                                    style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer;">이벤트/프로모션</button>
+                                            </div>
+                                        </div>
+
+                                        <!-- 프롬프트 -->
+                                        <div style="margin-top: 1.5rem;">
+                                            <label
+                                                style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 1.2rem; display: block;">프롬프트</label>
+
+                                            <textarea placeholder="예: 상품을(를) 햇살이 비치는 욕실 선반 위에 자연스럽게 배치해줘."
+                                                style="width: 100%; padding: 1.2rem; border: none; background: #f4f6f9; border-radius: 6px; font-size: 0.95rem; color: #334155; margin-bottom: 0.8rem; resize: vertical; min-height: 80px; outline: none; font-family: inherit; font-weight: 500; box-sizing: border-box;"></textarea>
+
+                                            <div
+                                                style="background: #eff6ff; border-left: 3px solid #3b82f6; padding: 1.2rem; border-radius: 0 6px 6px 0; display: flex; gap: 0.8rem; align-items: start; margin-bottom: 1.5rem;">
+                                                <i class="fa-regular fa-lightbulb"
+                                                    style="color: #ca8a04; margin-top: 0.2rem; font-size: 1.1rem;"></i>
+                                                <div style="font-size: 0.85rem; color: #475569; line-height: 1.6;">
+                                                    <span style="font-weight: 600; color: #1e40af;">팁:</span> 장면을 설명하고
+                                                    키워드만 나열하지 마세요. 이 모델의 핵심 강점은 깊이 있는 언어 이해입니다. 설명적인 단락은 연결되지 않은 단어 목록보다
+                                                    더 나은 이미지를 생성할 가능성이 높습니다.
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 1rem 0;" />
+
+                                        <!-- 내 제품 -->
+                                        <div style="margin-top: 1.5rem;">
+                                            <label
+                                                style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 1.2rem; display: block;">내
+                                                제품</label>
+                                            <div style="background: #f8fafc; border-radius: 6px; padding: 1.2rem; text-align: left; cursor: pointer; transition: background 0.2s; border: 1px solid transparent;"
+                                                onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#e2e8f0';"
+                                                onmouseout="this.style.background='#f8fafc'; this.style.borderColor='transparent';">
+                                                <span
+                                                    style="color: #64748b; font-size: 0.95rem; font-weight: 600; display: flex; align-items: center; justify-content: center;"><i
+                                                        class="fa-solid fa-plus"
+                                                        style="margin-right:0.5rem; font-size: 0.8rem;"></i> 제품 이미지
+                                                    업로드</span>
+                                            </div>
+                                            <div
+                                                style="font-size: 0.9rem; color: #0f172a; font-weight: 500; margin-top: 1.2rem;">
+                                                업로드된 제품이 없습니다.</div>
                                         </div>
                                     </div>
                                 </div>
