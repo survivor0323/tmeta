@@ -227,11 +227,11 @@
                                     Create Your Brand</h2>
                                 <div style="display: flex; gap: 0.8rem; align-items: center;">
                                     <select id="savedBrandSelect"
-                                        style="padding: 0.6rem 1rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.85rem; outline: none; cursor: pointer; min-width: 160px;">
+                                        style="padding: 0.8rem 1rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none; cursor: pointer; max-width: 250px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
                                         <option value="">저장된 브랜드 불러오기</option>
                                     </select>
                                     <button class="btn" id="btnSaveBrand"
-                                        style="background: #10b981; color: white; padding: 0.6rem 1rem; font-size: 0.85rem; white-space: nowrap;">
+                                        style="background: #10b981; color: white; padding: 0.8rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 0.95rem; white-space: nowrap; border: none; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);">
                                         <i class="fa-solid fa-floppy-disk" style="margin-right: 0.3rem;"></i> 브랜드 저장
                                     </button>
                                 </div>
@@ -249,7 +249,7 @@
                                         <input type="text" id="brandWebsiteUrl" placeholder="https://example.com"
                                             style="flex: 1; min-width: 0; padding: 0.8rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none;" />
                                         <button class="btn" id="btnScanWebsite"
-                                            style="background: var(--text-main); color: white; white-space: nowrap;">Scan
+                                            style="background: var(--text-main); color: white; padding: 0.8rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 0.95rem; white-space: nowrap; border: none; cursor: pointer; transition: all 0.2s;">Scan
                                             Website</button>
                                     </div>
                                     <label
@@ -296,7 +296,7 @@
                             <!-- 다음 버튼 -->
                             <div style="display: flex; justify-content: flex-end; margin-top: 2rem;">
                                 <button class="btn wizard-next-btn" onclick="goWizardStep(2)"
-                                    style="background: var(--accent-blue); color: white; padding: 0.8rem 2.5rem; border-radius: 8px; font-weight: 600; font-size: 1rem; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);">
+                                    style="background: var(--accent-blue); color: white; padding: 0.8rem 2.5rem; border-radius: 8px; font-weight: 600; font-size: 1rem; border: none; cursor: pointer; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); transition: all 0.2s;">
                                     다음 <i class="fa-solid fa-arrow-right" style="margin-left: 0.5rem;"></i>
                                 </button>
                             </div>
@@ -321,7 +321,7 @@
                                             style="margin-right: 0.5rem; color: var(--accent-blue);"></i> 레퍼런스 선택
                                     </h4>
                                     <button class="btn" id="btnLoadReferences"
-                                        style="background: white; color: var(--text-main); border: 1px solid var(--border-color); padding: 0.5rem 1rem; font-size: 0.85rem;">
+                                        style="background: white; color: var(--text-main); border: 1px solid var(--border-color); padding: 0.8rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: all 0.2s;">
                                         <i class="fa-solid fa-rotate" style="margin-right: 0.3rem;"></i> 모니터링 데이터에서 불러오기
                                     </button>
                                 </div>
@@ -354,9 +354,10 @@
                                     </div>
                                 </div>
                                 <button class="btn" id="btnGenerateAI"
-                                    style="background: var(--text-main); color: white; white-space: nowrap;"><i
-                                        class="fa-solid fa-wand-magic-sparkles" style="margin-right: 0.3rem;"></i> AI 전략
-                                    생성</button>
+                                    style="background: var(--text-main); color: white; padding: 0.8rem 2rem; border-radius: 8px; font-weight: 600; font-size: 0.95rem; white-space: nowrap; border: none; cursor: pointer; box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2); transition: all 0.2s;">
+                                    <i class="fa-solid fa-wand-magic-sparkles" style="margin-right: 0.3rem;"></i> AI 전략
+                                    생성
+                                </button>
                             </div>
 
                             <!-- AI 전략 생성 결과 영역 -->
@@ -365,11 +366,11 @@
                             <!-- 이전/다음 버튼 -->
                             <div style="display: flex; justify-content: space-between; margin-top: 2rem;">
                                 <button class="btn" onclick="goWizardStep(1)"
-                                    style="background: white; color: var(--text-main); border: 1px solid var(--border-color); padding: 0.8rem 2rem; border-radius: 8px; font-weight: 600; font-size: 1rem;">
+                                    style="background: white; color: var(--text-main); border: 1px solid var(--border-color); padding: 0.8rem 2.5rem; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s;">
                                     <i class="fa-solid fa-arrow-left" style="margin-right: 0.5rem;"></i> 이전
                                 </button>
                                 <button class="btn wizard-next-btn" onclick="goWizardStep(3)"
-                                    style="background: var(--accent-blue); color: white; padding: 0.8rem 2.5rem; border-radius: 8px; font-weight: 600; font-size: 1rem; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);">
+                                    style="background: var(--accent-blue); color: white; padding: 0.8rem 2.5rem; border-radius: 8px; font-weight: 600; font-size: 1rem; border: none; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); cursor: pointer; transition: all 0.2s;">
                                     다음 <i class="fa-solid fa-arrow-right" style="margin-left: 0.5rem;"></i>
                                 </button>
                             </div>
@@ -604,12 +605,12 @@
                                 <!-- 하단 버튼 -->
                                 <div style="display: flex; justify-content: space-between; gap: 1rem;">
                                     <button class="btn" onclick="goWizardStep(2)"
-                                        style="background: white; color: var(--text-main); border: 1px solid var(--border-color); padding: 0.8rem 2rem; border-radius: 8px; font-weight: 600;">
+                                        style="background: white; color: var(--text-main); border: 1px solid var(--border-color); padding: 0.8rem 2.5rem; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s;">
                                         <i class="fa-solid fa-arrow-left" style="margin-right: 0.5rem;"></i> 이전
                                     </button>
                                     <div style="display: flex; gap: 1rem;">
                                         <button class="btn" id="btnPreviewRender"
-                                            style="background: var(--accent-blue); color: white; padding: 0.8rem 2.5rem; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); font-size: 1rem;">
+                                            style="background: var(--accent-blue); color: white; padding: 0.8rem 2.5rem; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); font-size: 1rem; border: none; cursor: pointer; transition: all 0.2s;">
                                             <i class="fa-solid fa-wand-magic-sparkles"
                                                 style="margin-right: 0.3rem;"></i> Generate Creative
                                         </button>
