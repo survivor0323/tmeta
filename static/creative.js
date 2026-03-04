@@ -9,16 +9,32 @@ document.addEventListener("DOMContentLoaded", () => {
         e.preventDefault();
         navReference.parentElement.classList.add("active");
         navCreative.parentElement.classList.remove("active");
+        
         referenceView.classList.remove("hidden");
         creativeView.classList.add("hidden");
+
+        // Show icons if user is logged in
+        if (!document.getElementById('userInfo')?.classList.contains('hidden')) {
+            document.getElementById('monitorBtn')?.classList.remove('hidden');
+            document.getElementById('boardsBtn')?.classList.remove('hidden');
+            document.getElementById('historyBtn')?.classList.remove('hidden');
+            document.getElementById('bookmarkBtn')?.classList.remove('hidden');
+        }
     });
 
     navCreative.addEventListener("click", (e) => {
         e.preventDefault();
         navCreative.parentElement.classList.add("active");
         navReference.parentElement.classList.remove("active");
+        
         creativeView.classList.remove("hidden");
         referenceView.classList.add("hidden");
+
+        // Hide icons
+        document.getElementById('monitorBtn')?.classList.add('hidden');
+        document.getElementById('boardsBtn')?.classList.add('hidden');
+        document.getElementById('historyBtn')?.classList.add('hidden');
+        document.getElementById('bookmarkBtn')?.classList.add('hidden');
 
         // 캔버스 초기화 호출 (최초 열릴 때 한 번)
         if (!window.creativeCanvasInstance) {

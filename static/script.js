@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     // 플랫폼 필터 DOM (관리자 대시보드 탭 분리를 위해 속성 선택자 사용)
-    const platformTabs = document.querySelectorAll(".tab-chip[data-platform]");
+    const platformTabs = document.querySelectorAll("#platformFilters .tab-chip[data-platform]");
 
     // 플랫폼 선택 UI 이벤트
     platformTabs.forEach(tab => {
