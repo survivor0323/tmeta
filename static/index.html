@@ -183,362 +183,214 @@
             <!-- 🎨 크리에이티브 스튜디오 뷰 -->
             <div id="creativeView" class="hidden"
                 style="display: flex; min-height: calc(100vh - 80px); width: 100%; background: var(--bg-base); flex-direction: column;">
-
-                <!-- 스튜디오 메인 뷰 -->
                 <main style="flex: 1; padding: 2.5rem 3rem; overflow-y: auto;">
-
-
-
                     <section class="hero-section" style="margin-top: 2rem; margin-bottom: 2.5rem;">
-                        <h1
-                            style="font-family: 'GmarketSans', sans-serif; font-weight: 700; font-size: 2.2rem; margin-bottom: 0.5rem; letter-spacing: -0.5px;">
+                        <h1 style="font-family: 'GmarketSans', sans-serif; font-weight: 700; font-size: 2.2rem; margin-bottom: 0.5rem; letter-spacing: -0.5px;">
                             Motiverse AI <span class="text-gradient">크리에이티브 스튜디오</span></h1>
-                        <p style="color: var(--text-muted); font-size: 1.1rem;">AI를 활용해 마케팅 전략을 세우고, 내 브랜드에 최적화된 맞춤형 광고
-                            에셋을 생성하세요.</p>
+                        <p style="color: var(--text-muted); font-size: 1.1rem;">AI를 활용해 마케팅 전략을 세우고, 내 브랜드에 최적화된 맞춤형 광고 에셋을 생성하세요.</p>
                     </section>
 
-                    <div
-                        style="max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: stretch;">
+                    <div style="max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start;">
 
-                        <!-- LEFT COLUMN -->
+                        <!-- ========== LEFT COLUMN ========== -->
                         <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-                            <!-- Step 1: Create Brand -->
+
+                            <!-- Step 1: Create Your Brand -->
                             <div class="panel-box" style="padding: 1.5rem;">
                                 <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
-                                    <div
-                                        style="background: rgba(59, 130, 246, 0.1); color: var(--accent-blue); border-radius: 8px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 700;">
-                                        1</div>
+                                    <div style="background: rgba(59, 130, 246, 0.1); color: var(--accent-blue); border-radius: 8px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 700;">1</div>
                                     <div>
-                                        <h3
-                                            style="font-family: var(--font-heading); font-size: 1.2rem; color: var(--text-main); margin: 0;">
-                                            Create Your Brand <span
-                                                style="font-size: 0.8rem; font-weight: 400; color: var(--text-muted); margin-left: 0.5rem; background: #f1f5f9; padding: 0.2rem 0.5rem; border-radius: 4px;">Step
-                                                1/3</span></h3>
+                                        <h3 style="font-family: var(--font-heading); font-size: 1.2rem; color: var(--text-main); margin: 0;">
+                                            Create Your Brand <span style="font-size: 0.8rem; font-weight: 400; color: var(--text-muted); margin-left: 0.5rem; background: #f1f5f9; padding: 0.2rem 0.5rem; border-radius: 4px;">Step 1/3</span></h3>
                                     </div>
                                 </div>
-
-                                <div
-                                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; background: #f8fafc; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; background: #f8fafc; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
                                     <div>
-                                        <label
-                                            style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">브랜드
-                                            사이트 로드 (AI 자동 스캔)</label>
+                                        <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">브랜드 사이트 로드 (AI 자동 스캔)</label>
                                         <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
-                                            <input type="text" id="brandWebsiteUrl" placeholder="https://example.com"
-                                                style="flex: 1; padding: 0.8rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none;" />
-                                            <button class="btn" id="btnScanWebsite"
-                                                style="background: var(--text-main); color: white;">Scan
-                                                Website</button>
+                                            <input type="text" id="brandWebsiteUrl" placeholder="https://example.com" style="flex: 1; padding: 0.8rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none;" />
+                                            <button class="btn" id="btnScanWebsite" style="background: var(--text-main); color: white;">Scan Website</button>
                                         </div>
-
-                                        <label
-                                            style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">브랜드
-                                            명</label>
-                                        <input type="text" id="brandName" placeholder="Brand Name"
-                                            style="width: 100%; padding: 0.8rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none; margin-bottom: 1.5rem;" />
-
-                                        <label
-                                            style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">로고
-                                            업로드</label>
+                                        <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">브랜드 명</label>
+                                        <input type="text" id="brandName" placeholder="Brand Name" style="width: 100%; padding: 0.8rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none; margin-bottom: 1.5rem;" />
+                                        <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">로고 업로드</label>
                                         <div style="display: flex; gap: 1rem; align-items: center;">
-                                            <div id="brandLogoPreview"
-                                                style="width: 45px; height: 45px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; font-size: 1.2rem; color: #cbd5e1;">
-                                                <i class="fa-solid fa-image"></i>
-                                            </div>
-                                            <input type="file" id="brandLogo" accept="image/*"
-                                                style="flex: 1; padding: 0.6rem; border: 1px dashed #94a3b8; border-radius: 8px; font-size: 0.85rem; background: white;" />
+                                            <div id="brandLogoPreview" style="width: 45px; height: 45px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; font-size: 1.2rem; color: #cbd5e1;"><i class="fa-solid fa-image"></i></div>
+                                            <input type="file" id="brandLogo" accept="image/*" style="flex: 1; padding: 0.6rem; border: 1px dashed #94a3b8; border-radius: 8px; font-size: 0.85rem; background: white;" />
                                         </div>
                                     </div>
                                     <div>
-                                        <label
-                                            style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">브랜드
-                                            메인 컬러</label>
+                                        <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">브랜드 메인 컬러</label>
                                         <div style="display: flex; gap: 0.8rem; margin-bottom: 1.5rem;">
-                                            <input type="color" id="brandColor1" value="#0f172a"
-                                                style="width: 45px; height: 45px; border: none; border-radius: 8px; cursor: pointer; padding: 0;" />
-                                            <input type="color" id="brandColor2" value="#3b82f6"
-                                                style="width: 45px; height: 45px; border: none; border-radius: 8px; cursor: pointer; padding: 0;" />
+                                            <input type="color" id="brandColor1" value="#0f172a" style="width: 45px; height: 45px; border: none; border-radius: 8px; cursor: pointer; padding: 0;" />
+                                            <input type="color" id="brandColor2" value="#3b82f6" style="width: 45px; height: 45px; border: none; border-radius: 8px; cursor: pointer; padding: 0;" />
                                         </div>
-
-                                        <label
-                                            style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">대표
-                                            폰트 (TTF/OTF 업로드)</label>
-                                        <div
-                                            style="display: flex; gap: 0.5rem; align-items: center; background: white; border: 1px solid #cbd5e1; padding: 0.6rem; border-radius: 8px;">
-                                            <input type="file" id="brandCustomFont" accept=".ttf,.otf"
-                                                style="flex: 1; font-size: 0.85rem;" />
-                                            <span id="brandCustomFontLabel"
-                                                style="font-size: 0.8rem; color: #94a3b8;">Default (Pretendard)</span>
+                                        <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">대표 폰트 (TTF/OTF 업로드)</label>
+                                        <div style="display: flex; gap: 0.5rem; align-items: center; background: white; border: 1px solid #cbd5e1; padding: 0.6rem; border-radius: 8px;">
+                                            <input type="file" id="brandCustomFont" accept=".ttf,.otf" style="flex: 1; font-size: 0.85rem;" />
+                                            <span id="brandCustomFontLabel" style="font-size: 0.8rem; color: #94a3b8;">Default (Pretendard)</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <!-- Step 3: Text & AI Generative -->
+
+                            <!-- Step 2: Text on Image & AI Strategy -->
                             <div class="panel-box" style="padding: 1.5rem;">
-                                <div
-                                    style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
                                     <div style="display: flex; align-items: center; gap: 1rem;">
-                                        <div
-                                            style="background: rgba(59, 130, 246, 0.1); color: var(--accent-blue); border-radius: 8px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 700;">
-                                            3</div>
-                                        <h3
-                                            style="font-family: var(--font-heading); font-size: 1.2rem; color: var(--text-main); margin: 0;">
-                                            Text on Image & AI Strategy</h3>
+                                        <div style="background: rgba(59, 130, 246, 0.1); color: var(--accent-blue); border-radius: 8px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 700;">2</div>
+                                        <h3 style="font-family: var(--font-heading); font-size: 1.2rem; color: var(--text-main); margin: 0;">Text on Image & AI Strategy</h3>
                                     </div>
                                     <i class="fa-solid fa-chevron-down" style="color: #94a3b8;"></i>
                                 </div>
-
-                                <div
-                                    style="margin-top: 1.5rem; background: #eff6ff; border: 1px solid #bfdbfe; padding: 1.5rem; border-radius: 12px; display: flex; justify-content: space-between; align-items: center;">
+                                <div style="margin-top: 1.5rem; background: #eff6ff; border: 1px solid #bfdbfe; padding: 1.5rem; border-radius: 12px; display: flex; justify-content: space-between; align-items: center;">
                                     <div style="display: flex; align-items: center; gap: 1rem;">
-                                        <div
-                                            style="width: 48px; height: 48px; background: var(--text-main); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
-                                            <i class="fa-solid fa-robot" style="font-size: 1.5rem;"></i>
-                                        </div>
+                                        <div style="width: 48px; height: 48px; background: var(--text-main); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;"><i class="fa-solid fa-robot" style="font-size: 1.5rem;"></i></div>
                                         <div>
-                                            <div
-                                                style="font-weight: 700; color: var(--text-main); font-size: 1.1rem; font-family: var(--font-heading);">
-                                                Generate strategy & texts with AI</div>
-                                            <div style="font-size: 0.9rem; color: var(--text-muted);">업로드된 레퍼런스와 내 브랜드를
-                                                분석하여
-                                                고효율 카피와 레이아웃 전략을 추천합니다.</div>
+                                            <div style="font-weight: 700; color: var(--text-main); font-size: 1.1rem; font-family: var(--font-heading);">Generate strategy & texts with AI</div>
+                                            <div style="font-size: 0.9rem; color: var(--text-muted);">업로드된 레퍼런스와 내 브랜드를 분석하여 고효율 카피와 레이아웃 전략을 추천합니다.</div>
                                         </div>
                                     </div>
-                                    <button class="btn" style="background: var(--text-main); color: white;"><i
-                                            class="fa-solid fa-bolt text-gradient"></i> Generate AI Strategy</button>
+                                    <button class="btn" style="background: var(--text-main); color: white;"><i class="fa-solid fa-bolt text-gradient"></i> Generate AI Strategy</button>
                                 </div>
-
-
                                 <div style="display: flex; flex-direction: column;">
-                                    <h4
-                                        style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem;">
-                                        On Image Texts</h4>
-
-                                    <div
-                                        style="display: flex; flex-direction: column; gap: 1.2rem; background: #f8fafc; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                                    <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; margin-top: 1.5rem;">On Image Texts</h4>
+                                    <div style="display: flex; flex-direction: column; gap: 1.2rem; background: #f8fafc; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
                                         <div>
-                                            <label
-                                                style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.5rem; display: block;">메인
-                                                카피 (Main Headline)</label>
-                                            <div
-                                                style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
-                                                <input type="text" id="copyMain" value="압도적인 퍼포먼스, 새로운 차원의 경험"
-                                                    style="border: none; outline: none; width: 100%; font-weight: 600; color: var(--text-main); font-size: 0.95rem;" />
-                                                <i class="fa-solid fa-dice text-gradient"
-                                                    style="cursor: pointer; padding-left: 0.5rem;"></i>
+                                            <label style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.5rem; display: block;">메인 카피 (Main Headline)</label>
+                                            <div style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
+                                                <input type="text" id="copyMain" value="압도적인 퍼포먼스, 새로운 차원의 경험" style="border: none; outline: none; width: 100%; font-weight: 600; color: var(--text-main); font-size: 0.95rem;" />
+                                                <i class="fa-solid fa-dice text-gradient" style="cursor: pointer; padding-left: 0.5rem;"></i>
                                             </div>
                                         </div>
                                         <div>
-                                            <label
-                                                style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.5rem; display: block;">서브
-                                                카피 (Punchline / Sub)</label>
-                                            <div
-                                                style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
-                                                <input type="text" id="copySub" value="지금 사전예약하고 특별한 혜택을 누리세요."
-                                                    style="border: none; outline: none; width: 100%; font-weight: 500; color: var(--text-main); font-size: 0.95rem;" />
-                                                <i class="fa-solid fa-dice text-gradient"
-                                                    style="cursor: pointer; padding-left: 0.5rem;"></i>
+                                            <label style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.5rem; display: block;">서브 카피 (Punchline / Sub)</label>
+                                            <div style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
+                                                <input type="text" id="copySub" value="지금 사전예약하고 특별한 혜택을 누리세요." style="border: none; outline: none; width: 100%; font-weight: 500; color: var(--text-main); font-size: 0.95rem;" />
+                                                <i class="fa-solid fa-dice text-gradient" style="cursor: pointer; padding-left: 0.5rem;"></i>
                                             </div>
                                         </div>
                                         <div>
-                                            <label
-                                                style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.5rem; display: block;">콜투액션
-                                                (Call to Action)</label>
-                                            <div
-                                                style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
-                                                <input type="text" id="copyCta" value="자세히 알아보기"
-                                                    style="border: none; outline: none; width: 100%; font-weight: 600; color: var(--text-main); font-size: 0.95rem;" />
-                                                <i class="fa-solid fa-dice text-gradient"
-                                                    style="cursor: pointer; padding-left: 0.5rem;"></i>
+                                            <label style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.5rem; display: block;">콜투액션 (Call to Action)</label>
+                                            <div style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
+                                                <input type="text" id="copyCta" value="자세히 알아보기" style="border: none; outline: none; width: 100%; font-weight: 600; color: var(--text-main); font-size: 0.95rem;" />
+                                                <i class="fa-solid fa-dice text-gradient" style="cursor: pointer; padding-left: 0.5rem;"></i>
                                             </div>
-                                        </div>
-
-                                        <!-- AI 이미지 생성 타입 및 프롬프트 섹션 -->
-                                        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 1.5rem 0;" />
-
-                                        <!-- 이미지 생성 타입 -->
-                                        <div>
-                                            <label
-                                                style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 1.2rem; display: block;">이미지
-                                                생성 타입</label>
-                                            <div
-                                                style="display: flex; flex-wrap: wrap; gap: 0.6rem; padding-bottom: 2rem; border-bottom: 1px solid #f1f5f9;">
-                                                <button
-                                                    style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer;">실사형
-                                                    장면</button>
-                                                <button
-                                                    style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer;">제품
-                                                    모형 및 상업용 사진</button>
-                                                <button
-                                                    style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer;">배너형
-                                                    광고</button>
-                                                <button
-                                                    style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer;">브랜드
-                                                    히어로</button>
-                                                <button
-                                                    style="padding: 0.7rem 1.2rem; background: #3b82f6; color: white; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);">라이프스타일</button>
-                                                <button
-                                                    style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer;">이벤트/프로모션</button>
-                                            </div>
-                                        </div>
-
-                                        <!-- 프롬프트 -->
-                                        <div style="margin-top: 1.5rem;">
-                                            <label
-                                                style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 1.2rem; display: block;">프롬프트</label>
-
-                                            <textarea placeholder="예: 상품을(를) 햇살이 비치는 욕실 선반 위에 자연스럽게 배치해줘."
-                                                style="width: 100%; padding: 1.2rem; border: none; background: #f4f6f9; border-radius: 6px; font-size: 0.95rem; color: #334155; margin-bottom: 0.8rem; resize: vertical; min-height: 80px; outline: none; font-family: inherit; font-weight: 500; box-sizing: border-box;"></textarea>
-
-                                            <div
-                                                style="background: #eff6ff; border-left: 3px solid #3b82f6; padding: 1.2rem; border-radius: 0 6px 6px 0; display: flex; gap: 0.8rem; align-items: start; margin-bottom: 1.5rem;">
-                                                <i class="fa-regular fa-lightbulb"
-                                                    style="color: #ca8a04; margin-top: 0.2rem; font-size: 1.1rem;"></i>
-                                                <div style="font-size: 0.85rem; color: #475569; line-height: 1.6;">
-                                                    <span style="font-weight: 600; color: #1e40af;">팁:</span> 장면을 설명하고
-                                                    키워드만 나열하지 마세요. 이 모델의 핵심 강점은 깊이 있는 언어 이해입니다. 설명적인 단락은 연결되지 않은 단어 목록보다
-                                                    더 나은 이미지를 생성할 가능성이 높습니다.
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 1rem 0;" />
-
-                                        <!-- 내 제품 -->
-                                        <div style="margin-top: 1.5rem;">
-                                            <label
-                                                style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 1.2rem; display: block;">내
-                                                제품</label>
-                                            <div style="background: #f8fafc; border-radius: 6px; padding: 1.2rem; text-align: left; cursor: pointer; transition: background 0.2s; border: 1px solid transparent;"
-                                                onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#e2e8f0';"
-                                                onmouseout="this.style.background='#f8fafc'; this.style.borderColor='transparent';">
-                                                <span
-                                                    style="color: #64748b; font-size: 0.95rem; font-weight: 600; display: flex; align-items: center; justify-content: center;"><i
-                                                        class="fa-solid fa-plus"
-                                                        style="margin-right:0.5rem; font-size: 0.8rem;"></i> 제품 이미지
-                                                    업로드</span>
-                                            </div>
-                                            <div
-                                                style="font-size: 0.9rem; color: #0f172a; font-weight: 500; margin-top: 1.2rem;">
-                                                업로드된 제품이 없습니다.</div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- RIGHT COLUMN -->
-                        <div style="display: flex; flex-direction: column; gap: 1.5rem; height: 100%;">
-                            <!-- Step 2: Select Creative Size -->
+                        <!-- ========== RIGHT COLUMN ========== -->
+                        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+                            <!-- Step 3: 광고 크리에이티브 제작 (이미지타입 + 프롬프트 + 제품 + 크기 통합) -->
                             <div class="panel-box" style="padding: 1.5rem;">
-                                <div
-                                    style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
                                     <div style="display: flex; align-items: center; gap: 1rem;">
-                                        <div
-                                            style="background: rgba(59, 130, 246, 0.1); color: var(--accent-blue); border-radius: 8px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 700;">
-                                            2</div>
-                                        <h3
-                                            style="font-family: var(--font-heading); font-size: 1.2rem; color: var(--text-main); margin: 0;">
-                                            Select Creative Size</h3>
+                                        <div style="background: rgba(59, 130, 246, 0.1); color: var(--accent-blue); border-radius: 8px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 700;">3</div>
+                                        <h3 style="font-family: var(--font-heading); font-size: 1.2rem; color: var(--text-main); margin: 0;">Select Creative Size</h3>
                                     </div>
                                     <i class="fa-solid fa-chevron-down" style="color: #94a3b8;"></i>
                                 </div>
 
+                                <!-- Advertising Platforms -->
                                 <div style="margin-top: 1.5rem;">
-                                    <h4
-                                        style="font-size: 0.95rem; color: var(--text-main); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                                        Advertising Platforms <span
-                                            style="font-size: 0.8rem; font-weight: 400; color: var(--text-muted);">Select
-                                            a target platform to view specific sizes and Safe Zone rules.</span></h4>
-
-                                    <div id="creativePlatformTabs"
-                                        style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
-                                        <!-- Naver Card -->
-                                        <div class="tab-chip platform-card active" data-platform="naver"
-                                            style="cursor: pointer; display: flex; align-items: center; gap: 1rem; padding: 1rem; text-align: left;">
+                                    <h4 style="font-size: 0.95rem; color: var(--text-main); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                                        Advertising Platforms <span style="font-size: 0.8rem; font-weight: 400; color: var(--text-muted);">Select a target platform to view specific sizes and Safe Zone rules.</span></h4>
+                                    <div id="creativePlatformTabs" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                                        <div class="tab-chip platform-card active" data-platform="naver" style="cursor: pointer; display: flex; align-items: center; gap: 1rem; padding: 1rem; text-align: left;">
                                             <i class="fa-solid fa-n" style="font-size: 2rem; color: #03c75a;"></i>
-                                            <div
-                                                style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem;">
+                                            <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem;">
                                                 <div style="font-weight: 700; font-size: 1rem;">Naver GFA</div>
                                                 <div style="font-size: 0.8rem; opacity: 0.8;">Feed & Native</div>
                                             </div>
                                         </div>
-                                        <!-- Kakao Card -->
-                                        <div class="tab-chip platform-card" data-platform="kakao"
-                                            style="cursor: pointer; display: flex; align-items: center; gap: 1rem; padding: 1rem; text-align: left;">
+                                        <div class="tab-chip platform-card" data-platform="kakao" style="cursor: pointer; display: flex; align-items: center; gap: 1rem; padding: 1rem; text-align: left;">
                                             <i class="fa-solid fa-k" style="font-size: 2rem; color: #fae100;"></i>
                                             <div style="display: flex; flex-direction: column; gap: 0.2rem;">
-                                                <div style="font-weight: 700; font-size: 1rem; line-height: 1.2;">
-                                                    Kakao<br>Moment</div>
-                                                <div style="font-size: 0.8rem; opacity: 0.8; line-height: 1.2;">Bizboard
-                                                    &<br>Display</div>
+                                                <div style="font-weight: 700; font-size: 1rem; line-height: 1.2;">Kakao<br>Moment</div>
+                                                <div style="font-size: 0.8rem; opacity: 0.8; line-height: 1.2;">Bizboard &<br>Display</div>
                                             </div>
                                         </div>
-                                        <!-- Meta Card -->
-                                        <div class="tab-chip platform-card" data-platform="meta"
-                                            style="cursor: pointer; display: flex; align-items: center; gap: 1rem; padding: 1rem; text-align: left;">
+                                        <div class="tab-chip platform-card" data-platform="meta" style="cursor: pointer; display: flex; align-items: center; gap: 1rem; padding: 1rem; text-align: left;">
                                             <i class="fa-brands fa-meta" style="font-size: 2rem; color: #0668E1;"></i>
                                             <div style="display: flex; flex-direction: column; gap: 0.2rem;">
-                                                <div style="font-weight: 700; font-size: 1rem; line-height: 1.2;">
-                                                    Meta<br>(FB/IG)</div>
-                                                <div style="font-size: 0.8rem; opacity: 0.8; line-height: 1.2;">Feed
-                                                    &<br>Reels</div>
+                                                <div style="font-weight: 700; font-size: 1rem; line-height: 1.2;">Meta<br>(FB/IG)</div>
+                                                <div style="font-size: 0.8rem; opacity: 0.8; line-height: 1.2;">Feed &<br>Reels</div>
                                             </div>
                                         </div>
                                     </div>
-
-                                    <div
-                                        style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.8rem;">
-                                        <label
-                                            style="font-size: 0.85rem; font-weight: 600; color: var(--text-main);">Target
-                                            Dimensions</label>
-                                        <select id="canvasSizeSelect"
-                                            style="padding: 0.8rem 1rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer;">
-                                            <!-- Options will be populated by JS, initializing with Naver -->
+                                    <div style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.8rem;">
+                                        <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-main);">Target Dimensions</label>
+                                        <select id="canvasSizeSelect" style="padding: 0.8rem 1rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer;">
                                             <option value="1200x628">피드 및 네이티브 (1200x628)</option>
                                             <option value="600x600">스퀘어 썸네일 (600x600)</option>
                                             <option value="342x228">PC 스마트채널 (342x228)</option>
                                             <option value="1200x1800">세로형 피드 (1200x1800)</option>
                                         </select>
-                                        <div id="creativeRuleWarning"
-                                            style="background: #fff1f2; color: #e11d48; padding: 0.8rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; border: 1px solid #ffe4e6;">
+                                        <div id="creativeRuleWarning" style="background: #fff1f2; color: #e11d48; padding: 0.8rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; border: 1px solid #ffe4e6;">
                                             <i class="fa-solid fa-circle-exclamation" style="margin-right:0.4rem;"></i>
                                             <span>텍스트 면적 20% 이내 (단색 배경 불가)</span>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="panel-box"
-                                style="padding: 1.5rem; display: flex; flex-direction: column; flex: 1;">
-                                <div style="flex: 1; display: flex; flex-direction: column;">
-                                    <!-- 미리보기 캔버스 보드 -->
-                                    <div
-                                        style="background: white; border: 1px solid var(--border-color); border-radius: 12px; height: 100%; display: flex; flex-direction: column;">
-                                        <div
-                                            style="padding: 0.8rem 1rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">
-                                            <span><i class="fa-solid fa-eye"></i> Live Preview</span>
-                                            <span style="color: #ef4444;"><i class="fa-solid fa-circle-exclamation"></i>
-                                                Safe Zone Check</span>
+
+                                <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 1.5rem 0;" />
+
+                                <!-- 이미지 생성 타입 -->
+                                <div>
+                                    <label style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 1.2rem; display: block;">이미지 생성 타입</label>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 0.6rem; padding-bottom: 2rem; border-bottom: 1px solid #f1f5f9;">
+                                        <button style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer;">실사형 장면</button>
+                                        <button style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer;">제품 모형 및 상업용 사진</button>
+                                        <button style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer;">배너형 광고</button>
+                                        <button style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer;">브랜드 히어로</button>
+                                        <button style="padding: 0.7rem 1.2rem; background: #3b82f6; color: white; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);">라이프스타일</button>
+                                        <button style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer;">이벤트/프로모션</button>
+                                    </div>
+                                </div>
+
+                                <!-- 프롬프트 -->
+                                <div style="margin-top: 1.5rem;">
+                                    <label style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 1.2rem; display: block;">프롬프트</label>
+                                    <textarea placeholder="예: 상품을(를) 햇살이 비치는 욕실 선반 위에 자연스럽게 배치해줘." style="width: 100%; padding: 1.2rem; border: none; background: #f4f6f9; border-radius: 6px; font-size: 0.95rem; color: #334155; margin-bottom: 0.8rem; resize: vertical; min-height: 80px; outline: none; font-family: inherit; font-weight: 500; box-sizing: border-box;"></textarea>
+                                    <div style="background: #eff6ff; border-left: 3px solid #3b82f6; padding: 1.2rem; border-radius: 0 6px 6px 0; display: flex; gap: 0.8rem; align-items: start;">
+                                        <i class="fa-regular fa-lightbulb" style="color: #ca8a04; margin-top: 0.2rem; font-size: 1.1rem;"></i>
+                                        <div style="font-size: 0.85rem; color: #475569; line-height: 1.6;">
+                                            <span style="font-weight: 600; color: #1e40af;">팁:</span> 장면을 설명하고 키워드만 나열하지 마세요. 이 모델의 핵심 강점은 깊이 있는 언어 이해입니다. 설명적인 단락은 연결되지 않은 단어 목록보다 더 나은 이미지를 생성할 가능성이 높습니다.
                                         </div>
-                                        <!-- Fabric.js Canvas Container -->
-                                        <div id="canvasWrapper"
-                                            style="flex: 1; display: flex; align-items: center; justify-content: center; background: repeating-conic-gradient(#f1f5f9 0% 25%, transparent 0% 50%) 50% / 20px 20px; overflow: hidden; position: relative; padding: 1rem; min-height: 400px;">
-                                            <canvas id="creativeCanvas"
-                                                style="display: none; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); max-width: 100%; max-height: 100%; position: absolute; z-index: 1;"></canvas>
+                                    </div>
+                                </div>
 
-                                            <!-- Safe Zone 가이드라인 오버레이 (Fabric 캔버스와 동일한 위치, 크기로 동기화 됨) -->
-                                            <div id="safeZoneOverlay"
-                                                style="display: none; position: absolute; z-index: 2; pointer-events: none; border: 2px dashed rgba(239, 68, 68, 0.7); box-shadow: inset 0 0 0 1000px rgba(239, 68, 68, 0.1);">
-                                                <div
-                                                    style="position: absolute; top: -25px; left: 0; background: rgba(239, 68, 68, 0.9); color: white; padding: 2px 8px; font-size: 0.7rem; border-radius: 4px; font-weight: bold;">
-                                                    <i class="fa-solid fa-triangle-exclamation"></i> Danger Zone
-                                                </div>
+                                <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 1.5rem 0;" />
+
+                                <!-- 내 제품 -->
+                                <div>
+                                    <label style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 1.2rem; display: block;">내 제품</label>
+                                    <div style="background: #f8fafc; border-radius: 6px; padding: 1.2rem; text-align: left; cursor: pointer; transition: background 0.2s; border: 1px solid transparent;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#e2e8f0';" onmouseout="this.style.background='#f8fafc'; this.style.borderColor='transparent';">
+                                        <span style="color: #64748b; font-size: 0.95rem; font-weight: 600; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-plus" style="margin-right:0.5rem; font-size: 0.8rem;"></i> 제품 이미지 업로드</span>
+                                    </div>
+                                    <div style="font-size: 0.9rem; color: #0f172a; font-weight: 500; margin-top: 1.2rem;">업로드된 제품이 없습니다.</div>
+                                </div>
+                            </div>
+
+                            <!-- Live Preview -->
+                            <div class="panel-box" style="padding: 1.5rem; display: flex; flex-direction: column; flex: 1;">
+                                <div style="flex: 1; display: flex; flex-direction: column;">
+                                    <div style="background: white; border: 1px solid var(--border-color); border-radius: 12px; height: 100%; display: flex; flex-direction: column;">
+                                        <div style="padding: 0.8rem 1rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">
+                                            <span><i class="fa-solid fa-eye"></i> Live Preview</span>
+                                            <span style="color: #ef4444;"><i class="fa-solid fa-circle-exclamation"></i> Safe Zone Check</span>
+                                        </div>
+                                        <div id="canvasWrapper" style="flex: 1; display: flex; align-items: center; justify-content: center; background: repeating-conic-gradient(#f1f5f9 0% 25%, transparent 0% 50%) 50% / 20px 20px; overflow: hidden; position: relative; padding: 1rem; min-height: 400px;">
+                                            <canvas id="creativeCanvas" style="display: none; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); max-width: 100%; max-height: 100%; position: absolute; z-index: 1;"></canvas>
+                                            <div id="safeZoneOverlay" style="display: none; position: absolute; z-index: 2; pointer-events: none; border: 2px dashed rgba(239, 68, 68, 0.7); box-shadow: inset 0 0 0 1000px rgba(239, 68, 68, 0.1);">
+                                                <div style="position: absolute; top: -25px; left: 0; background: rgba(239, 68, 68, 0.9); color: white; padding: 2px 8px; font-size: 0.7rem; border-radius: 4px; font-weight: bold;"><i class="fa-solid fa-triangle-exclamation"></i> Danger Zone</div>
                                             </div>
-
-                                            <div id="canvasEmptyState"
-                                                style="text-align: center; color: var(--text-muted); z-index: 0;">
-                                                <i class="fa-solid fa-laptop-code"
-                                                    style="font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5;"></i><br>
+                                            <div id="canvasEmptyState" style="text-align: center; color: var(--text-muted); z-index: 0;">
+                                                <i class="fa-solid fa-laptop-code" style="font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5;"></i><br>
                                                 <span style="font-size: 0.9rem;">Generate 버튼을 눌러 에셋을 생성하세요</span>
                                             </div>
                                         </div>
@@ -546,24 +398,20 @@
                                 </div>
                             </div>
 
-                            <!-- 하단 저장 및 렌더링 버튼 -->
-                            <div
-                                style="text-align: right; margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem;">
-                                <select
-                                    style="padding: 0.8rem 1.5rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; font-weight: 600;">
+                            <!-- 하단 버튼 -->
+                            <div style="text-align: right; margin-top: 0.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem; display: flex; justify-content: center; gap: 1rem;">
+                                <select style="padding: 0.8rem 1.5rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; font-weight: 600;">
                                     <option>Save to Project</option>
                                 </select>
-                                <button class="btn" id="btnPreviewRender"
-                                    style="background: var(--accent-blue); color: white; padding: 0.8rem 2.5rem; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); font-size: 1rem;">
+                                <button class="btn" id="btnPreviewRender" style="background: var(--accent-blue); color: white; padding: 0.8rem 2.5rem; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); font-size: 1rem;">
                                     <i class="fa-solid fa-bolt"></i> Preview Render
                                 </button>
                             </div>
                         </div>
                     </div>
-
+                </main>
             </div>
-            </main>
-        </div>
+
 
         <!-- AI Analysis Modal \(팝업\) -->
         <div id="aiModal" class="modal hidden">
