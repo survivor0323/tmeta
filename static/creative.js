@@ -914,31 +914,53 @@ document.addEventListener("DOMContentLoaded", () => {
                 const hasProduct = (window._productImages && window._productImages.length > 0);
 
                 const mainFont = 'Pretendard, sans-serif';
-                const mainFontSize = hasProduct ? Math.max(cw * 0.045, 32) : Math.max(cw * 0.06, 44);
-                const subFontSize = hasProduct ? Math.max(cw * 0.02, 16) : Math.max(cw * 0.022, 20);
+                const mainFontSize = Math.max(cw * 0.06, 44);
+                const subFontSize = Math.max(cw * 0.022, 20);
 
-                const leftOffset = hasProduct ? cw * 0.06 : cw * 0.5;
-                const textOrigin = hasProduct ? 'left' : 'center';
-                const textAlign = hasProduct ? 'left' : 'center';
-                const textBoxWidth = hasProduct ? cw * 0.42 : cw * 0.8;
+                const leftOffset = cw * 0.5;
+                const textOrigin = 'center';
+                const textAlign = 'center';
+                const textBoxWidth = cw * 0.8;
 
-                // 1. 제품 이미지가 있으면 오른쪽에 큼직하게 배치
+                // 🌟 브랜드 로고가 업로드되어 있다면, 좌측 상단(또는 우측 상단)에 배치
+                const logoImgEl = document.querySelector('#brandLogoPreview img');
+                if (logoImgEl && logoImgEl.src) {
+                    await new Promise((resolve) => {
+                        fabric.Image.fromURL(logoImgEl.src, (img) => {
+                            const logoMaxH = ch * 0.1; // 캔버스 높이의 10%
+                            const logoScale = logoMaxH / img.height;
+                            img.set({
+                                scaleX: logoScale,
+                                scaleY: logoScale,
+                                originX: 'left',
+                                originY: 'top',
+                                left: cw * 0.04,
+                                top: ch * 0.05,
+                                shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.3)', blur: 10, offsetX: 0, offsetY: 2 })
+                            });
+                            fc.add(img);
+                            resolve();
+                        });
+                    });
+                }
+
+                // 1. 제품 이미지가 있다면 (가운데로 배치 요청 반영)
                 if (hasProduct) {
                     const imgData = window._productImages[0].dataUrl;
                     await new Promise((resolve) => {
                         fabric.Image.fromURL(imgData, (img) => {
-                            const maxW = cw * 0.45;
-                            const maxH = ch * 0.75;
+                            const maxW = cw * 0.5;
+                            const maxH = ch * 0.6;
                             const scale = Math.min(maxW / img.width, maxH / img.height);
                             img.set({
                                 scaleX: scale,
                                 scaleY: scale,
-                                originX: 'right',
+                                originX: 'center',
                                 originY: 'center',
-                                left: cw * 0.95,
+                                left: cw * 0.5,
                                 top: ch * 0.5,
-                                // 고급스러운 하이라이트 그림자 패키지
-                                shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.6)', blur: 30, offsetX: -5, offsetY: 15 })
+                                // 피사체를 강조하는 하이라이트 그림자
+                                shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.6)', blur: 30, offsetX: 0, offsetY: 15 })
                             });
                             fc.add(img);
                             resolve();
@@ -1018,9 +1040,8 @@ document.addEventListener("DOMContentLoaded", () => {
                         shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.4)', blur: 12, offsetX: 0, offsetY: 5 })
                     });
 
-                    const ctaGroupX = hasProduct ? leftOffset + (ctaBg.width / 2) : cw * 0.5;
                     const ctaGroup = new fabric.Group([ctaBg, ctaLabel], {
-                        left: ctaGroupX,
+                        left: cw * 0.5,
                         top: currentY,
                         originX: 'center',
                         originY: 'top',
