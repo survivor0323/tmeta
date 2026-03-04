@@ -1,4 +1,63 @@
+// === Wizard Step Navigation (Global) ===
+window.goWizardStep = function (step) {
+    // Hide all panels
+    document.querySelectorAll('.wizard-panel').forEach(p => p.classList.add('hidden'));
+    // Show target
+    const target = document.getElementById('wizardStep' + step);
+    if (target) target.classList.remove('hidden');
+
+    // Update step indicators
+    document.querySelectorAll('.wizard-step').forEach(s => {
+        const sNum = parseInt(s.dataset.step);
+        const numEl = s.querySelector('.wizard-num');
+        const labelEl = s.querySelector('span');
+        if (sNum <= step) {
+            s.classList.add('active');
+            if (numEl) { numEl.style.background = 'var(--accent-blue)'; numEl.style.color = 'white'; }
+            if (labelEl) labelEl.style.color = 'var(--text-main)';
+        } else {
+            s.classList.remove('active');
+            if (numEl) { numEl.style.background = '#e2e8f0'; numEl.style.color = '#94a3b8'; }
+            if (labelEl) labelEl.style.color = '#94a3b8';
+        }
+    });
+    // Update connecting lines
+    document.querySelectorAll('.wizard-line').forEach((line, i) => {
+        line.style.background = (i + 1 < step) ? 'var(--accent-blue)' : '#e2e8f0';
+    });
+
+    // Step 3 진입 시: On Image Texts 미리보기 동기화
+    if (step === 3) {
+        const main = document.getElementById('copyMain');
+        const sub = document.getElementById('copySub');
+        const cta = document.getElementById('copyCta');
+        const pMain = document.getElementById('previewCopyMain');
+        const pSub = document.getElementById('previewCopySub');
+        const pCta = document.getElementById('previewCopyCta');
+        if (main && pMain) pMain.textContent = main.value;
+        if (sub && pSub) pSub.textContent = sub.value;
+        if (cta && pCta) pCta.textContent = cta.value;
+
+        // 캔버스 초기화 (최초 열릴 때)
+        if (!window.creativeCanvasInstance && window.fabric) {
+            setTimeout(() => {
+                if (typeof initCreativeCanvas === 'function') initCreativeCanvas();
+            }, 100);
+        }
+    }
+
+    // 스크롤 맨 위로
+    document.querySelector('#creativeView main')?.scrollTo(0, 0);
+};
+
 document.addEventListener("DOMContentLoaded", () => {
+    // Wizard step indicator click
+    document.querySelectorAll('.wizard-step').forEach(s => {
+        s.addEventListener('click', () => {
+            window.goWizardStep(parseInt(s.dataset.step));
+        });
+    });
+
     // === Tab Switching Logic ===
     const navReference = document.getElementById("navReference");
     const navCreative = document.getElementById("navCreative");
@@ -9,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
         e.preventDefault();
         navReference.parentElement.classList.add("active");
         navCreative.parentElement.classList.remove("active");
-        
+
         referenceView.classList.remove("hidden");
         creativeView.classList.add("hidden");
 
@@ -26,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
         e.preventDefault();
         navCreative.parentElement.classList.add("active");
         navReference.parentElement.classList.remove("active");
-        
+
         creativeView.classList.remove("hidden");
         referenceView.classList.add("hidden");
 
@@ -36,10 +95,8 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById('historyBtn')?.classList.add('hidden');
         document.getElementById('bookmarkBtn')?.classList.add('hidden');
 
-        // 캔버스 초기화 호출 (최초 열릴 때 한 번)
-        if (!window.creativeCanvasInstance) {
-            initCreativeCanvas();
-        }
+        // 위저드 Step 1으로 초기화
+        window.goWizardStep(1);
     });
 
     // === Fabric.js Canvas Initialization ===
@@ -289,7 +346,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // === Step 3: Render Preview ===
     const btnPreviewRender = document.getElementById('btnPreviewRender');
-    
+
     if (btnPreviewRender) {
         btnPreviewRender.addEventListener('click', () => {
             const canvas = window.creativeCanvasInstance;
@@ -306,14 +363,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const cWidth = canvas.getWidth();
             const cHeight = canvas.getHeight();
-            
+
             // Clear canvas
             canvas.clear();
-            
+
             // Background Color
             const bgHex = document.getElementById('brandColor1')?.value || '#0f172a';
             const accentHex = document.getElementById('brandColor2')?.value || '#3b82f6';
-            
+
             // Set Background
             const bgRect = new fabric.Rect({
                 left: 0,
