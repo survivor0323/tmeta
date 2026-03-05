@@ -32,6 +32,10 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
+        // 실사 모델 포함 여부 확인
+        const humanModelRadio = document.querySelector('input[name="labsHumanModel"]:checked');
+        const includeHumanModel = humanModelRadio ? (humanModelRadio.value === "true") : false;
+
         // 로딩 상태 표시
         const originalBtnText = btnLabsGenerate.innerHTML;
         btnLabsGenerate.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 생성 중... (최대 1분 소요)`;
@@ -51,7 +55,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 body: JSON.stringify({
                     brand_name: brandName,
                     product_url: productUrl,
-                    image_b64: imageB64
+                    image_b64: imageB64,
+                    include_human_model: includeHumanModel
                 })
             });
 
