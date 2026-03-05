@@ -1179,8 +1179,8 @@ async def generate_creative_image(req: GenerateImageRequest, authorization: str 
 
 async def extract_product_image_from_url(url: str) -> Optional[str]:
     import base64
-    from bs4 import BeautifulSoup
     import httpx
+    import re
     if not url.startswith("http"):
         return None
     try:
@@ -1188,21 +1188,23 @@ async def extract_product_image_from_url(url: str) -> Optional[str]:
             resp = await client.get(url, follow_redirects=True)
             if resp.status_code != 200:
                 return None
-            soup = BeautifulSoup(resp.text, "html.parser")
             
-            og_img = soup.find("meta", property="og:image")
+            html_content = resp.text
             img_url = None
-            if og_img and og_img.get("content"):
-                img_url = og_img["content"]
+            
+            # 1. og:image 우선 검색
+            og_match = re.search(r'<meta[^>]*property=[\'"]og:image[\'"][^>]*content=[\'"]([^\'"]+)[\'"]', html_content, re.IGNORECASE)
+            if not og_match:
+                # content 속성이 먼저 나오는 경우 대응
+                og_match = re.search(r'<meta[^>]*content=[\'"]([^\'"]+)[\'"][^>]*property=[\'"]og:image[\'"]', html_content, re.IGNORECASE)
+                
+            if og_match:
+                img_url = og_match.group(1)
             else:
-                imgs = soup.find_all("img")
-                for img in imgs:
-                    src = img.get("src", "")
-                    if "product" in src.lower() or "item" in src.lower():
-                        img_url = src
-                        break
-                if not img_url and imgs:
-                    img_url = imgs[0].get("src")
+                # 2. 첫 번째 img 태그 검색
+                img_match = re.search(r'<img[^>]*src=[\'"]([^\'"]+)[\'"]', html_content, re.IGNORECASE)
+                if img_match:
+                    img_url = img_match.group(1)
                     
             if img_url:
                 if img_url.startswith("//"):
@@ -1224,22 +1226,7 @@ async def extract_product_image_from_url(url: str) -> Optional[str]:
         logger.warning(f"Failed to scrape product image from {url}: {e}")
     return None
 
-def remove_background(image_b64: str) -> str:
-    try:
-        import os
-        os.environ["U2NET_HOME"] = "/tmp"
-        
-        import rembg
-        import base64
-        head, data = image_b64.split(',', 1) if ',' in image_b64 else ('', image_b64)
-        img_bytes = base64.b64decode(data)
-        
-        result_bytes = rembg.remove(img_bytes)
-        out_b64 = base64.b64encode(result_bytes).decode('utf-8')
-        return f"data:image/png;base64,{out_b64}"
-    except Exception as e:
-        logger.error(f"background removal failed: {e}")
-        return image_b64
+
 @app.post("/api/v1/labs/generate")
 async def labs_generate_creative(req: LabsGenerateRequest, authorization: str = Header(default="")):
     try:
@@ -1324,9 +1311,10 @@ b) 편집 단계에서 분위기를 결정짓는 색보정(LUT), 컷 편집의 �
             if scraped_b64:
                 final_image_b64 = scraped_b64
                 
-        product_cutout_b64 = None
+        # 백엔드에서는 누끼를 따지 않고 원본 이미지만 클라이언트로 반환하도록 우회
+        product_cutout_b64 = final_image_b64
+
         if final_image_b64:
-            product_cutout_b64 = remove_background(final_image_b64)
             b64_data = final_image_b64.split(",")[1] if "," in final_image_b64 else final_image_b64
             messages[1] = {
                 "role": "user",
