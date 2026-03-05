@@ -88,6 +88,11 @@ class BookmarkSaveRequest(BaseModel):
     query: str
     platform: str
 
+class LabsGenerateRequest(BaseModel):
+    brand_name: str
+    product_url: str
+    image_b64: Optional[str] = None
+
 
 # ─── JWT에서 user_id 추출 헬퍼 ───────────────────────────
 def get_user_id_from_token(authorization: str) -> Optional[str]:
@@ -1170,7 +1175,157 @@ async def generate_creative_image(req: GenerateImageRequest, authorization: str 
     except Exception as e:
         logger.error(f"이미지 생성 에러: {e}")
         return {"status": "error", "message": f"서버 예외 발생: {str(e)}"}
+@app.post("/api/v1/labs/generate")
+async def labs_generate_creative(req: LabsGenerateRequest, authorization: str = Header(default="")):
+    try:
+        import openai
+        import json
+        import httpx
+        
+        client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        
+        system_prompt = """역할 및 목표:
+* 당신은 15년차 베테랑 CF 사진작가이자 비디오 촬영 및 편집 전문가로서 사용자의 프로젝트에 전문적인 조언을 제공합니다.
+* 조명, 카메라 설정, 현장별 적용 방식, 다양한 비디오 촬영 기법에 대한 심도 있는 지식을 전달합니다.
+* 특정 제품이나 상황에 적합한 렌즈, 구도, 하드웨어 구성을 추천합니다.
+* 세계적인 영상미와 트렌드를 분석하여 사용자가 원하는 고품질의 결과물을 구현할 수 있도록 가이드를 제공합니다.
+* AI 이미지 생성 모델을 위한 구체적인 프롬프트 디렉션(모델의 특징, 장소, 배경, 카메라 앵글, 조명 상세 설정 등)을 지원합니다.
 
+행동 지침 및 규칙:
+1) 초기 상담:
+a) 사용자가 제작하고자 하는 CF의 종류, 타겟 제품, 핵심 컨셉을 먼저 상세히 질문하십시오.
+b) 사용자가 현재 보유하고 있는 장비나 촬영 환경(실내 스튜디오, 야외 로케이션 등)을 파악하여 맞춤형 솔루션을 제공하십시오.
+c) 업계 전문 용어를 적절히 활용하되, 비전문가도 이해할 수 있도록 명확한 설명을 덧붙여 전문가다운 신뢰감을 주십시오.
+
+2) 기술적 및 시각적 디렉션:
+a) 구체적인 조명 배치도(Key, Fill, Back light, Rim light 등)와 색온도(Kelvin), 광질(Soft/Hard) 설정을 제안하십시오.
+b) 촬영 목적에 부합하는 카메라 바디, 렌즈군(초점 거리, T-stop/F-stop), 필터 활용법을 추천하고 그 이유를 기술적으로 설명하십시오.
+c) 짐벌, 슬라이더, 드론 등 특수 촬영 장비의 동선과 테크니컬한 활용법을 제안하십시오.
+d) AI 이미지 생성을 위한 디렉션 시, 인물의 외형적 특징, 의상, 배경의 질감, 빛의 방향, 렌즈의 왜곡 정도 등을 세밀하게 묘사하십시오.
+
+3) 스타일 및 편집 조언:
+a) 특정 장르나 제품군에서 성공적인 연출 기법(미장센, 카메라 워킹, 프레이밍)을 예시로 들어 창의적인 영감을 제공하십시오.
+b) 편집 단계에서 분위기를 결정짓는 색보정(LUT), 컷 편집의 리듬감, 모션 그래픽 활용법에 대해 조언하십시오.
+
+전반적인 어조:
+* 자신감 있고 권위 있는 15년차 베테랑의 어조를 유지하십시오.
+* 이론보다는 실무 중심의 구체적이고 즉각 적용 가능한 조언을 제공하십시오.
+* 사용자의 창의적인 시도를 지지하며 열정적이고 전문적으로 소통하십시오.
+
+데이터구조 (무조건 이 JSON 형식과 키 조합을 지켜서 반환할 것):
+{
+  "project_metadata": {
+    "brand_name": "string",
+    "industry_category": "string",
+    "target_mood": "string"
+  },
+  "visual_elements": {
+    "subject": {
+      "name": "string",
+      "action": "string",
+      "material_texture": "string"
+    },
+    "layout_config": {
+      "text_placement": "string",
+      "aspect_ratio": "16:9 | 1:1 | 4:5 | 3:4"
+    }
+  },
+  "technical_direction": {
+    "camera": {
+      "lens": "string",
+      "angle": "string",
+      "depth_of_field": "string"
+    },
+    "lighting": {
+      "type": "string",
+      "color_temp": "string"
+    }
+  }
+}
+"""
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": f"브랜드명: {req.brand_name}\n제품 URL 또는 설명: {req.product_url}\n위 정보를 바탕으로 구조화된 JSON 응답을 주세요."}
+        ]
+        
+        if req.image_b64:
+            b64_data = req.image_b64.split(",")[1] if "," in req.image_b64 else req.image_b64
+            messages[1] = {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": f"브랜드명: {req.brand_name}\n제품 URL 또는 설명: {req.product_url}\n첨부된 이미지를 참고하여 위 정보를 바탕으로 구조화된 JSON 응답을 주세요."},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64_data}"}}
+                ]
+            }
+
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=messages,
+            response_format={ "type": "json_object" },
+            temperature=0.7
+        )
+        
+        result_json_str = response.choices[0].message.content
+        result_data = json.loads(result_json_str)
+        
+        # JSON 기반 프롬프트 생성
+        pm = result_data.get("project_metadata", {})
+        ve = result_data.get("visual_elements", {})
+        td = result_data.get("technical_direction", {})
+        
+        subject = ve.get("subject", {})
+        layout = ve.get("layout_config", {})
+        camera = td.get("camera", {})
+        lighting = td.get("lighting", {})
+        
+        gemini_prompt = f"Highly professional commercial product photography for {pm.get('brand_name')}. "
+        gemini_prompt += f"Industry: {pm.get('industry_category')}. Mood: {pm.get('target_mood')}. "
+        gemini_prompt += f"Subject: {subject.get('name')}, Action: {subject.get('action')}, Texture: {subject.get('material_texture')}. "
+        gemini_prompt += f"Camera: {camera.get('lens')} lens, {camera.get('angle')} angle, {camera.get('depth_of_field')}. "
+        gemini_prompt += f"Lighting: {lighting.get('type')}, Color temperature: {lighting.get('color_temp')}. "
+        gemini_prompt += "Hyper realistic, 8k resolution, award-winning cinematography, masterpiece."
+        
+        # Gemini 이미지 생성 호출
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            return {"status": "error", "message": "GEMINI_API_KEY가 설정되지 않았습니다."}
+            
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key={api_key}"
+        
+        aspect_ratio = layout.get("aspect_ratio", "1:1")
+        if aspect_ratio not in ["1:1", "3:4", "4:3", "9:16", "16:9"]:
+            aspect_ratio = "16:9"
+            
+        payload = {
+            "instances": [{"prompt": gemini_prompt}],
+            "parameters": {
+                "sampleCount": 1,
+                "aspectRatio": aspect_ratio
+            }
+        }
+        
+        async with httpx.AsyncClient(timeout=60.0) as http_client:
+            resp = await http_client.post(url, json=payload)
+            res_json = resp.json()
+            
+            image_b64_result = None
+            if resp.status_code == 200 and 'predictions' in res_json:
+                gen_b64_img = res_json['predictions'][0].get('bytesBase64Encoded', '')
+                if gen_b64_img:
+                    image_b64_result = f"data:image/jpeg;base64,{gen_b64_img}"
+            
+        return {
+            "status": "success",
+            "data": {
+                "creative_direction": result_data,
+                "generated_image_b64": image_b64_result,
+                "gemini_prompt": gemini_prompt
+            }
+        }
+    except Exception as e:
+        logger.error(f"Labs Generate Error: {e}")
+        return {"status": "error", "message": str(e)}
 
 if __name__ == "__main__":
     import uvicorn
