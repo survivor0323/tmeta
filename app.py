@@ -1176,6 +1176,67 @@ async def generate_creative_image(req: GenerateImageRequest, authorization: str 
     except Exception as e:
         logger.error(f"이미지 생성 에러: {e}")
         return {"status": "error", "message": f"서버 예외 발생: {str(e)}"}
+
+async def extract_product_image_from_url(url: str) -> Optional[str]:
+    import base64
+    from bs4 import BeautifulSoup
+    import httpx
+    if not url.startswith("http"):
+        return None
+    try:
+        async with httpx.AsyncClient(verify=False, timeout=10.0) as client:
+            resp = await client.get(url, follow_redirects=True)
+            if resp.status_code != 200:
+                return None
+            soup = BeautifulSoup(resp.text, "html.parser")
+            
+            og_img = soup.find("meta", property="og:image")
+            img_url = None
+            if og_img and og_img.get("content"):
+                img_url = og_img["content"]
+            else:
+                imgs = soup.find_all("img")
+                for img in imgs:
+                    src = img.get("src", "")
+                    if "product" in src.lower() or "item" in src.lower():
+                        img_url = src
+                        break
+                if not img_url and imgs:
+                    img_url = imgs[0].get("src")
+                    
+            if img_url:
+                if img_url.startswith("//"):
+                    img_url = "https:" + img_url
+                elif img_url.startswith("/"):
+                    from urllib.parse import urlparse
+                    parsed = urlparse(url)
+                    img_url = f"{parsed.scheme}://{parsed.netloc}{img_url}"
+                elif not img_url.startswith("http"):
+                    from urllib.parse import urljoin
+                    img_url = urljoin(url, img_url)
+
+                img_resp = await client.get(img_url, follow_redirects=True)
+                if img_resp.status_code == 200:
+                    b64 = base64.b64encode(img_resp.content).decode("utf-8")
+                    content_type = img_resp.headers.get('content-type', 'image/jpeg')
+                    return f"data:{content_type};base64,{b64}"
+    except Exception as e:
+        logger.warning(f"Failed to scrape product image from {url}: {e}")
+    return None
+
+def remove_background(image_b64: str) -> str:
+    try:
+        import rembg
+        import base64
+        head, data = image_b64.split(',', 1) if ',' in image_b64 else ('', image_b64)
+        img_bytes = base64.b64decode(data)
+        
+        result_bytes = rembg.remove(img_bytes)
+        out_b64 = base64.b64encode(result_bytes).decode('utf-8')
+        return f"data:image/png;base64,{out_b64}"
+    except Exception as e:
+        logger.error(f"background removal failed: {e}")
+        return image_b64
 @app.post("/api/v1/labs/generate")
 async def labs_generate_creative(req: LabsGenerateRequest, authorization: str = Header(default="")):
     try:
@@ -1248,18 +1309,26 @@ b) 편집 단계에서 분위기를 결정짓는 색보정(LUT), 컷 편집의 �
 }
 """
 
-        human_model_instruction = "이 광고는 실사 모델(인물)을 포함하여 라이프스타일을 보여주는 컷이어야 합니다." if req.include_human_model else "이 광고는 인물(사람)을 절대 노출하지 않고 핵심 제품만 돋보이는 누끼컷 중심의 배너여야 합니다."
+        human_model_instruction = "이 광고는 실사 모델(인물)을 포함하여 라이프스타일을 보여주는 컷이어야 합니다." if req.include_human_model else "이 광고는 인물(사람)을 절대 노출하지 않고 3D 빈 공간(stage)이나 배경만이 존재하는 컷이어야 합니다."
         messages = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": f"브랜드명: {req.brand_name}\n제품 URL 또는 설명: {req.product_url}\n조건: {human_model_instruction}\n위 정보를 바탕으로 구조화된 JSON 응답을 주세요."}
         ]
         
-        if req.image_b64:
-            b64_data = req.image_b64.split(",")[1] if "," in req.image_b64 else req.image_b64
+        final_image_b64 = req.image_b64
+        if not final_image_b64 and req.product_url:
+            scraped_b64 = await extract_product_image_from_url(req.product_url)
+            if scraped_b64:
+                final_image_b64 = scraped_b64
+                
+        product_cutout_b64 = None
+        if final_image_b64:
+            product_cutout_b64 = remove_background(final_image_b64)
+            b64_data = final_image_b64.split(",")[1] if "," in final_image_b64 else final_image_b64
             messages[1] = {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": f"브랜드명: {req.brand_name}\n제품 URL 또는 설명: {req.product_url}\n조건: {human_model_instruction}\n첨부된 이미지를 참고하여 위 정보를 바탕으로 구조화된 JSON 응답을 주세요."},
+                    {"type": "text", "text": f"브랜드명: {req.brand_name}\n제품 URL 또는 설명: {req.product_url}\n조건: {human_model_instruction}\n첨부(분석)된 이미지를 참고하여 위 정보를 바탕으로 구조화된 JSON 응답을 주세요."},
                     {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64_data}"}}
                 ]
             }
@@ -1294,8 +1363,9 @@ b) 편집 단계에서 분위기를 결정짓는 색보정(LUT), 컷 편집의 �
         # 사람 모델 제어
         if req.include_human_model and subject.get('human_model') != "none":
             gemini_prompt += f"Include human model: {subject.get('human_model')}. "
+            gemini_prompt += "The model should be presenting, looking at, or pointing at an empty space designated for a product overlay. "
         else:
-            gemini_prompt += "No humans, no people, product isolated cutout style banner. "
+            gemini_prompt += "No humans, no people, empty product podium, clean studio background with a blank space for placing a product. "
             
         gemini_prompt += f"Camera: {camera.get('lens')} lens, {camera.get('angle')} angle, {camera.get('depth_of_field')}. "
         gemini_prompt += f"Lighting: {lighting.get('type')}, Color temperature: {lighting.get('color_temp')}. "
@@ -1335,6 +1405,7 @@ b) 편집 단계에서 분위기를 결정짓는 색보정(LUT), 컷 편집의 �
             "data": {
                 "creative_direction": result_data,
                 "generated_image_b64": image_b64_result,
+                "product_cutout_b64": product_cutout_b64,
                 "gemini_prompt": gemini_prompt
             }
         }

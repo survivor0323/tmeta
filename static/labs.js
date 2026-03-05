@@ -71,11 +71,56 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Gemini 프롬프트 표시
                 labsPromptDisplay.innerHTML = `<strong>생성 프롬프트:</strong><br><span style="color: #475569;">${data.gemini_prompt}</span>`;
 
-                // 이미지 표시
+                // 이미지 표시 결합 부
                 if (data.generated_image_b64) {
-                    labsGeneratedImg.src = data.generated_image_b64;
-                    labsGeneratedImg.style.display = "block";
-                    labsCanvasEmptyState.style.display = "none";
+                    if (data.product_cutout_b64) {
+                        const tempCanvas = document.createElement('canvas');
+                        const ctx = tempCanvas.getContext('2d');
+                        const bgImg = new Image();
+                        bgImg.crossOrigin = "anonymous";
+
+                        bgImg.onload = () => {
+                            tempCanvas.width = bgImg.width;
+                            tempCanvas.height = bgImg.height;
+                            ctx.drawImage(bgImg, 0, 0);
+
+                            const fgImg = new Image();
+                            fgImg.onload = () => {
+                                // 제품 이미지 적절한 비율로 리사이징 및 배치 (가운데 약간 하단)
+                                const max_fg_height = tempCanvas.height * 0.55;
+                                const max_fg_width = tempCanvas.width * 0.55;
+                                let fg_w = fgImg.width;
+                                let fg_h = fgImg.height;
+
+                                const ratio = Math.min(max_fg_width / fg_w, max_fg_height / fg_h, 1.0);
+                                fg_w *= ratio;
+                                fg_h *= ratio;
+
+                                const x = (tempCanvas.width - fg_w) / 2;
+                                let y = (tempCanvas.height - fg_h) / 2 + (tempCanvas.height * 0.1);
+
+                                // 빛 반사, 그림자 효과 약간 추가 (디테일)
+                                ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
+                                ctx.shadowBlur = 20;
+                                ctx.shadowOffsetX = 0;
+                                ctx.shadowOffsetY = 10;
+
+                                ctx.drawImage(fgImg, x, y, fg_w, fg_h);
+
+                                // 출력 이미지를 캔버스를 통해 최종 업데이트
+                                labsGeneratedImg.src = tempCanvas.toDataURL('image/png');
+                                labsGeneratedImg.style.display = "block";
+                                labsCanvasEmptyState.style.display = "none";
+                            };
+                            fgImg.src = data.product_cutout_b64;
+                        };
+                        bgImg.src = data.generated_image_b64;
+                    } else {
+                        // 제품 컷아웃이 실패했거나 없는 경우 원래 생성된 이미지만 렌더링
+                        labsGeneratedImg.src = data.generated_image_b64;
+                        labsGeneratedImg.style.display = "block";
+                        labsCanvasEmptyState.style.display = "none";
+                    }
                 } else {
                     labsCanvasEmptyState.innerHTML = `<i class="fa-solid fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 0.5rem; color:#ef4444;"></i><br><span>이미지 생성에 실패했습니다.</span>`;
                 }
