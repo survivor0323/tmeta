@@ -79,7 +79,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         try {
                             const { removeBackground } = await import('https://unpkg.com/@imgly/background-removal@1.4.5/dist/imgly-background-removal.js');
                             const fgBlob = await fetch(data.product_cutout_b64).then(res => res.blob());
-                            const imageWithoutBackground = await removeBackground(fgBlob);
+                            const imageWithoutBackground = await removeBackground(fgBlob, {
+                                publicPath: 'https://unpkg.com/@imgly/background-removal@1.4.5/dist/'
+                            });
                             const productCutoutB64 = await toBase64(imageWithoutBackground);
 
                             const tempCanvas = document.createElement('canvas');
@@ -126,12 +128,40 @@ document.addEventListener("DOMContentLoaded", () => {
                             bgImg.src = data.generated_image_b64;
                         } catch (err) {
                             console.error("클라이언트 딴 누끼제거 실패. 원본 합성:", err);
-                            // 누끼 제거 실패 시 원본 사용 (fallthrough)
                             const tempCanvas = document.createElement('canvas');
-                            // [코드 생략, 이전 원본 합성 로직과 동일하거나 여기서 바로 generated_image_b64 렌더 수행 가능합니다]
-                            labsGeneratedImg.src = data.generated_image_b64;
-                            labsGeneratedImg.style.display = "block";
-                            labsCanvasEmptyState.style.display = "none";
+                            const ctx = tempCanvas.getContext('2d');
+                            const bgImg = new Image();
+                            bgImg.crossOrigin = "anonymous";
+
+                            bgImg.onload = () => {
+                                tempCanvas.width = bgImg.width;
+                                tempCanvas.height = bgImg.height;
+                                ctx.drawImage(bgImg, 0, 0);
+
+                                const fgImg = new Image();
+                                fgImg.onload = () => {
+                                    const max_fg_height = tempCanvas.height * 0.55;
+                                    const max_fg_width = tempCanvas.width * 0.55;
+                                    let fg_w = fgImg.width;
+                                    let fg_h = fgImg.height;
+
+                                    const ratio = Math.min(max_fg_width / fg_w, max_fg_height / fg_h, 1.0);
+                                    fg_w *= ratio;
+                                    fg_h *= ratio;
+
+                                    const x = (tempCanvas.width - fg_w) / 2;
+                                    let y = (tempCanvas.height - fg_h) / 2 + (tempCanvas.height * 0.1);
+
+                                    ctx.drawImage(fgImg, x, y, fg_w, fg_h);
+
+                                    labsGeneratedImg.src = tempCanvas.toDataURL('image/png');
+                                    labsGeneratedImg.style.display = "block";
+                                    labsCanvasEmptyState.style.display = "none";
+                                    labsResultJson.textContent = labsResultJson.textContent.replace("가져온 제품 이미지에서 배경을 제거하는 중입니다... (약 10~20초 소요, 서버 스케일 확장 방지)\n\n", "");
+                                };
+                                fgImg.src = data.product_cutout_b64;
+                            };
+                            bgImg.src = data.generated_image_b64;
                         }
                     } else {
                         // 제품 컷아웃이 실패했거나 없는 경우 원래 생성된 이미지만 렌더링
