@@ -1190,23 +1190,34 @@ async def extract_product_image_from_url(url: str) -> Optional[str]:
                 return None
             
             html_content = resp.text
-            img_url = None
+            candidates = []
             
             # 1. og:image 우선 검색
             og_match = re.search(r'<meta[^>]*property=[\'"]og:image[\'"][^>]*content=[\'"]([^\'"]+)[\'"]', html_content, re.IGNORECASE)
             if not og_match:
-                # content 속성이 먼저 나오는 경우 대응
                 og_match = re.search(r'<meta[^>]*content=[\'"]([^\'"]+)[\'"][^>]*property=[\'"]og:image[\'"]', html_content, re.IGNORECASE)
-                
             if og_match:
-                img_url = og_match.group(1)
-            else:
-                # 2. 첫 번째 img 태그 검색
-                img_match = re.search(r'<img[^>]*src=[\'"]([^\'"]+)[\'"]', html_content, re.IGNORECASE)
-                if img_match:
-                    img_url = img_match.group(1)
-                    
-            if img_url:
+                candidates.append(og_match.group(1))
+
+            # 2. 모든 img 태그 검색 후 필터링
+            img_urls = re.findall(r'<img[^>]*src=[\'"]([^\'"]+)[\'"]', html_content, re.IGNORECASE)
+            
+            # 앞부분에 오도록 정렬하기 위해, product/item 등 우선순위 이미지를 찾습니다.
+            priority_urls = []
+            normal_urls = []
+            for src in img_urls:
+                src_lower = src.lower()
+                if "facebook" in src_lower or "google" in src_lower or "pixel" in src_lower or src_lower.endswith(".gif") or "logo" in src_lower or "icon" in src_lower:
+                    continue
+                if "product" in src_lower or "item" in src_lower or "detail" in src_lower:
+                    priority_urls.append(src)
+                else:
+                    normal_urls.append(src)
+            
+            candidates.extend(priority_urls)
+            candidates.extend(normal_urls)
+
+            for img_url in candidates:
                 if img_url.startswith("//"):
                     img_url = "https:" + img_url
                 elif img_url.startswith("/"):
@@ -1217,13 +1228,16 @@ async def extract_product_image_from_url(url: str) -> Optional[str]:
                     from urllib.parse import urljoin
                     img_url = urljoin(url, img_url)
 
-                img_resp = await client.get(img_url, follow_redirects=True)
-                if img_resp.status_code == 200:
-                    b64 = base64.b64encode(img_resp.content).decode("utf-8")
-                    content_type = img_resp.headers.get('content-type', '').split(';')[0].strip()
-                    if content_type not in ['image/jpeg', 'image/png', 'image/webp', 'image/gif']:
-                        content_type = 'image/jpeg'
-                    return f"data:{content_type};base64,{b64}"
+                try:
+                    img_resp = await client.get(img_url, follow_redirects=True)
+                    if img_resp.status_code == 200 and len(img_resp.content) > 1024:
+                        b64 = base64.b64encode(img_resp.content).decode("utf-8")
+                        content_type = img_resp.headers.get('content-type', '').split(';')[0].strip()
+                        if content_type not in ['image/jpeg', 'image/png', 'image/webp']:
+                            content_type = 'image/jpeg'
+                        return f"data:{content_type};base64,{b64}"
+                except Exception:
+                    continue
     except Exception as e:
         logger.warning(f"Failed to scrape product image from {url}: {e}")
     return None
