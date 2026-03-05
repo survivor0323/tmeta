@@ -74,14 +74,29 @@ document.addEventListener("DOMContentLoaded", () => {
                 // 이미지 표시 결합 부
                 if (data.generated_image_b64) {
                     if (data.product_cutout_b64) {
-                        labsResultJson.textContent = "가져온 제품 이미지에서 배경을 제거하는 중입니다... (약 10~20초 소요, 서버 스케일 확장 방지)\n\n" + labsResultJson.textContent;
-
                         try {
-                            const mod = await import('https://esm.sh/@imgly/background-removal@1.4.5');
-                            const removeBackground = mod.default;
-                            const fgBlob = await fetch(data.product_cutout_b64).then(res => res.blob());
-                            const imageWithoutBackground = await removeBackground(fgBlob, {
-                                publicPath: 'https://unpkg.com/@imgly/background-removal@1.4.5/dist/'
+                            // ESM 모듈 대신 cdn 스크립트로 불러오기 위해 전역에 로드된 imglyRemoveBackground 사용
+                            // 만약 이미 스크립트가 로드되었다면 그대로 진행합니다.
+                            let removeBackgroundFn = window.imglyRemoveBackground;
+
+                            if (!removeBackgroundFn) {
+                                // 동적으로 스크립트 로드
+                                await new Promise((resolve, reject) => {
+                                    const script = document.createElement("script");
+                                    script.src = "https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/dist/imgly-background-removal.js";
+                                    script.onload = () => resolve();
+                                    script.onerror = () => reject(new Error("Failed to load imgly script"));
+                                    document.head.appendChild(script);
+                                });
+                                removeBackgroundFn = window.imglyRemoveBackground;
+                            }
+
+                            // base64 이미지를 Blob으로 변환하여 누끼 따기
+                            const dataUrlToBlob = async (url) => await (await fetch(url)).blob();
+                            const fgBlob = await dataUrlToBlob(data.product_cutout_b64);
+
+                            const imageWithoutBackground = await removeBackgroundFn(fgBlob, {
+                                publicPath: 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/dist/'
                             });
                             const productCutoutB64 = await toBase64(imageWithoutBackground);
 
@@ -96,6 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 ctx.drawImage(bgImg, 0, 0);
 
                                 const fgImg = new Image();
+                                fgImg.crossOrigin = "anonymous";
                                 fgImg.onload = () => {
                                     // 제품 이미지 적절한 비율로 리사이징 및 배치 (가운데 약간 하단)
                                     const max_fg_height = tempCanvas.height * 0.55;
