@@ -77,7 +77,8 @@ document.addEventListener("DOMContentLoaded", () => {
                         labsResultJson.textContent = "가져온 제품 이미지에서 배경을 제거하는 중입니다... (약 10~20초 소요, 서버 스케일 확장 방지)\n\n" + labsResultJson.textContent;
 
                         try {
-                            const { removeBackground } = await import('https://unpkg.com/@imgly/background-removal@1.4.5/dist/imgly-background-removal.js');
+                            const mod = await import('https://esm.sh/@imgly/background-removal@1.4.5');
+                            const removeBackground = mod.default;
                             const fgBlob = await fetch(data.product_cutout_b64).then(res => res.blob());
                             const imageWithoutBackground = await removeBackground(fgBlob, {
                                 publicPath: 'https://unpkg.com/@imgly/background-removal@1.4.5/dist/'
