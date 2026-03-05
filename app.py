@@ -1220,7 +1220,9 @@ async def extract_product_image_from_url(url: str) -> Optional[str]:
                 img_resp = await client.get(img_url, follow_redirects=True)
                 if img_resp.status_code == 200:
                     b64 = base64.b64encode(img_resp.content).decode("utf-8")
-                    content_type = img_resp.headers.get('content-type', 'image/jpeg')
+                    content_type = img_resp.headers.get('content-type', '').split(';')[0].strip()
+                    if content_type not in ['image/jpeg', 'image/png', 'image/webp', 'image/gif']:
+                        content_type = 'image/jpeg'
                     return f"data:{content_type};base64,{b64}"
     except Exception as e:
         logger.warning(f"Failed to scrape product image from {url}: {e}")
