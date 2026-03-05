@@ -61,16 +61,20 @@ document.addEventListener("DOMContentLoaded", () => {
     // === Tab Switching Logic ===
     const navReference = document.getElementById("navReference");
     const navCreative = document.getElementById("navCreative");
+    const navLabs = document.getElementById("navLabs");
     const referenceView = document.getElementById("referenceView");
     const creativeView = document.getElementById("creativeView");
+    const labsView = document.getElementById("labsView");
 
-    navReference.addEventListener("click", (e) => {
+    navReference?.addEventListener("click", (e) => {
         e.preventDefault();
         navReference.parentElement.classList.add("active");
-        navCreative.parentElement.classList.remove("active");
+        navCreative?.parentElement.classList.remove("active");
+        navLabs?.parentElement.classList.remove("active");
 
-        referenceView.classList.remove("hidden");
-        creativeView.classList.add("hidden");
+        referenceView?.classList.remove("hidden");
+        creativeView?.classList.add("hidden");
+        labsView?.classList.add("hidden");
 
         // Show icons if user is logged in
         if (!document.getElementById('userInfo')?.classList.contains('hidden')) {
@@ -81,13 +85,15 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    navCreative.addEventListener("click", (e) => {
+    navCreative?.addEventListener("click", (e) => {
         e.preventDefault();
         navCreative.parentElement.classList.add("active");
-        navReference.parentElement.classList.remove("active");
+        navReference?.parentElement.classList.remove("active");
+        navLabs?.parentElement.classList.remove("active");
 
-        creativeView.classList.remove("hidden");
-        referenceView.classList.add("hidden");
+        creativeView?.classList.remove("hidden");
+        referenceView?.classList.add("hidden");
+        labsView?.classList.add("hidden");
 
         // Hide icons
         document.getElementById('monitorBtn')?.classList.add('hidden');
@@ -97,6 +103,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // 위저드 Step 1으로 초기화
         window.goWizardStep(1);
+    });
+
+    navLabs?.addEventListener("click", (e) => {
+        e.preventDefault();
+        navLabs.parentElement.classList.add("active");
+        navReference?.parentElement.classList.remove("active");
+        navCreative?.parentElement.classList.remove("active");
+
+        labsView?.classList.remove("hidden");
+        referenceView?.classList.add("hidden");
+        creativeView?.classList.add("hidden");
+
+        // Hide icons
+        document.getElementById('monitorBtn')?.classList.add('hidden');
+        document.getElementById('boardsBtn')?.classList.add('hidden');
+        document.getElementById('historyBtn')?.classList.add('hidden');
+        document.getElementById('bookmarkBtn')?.classList.add('hidden');
     });
 
     // === Fabric.js Canvas Initialization ===
