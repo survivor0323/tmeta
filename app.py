@@ -1226,6 +1226,9 @@ async def extract_product_image_from_url(url: str) -> Optional[str]:
 
 def remove_background(image_b64: str) -> str:
     try:
+        import os
+        os.environ["U2NET_HOME"] = "/tmp"
+        
         import rembg
         import base64
         head, data = image_b64.split(',', 1) if ',' in image_b64 else ('', image_b64)
