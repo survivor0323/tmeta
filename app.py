@@ -5,7 +5,7 @@ import os
 import json
 import logging
 from pydantic import BaseModel, validator
-from typing import List, Optional
+from typing import List, Optional, Dict
 from dotenv import load_dotenv
 
 load_dotenv()
