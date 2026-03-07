@@ -395,8 +395,19 @@ document.addEventListener("DOMContentLoaded", () => {
             newItemBlock.querySelector('.competitor-dropdown').classList.add('hidden');
             const sidebarList = document.getElementById("monitorSidebarList");
             if (newItemBlock.parentElement && newItemBlock.parentElement.classList.contains('folder-content')) {
-                // Ensure it gets inserted after folders or at top (let's prepend to main list)
-                sidebarList.insertBefore(newItemBlock, sidebarList.firstChild);
+                // Ensure it gets inserted after folders
+                const folders = Array.from(sidebarList.children).filter(el => el.classList.contains('folder-container'));
+                if (folders.length > 0) {
+                    const lastFolder = folders[folders.length - 1];
+                    if (lastFolder.nextSibling) {
+                        sidebarList.insertBefore(newItemBlock, lastFolder.nextSibling);
+                    } else {
+                        sidebarList.appendChild(newItemBlock);
+                    }
+                } else {
+                    sidebarList.insertBefore(newItemBlock, sidebarList.firstChild);
+                }
+
                 if (brandId && window._motiverseSession && typeof window.updateMonitoredBrandDB === 'function') {
                     await window.updateMonitoredBrandDB(brandId, { folder_id: null });
                 }
@@ -429,7 +440,19 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        if (monitorSidebarList) monitorSidebarList.insertBefore(newItemBlock, monitorSidebarList.firstChild);
+        if (monitorSidebarList) {
+            const folders = Array.from(monitorSidebarList.children).filter(el => el.classList.contains('folder-container'));
+            if (folders.length > 0) {
+                const lastFolder = folders[folders.length - 1];
+                if (lastFolder.nextSibling) {
+                    monitorSidebarList.insertBefore(newItemBlock, lastFolder.nextSibling);
+                } else {
+                    monitorSidebarList.appendChild(newItemBlock);
+                }
+            } else {
+                monitorSidebarList.insertBefore(newItemBlock, monitorSidebarList.firstChild);
+            }
+        }
 
         // Update the count to accurately reflect reality
         updateCompetitorCount();
@@ -1588,6 +1611,26 @@ window.loadRecommendedBrands = async function () {
                 if (item.platform === "instagram") { iconColor = "#e1306c"; iconClass = "fa-brands fa-instagram"; }
                 if (item.platform === "tiktok") { iconColor = "#000000"; iconClass = "fa-brands fa-tiktok"; }
 
+                let isAdded = false;
+                const existingItems = document.querySelectorAll('#monitorSidebarList .competitor-item');
+                for (let i = 0; i < existingItems.length; i++) {
+                    if (existingItems[i].dataset.brand === item.brand_name && existingItems[i].dataset.platform === item.platform) {
+                        isAdded = true;
+                        break;
+                    }
+                }
+
+                let btnHtml = '';
+                if (isAdded) {
+                    btnHtml = `<button disabled style="color: #10b981; background: none; border: none; font-weight: 600; font-size: 0.9rem; cursor: default; display: flex; align-items: center; gap: 0.4rem;">
+                        <i class="fa-solid fa-check"></i> 추가됨
+                    </button>`;
+                } else {
+                    btnHtml = `<button class="add-recommendation-btn" data-brand="${item.brand_name}" data-platform="${item.platform}" style="color: #3b82f6; background: none; border: none; font-weight: 600; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; transition: opacity 0.2s;">
+                        <i class="fa-solid fa-plus"></i> 모니터링에 추가
+                    </button>`;
+                }
+
                 el.innerHTML = `
                     <div style="display: flex; gap: 1.5rem; align-items: center;">
                         <div style="width: 50px; height: 50px; border-radius: 50%; background: ${iconColor}; color: white; font-weight: 800; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; font-family: sans-serif;">
@@ -1602,45 +1645,45 @@ window.loadRecommendedBrands = async function () {
                             </div>
                         </div>
                     </div>
-                    <button class="add-recommendation-btn" data-brand="${item.brand_name}" data-platform="${item.platform}" style="color: #3b82f6; background: none; border: none; font-weight: 600; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; transition: opacity 0.2s;">
-                        <i class="fa-solid fa-plus"></i> 모니터링에 추가
-                    </button>
+                    ${btnHtml}
                 `;
 
                 // Add button handler
                 const addBtn = el.querySelector('.add-recommendation-btn');
-                addBtn.addEventListener('click', async () => {
-                    const originalText = addBtn.innerHTML;
-                    addBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 추가 중...';
-                    addBtn.disabled = true;
-                    try {
-                        // Create modal instance behind the scenes or just call save API
-                        if (typeof window.saveMonitoredBrandDB === 'function') {
-                            const params = { brand_name: item.brand_name, platform: item.platform, ads_data: [], country: "KR" };
-                            const r = await fetch('/api/v1/monitors', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json', ...window.getAuthHeaders() },
-                                body: JSON.stringify(params)
-                            });
+                if (addBtn) {
+                    addBtn.addEventListener('click', async () => {
+                        const originalText = addBtn.innerHTML;
+                        addBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 추가 중...';
+                        addBtn.disabled = true;
+                        try {
+                            // Create modal instance behind the scenes or just call save API
+                            if (typeof window.saveMonitoredBrandDB === 'function') {
+                                const params = { brand_name: item.brand_name, platform: item.platform, ads_data: [], country: "KR" };
+                                const r = await fetch('/api/v1/monitors', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json', ...window.getAuthHeaders() },
+                                    body: JSON.stringify(params)
+                                });
 
-                            if (r.ok) {
-                                addBtn.innerHTML = '<i class="fa-solid fa-check"></i> 추가됨';
-                                addBtn.style.color = '#10b981';
-                                // Refresh sidebar
-                                if (window.loadMonitorState) window.loadMonitorState();
-                            } else {
-                                const err = await r.json();
-                                alert(err.message || '추가 실패');
-                                addBtn.innerHTML = originalText;
-                                addBtn.disabled = false;
+                                if (r.ok) {
+                                    addBtn.innerHTML = '<i class="fa-solid fa-check"></i> 추가됨';
+                                    addBtn.style.color = '#10b981';
+                                    // Refresh sidebar
+                                    if (window.loadMonitorState) window.loadMonitorState();
+                                } else {
+                                    const err = await r.json();
+                                    alert(err.message || '추가 실패');
+                                    addBtn.innerHTML = originalText;
+                                    addBtn.disabled = false;
+                                }
                             }
+                        } catch (e) {
+                            alert('오류 발생: ' + e.message);
+                            addBtn.innerHTML = originalText;
+                            addBtn.disabled = false;
                         }
-                    } catch (e) {
-                        alert('오류 발생: ' + e.message);
-                        addBtn.innerHTML = originalText;
-                        addBtn.disabled = false;
-                    }
-                });
+                    });
+                }
 
                 listContainer.appendChild(el);
             });
