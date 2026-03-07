@@ -58,7 +58,11 @@ function updateAuthUI(session) {
         // 최근 검색어 칩 로드 (한 번만)
         if (window.loadRecentSearchChips && !window._chipsLoaded) {
             window._chipsLoaded = true;
-            setTimeout(() => window.loadRecentSearchChips(), 500);
+            setTimeout(() => {
+                window.loadRecentSearchChips();
+                if (typeof window.loadSavedBrandsList === 'function') window.loadSavedBrandsList();
+                if (typeof window.loadMonitorState === 'function') window.loadMonitorState();
+            }, 500);
         }
     } else {
         window._motiverseSession = null;
@@ -137,7 +141,7 @@ window.saveHistoryToDB = async (query, platform, country, adsData) => {
     }
     const userId = window._motiverseSession.user.id;
     // ads_data 경량화: 핵심 필드만 추출 (payload 크기 축소)
-    const slimAds = (adsData || []).slice(0, 30).map(ad => ({
+    const slimAds = (adsData || []).slice(0, 100).map(ad => ({
         ad_id: ad.ad_id,
         brand: ad.brand,
         platform: ad.platform,
@@ -235,5 +239,99 @@ window.loadBookmarksFromDB = async () => {
         if (error) { console.warn("북마크 조회 오류:", error.message); return []; }
         return data || [];
     } catch (e) { return []; }
+};
+
+// ─── [모니터링] 폴더/경쟁사 DB API ───
+window.loadMonitorFoldersDB = async () => {
+    if (!window._motiverseSession) return [];
+    try {
+        const { data, error } = await supabaseClient
+            .from("monitor_folders")
+            .select("*")
+            .order("created_at", { ascending: false });
+        if (error) { console.warn("폴더 로드 에러", error); return []; }
+        return data || [];
+    } catch (e) { return []; }
+};
+
+window.saveMonitorFolderDB = async (name) => {
+    if (!window._motiverseSession) return null;
+    try {
+        const { data, error } = await supabaseClient
+            .from("monitor_folders")
+            .insert({ user_id: window._motiverseSession.user.id, name })
+            .select().single();
+        if (error) { console.warn("폴더 저장 에러", error); return null; }
+        return data;
+    } catch (e) { return null; }
+};
+
+window.deleteMonitorFolderDB = async (id) => {
+    if (!window._motiverseSession) return;
+    try { await supabaseClient.from("monitor_folders").delete().eq("id", id); } catch (e) { }
+};
+
+window.renameMonitorFolderDB = async (id, newName) => {
+    if (!window._motiverseSession) return;
+    try { await supabaseClient.from("monitor_folders").update({ name: newName }).eq("id", id); } catch (e) { }
+};
+
+window.loadMonitoredBrandsDB = async () => {
+    if (!window._motiverseSession) return [];
+    try {
+        const { data, error } = await supabaseClient
+            .from("monitored_brands")
+            .select("*")
+            .order("created_at", { ascending: false });
+        if (error) { console.warn("모니터링 브랜드 로드 에러", error); return []; }
+        return data || [];
+    } catch (e) { return []; }
+};
+
+window.saveMonitoredBrandDB = async (brandData) => {
+    if (!window._motiverseSession) return null;
+    try {
+        const { data, error } = await supabaseClient
+            .from("monitored_brands")
+            .insert({ ...brandData, user_id: window._motiverseSession.user.id })
+            .select().single();
+        if (error) { console.warn("모니터링 브랜드 저장 에러", error); return null; }
+        return data;
+    } catch (e) { return null; }
+};
+
+window.updateMonitoredBrandDB = async (id, updates) => {
+    if (!window._motiverseSession) return;
+    try { await supabaseClient.from("monitored_brands").update(updates).eq("id", id); } catch (e) { }
+};
+
+window.deleteMonitoredBrandDB = async (id) => {
+    if (!window._motiverseSession) return;
+    try { await supabaseClient.from("monitored_brands").delete().eq("id", id); } catch (e) { }
+};
+
+// ─── [크리에이티브 스튜디오] 브랜드 DB API ───
+window.loadUserBrandsDB = async () => {
+    if (!window._motiverseSession) return [];
+    try {
+        const { data, error } = await supabaseClient
+            .from("user_brands")
+            .select("*")
+            .order("created_at", { ascending: false });
+        if (error) { console.warn("유저 브랜드 로드 에러", error); return []; }
+        return data || [];
+    } catch (e) { return []; }
+};
+
+window.saveUserBrandDB = async (brandData) => {
+    if (!window._motiverseSession) return null;
+    try {
+        const { data, error } = await supabaseClient
+            .from("user_brands")
+            .insert({ ...brandData, user_id: window._motiverseSession.user.id })
+            .select().single();
+        if (error) { console.warn("유저 브랜드 저장 에러", error); return null; }
+        return data;
+    } catch (e) { return null; }
 };
 

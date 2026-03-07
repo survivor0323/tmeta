@@ -62,19 +62,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const navReference = document.getElementById("navReference");
     const navCreative = document.getElementById("navCreative");
     const navLabs = document.getElementById("navLabs");
+    const navMonitor = document.getElementById("navMonitor");
     const referenceView = document.getElementById("referenceView");
     const creativeView = document.getElementById("creativeView");
     const labsView = document.getElementById("labsView");
+    const monitorView = document.getElementById("monitorView");
 
     navReference?.addEventListener("click", (e) => {
         e.preventDefault();
         navReference.parentElement.classList.add("active");
         navCreative?.parentElement.classList.remove("active");
         navLabs?.parentElement.classList.remove("active");
+        navMonitor?.parentElement.classList.remove("active");
 
         referenceView?.classList.remove("hidden");
         creativeView?.classList.add("hidden");
         labsView?.classList.add("hidden");
+        monitorView?.classList.add("hidden");
 
         // Show icons if user is logged in
         if (!document.getElementById('userInfo')?.classList.contains('hidden')) {
@@ -90,10 +94,12 @@ document.addEventListener("DOMContentLoaded", () => {
         navCreative.parentElement.classList.add("active");
         navReference?.parentElement.classList.remove("active");
         navLabs?.parentElement.classList.remove("active");
+        navMonitor?.parentElement.classList.remove("active");
 
         creativeView?.classList.remove("hidden");
         referenceView?.classList.add("hidden");
         labsView?.classList.add("hidden");
+        monitorView?.classList.add("hidden");
 
         // Hide icons
         document.getElementById('monitorBtn')?.classList.add('hidden');
@@ -110,10 +116,31 @@ document.addEventListener("DOMContentLoaded", () => {
         navLabs.parentElement.classList.add("active");
         navReference?.parentElement.classList.remove("active");
         navCreative?.parentElement.classList.remove("active");
+        navMonitor?.parentElement.classList.remove("active");
 
         labsView?.classList.remove("hidden");
         referenceView?.classList.add("hidden");
         creativeView?.classList.add("hidden");
+        monitorView?.classList.add("hidden");
+
+        // Hide icons
+        document.getElementById('monitorBtn')?.classList.add('hidden');
+        document.getElementById('boardsBtn')?.classList.add('hidden');
+        document.getElementById('historyBtn')?.classList.add('hidden');
+        document.getElementById('bookmarkBtn')?.classList.add('hidden');
+    });
+
+    navMonitor?.addEventListener("click", (e) => {
+        e.preventDefault();
+        navMonitor.parentElement.classList.add("active");
+        navReference?.parentElement.classList.remove("active");
+        navCreative?.parentElement.classList.remove("active");
+        navLabs?.parentElement.classList.remove("active");
+
+        monitorView?.classList.remove("hidden");
+        referenceView?.classList.add("hidden");
+        creativeView?.classList.add("hidden");
+        labsView?.classList.add("hidden");
 
         // Hide icons
         document.getElementById('monitorBtn')?.classList.add('hidden');
@@ -402,39 +429,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const savedBrandSelect = document.getElementById('savedBrandSelect');
     const btnSaveBrand = document.getElementById('btnSaveBrand');
 
-    async function loadSavedBrandsList() {
+    window.loadSavedBrandsList = async function () {
         if (!savedBrandSelect) return;
         savedBrandSelect.innerHTML = '<option value="">저장된 브랜드 불러오기</option>';
 
-        // Supabase API 시도 → 실패 시 localStorage fallback
-        if (window._motiverseSession) {
-            try {
-                const res = await fetch('/api/v1/brands', { headers: window.getAuthHeaders?.() || {} });
-                const json = await res.json();
-                if (json.data && json.data.length > 0) {
-                    json.data.forEach(b => {
-                        const opt = document.createElement('option');
-                        opt.value = b.id;
-                        opt.dataset.source = 'api';
-                        opt.dataset.brandData = JSON.stringify(b);
-                        opt.textContent = `${b.name} (${b.url || 'API 저장'})`;
-                        savedBrandSelect.appendChild(opt);
-                    });
-                    return;
-                }
-            } catch (e) { console.warn('API 브랜드 로드 실패, localStorage 사용:', e); }
+        if (window._motiverseSession && typeof window.loadUserBrandsDB === 'function') {
+            const brands = await window.loadUserBrandsDB();
+            brands.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b.id;
+                opt.dataset.brandData = JSON.stringify(b);
+                opt.textContent = `${b.name} (${b.url || 'DB 저장됨'})`;
+                savedBrandSelect.appendChild(opt);
+            });
         }
-
-        // localStorage fallback
-        const brands = JSON.parse(localStorage.getItem('savedBrands') || '[]');
-        brands.forEach((b, i) => {
-            const opt = document.createElement('option');
-            opt.value = `local_${i}`;
-            opt.dataset.source = 'local';
-            opt.dataset.brandData = JSON.stringify(b);
-            opt.textContent = `${b.name} (${b.url || '로컬'})`;
-            savedBrandSelect.appendChild(opt);
-        });
     }
 
     if (btnSaveBrand) {
@@ -452,33 +460,17 @@ document.addEventListener("DOMContentLoaded", () => {
             btnSaveBrand.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
             btnSaveBrand.disabled = true;
 
-            try {
-                // Supabase 저장 시도
-                if (window._motiverseSession) {
-                    const res = await fetch('/api/v1/brands', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', ...(window.getAuthHeaders?.() || {}) },
-                        body: JSON.stringify(brandData)
-                    });
-                    const json = await res.json();
-                    if (json.status === 'success') {
-                        await loadSavedBrandsList();
-                        alert(`"${name}" 브랜드가 서버에 저장되었습니다!`);
-                        btnSaveBrand.innerHTML = '<i class="fa-solid fa-floppy-disk" style="margin-right: 0.3rem;"></i> 저장';
-                        btnSaveBrand.disabled = false;
-                        return;
-                    }
+            if (window._motiverseSession && typeof window.saveUserBrandDB === 'function') {
+                const saved = await window.saveUserBrandDB(brandData);
+                if (saved) {
+                    await window.loadSavedBrandsList();
+                    alert(`"${name}" 브랜드가 서버에 저장되었습니다!`);
+                } else {
+                    alert('브랜드 저장에 실패했습니다.');
                 }
-            } catch (e) { console.warn('API 저장 실패, localStorage 사용:', e); }
-
-            // localStorage fallback
-            const brands = JSON.parse(localStorage.getItem('savedBrands') || '[]');
-            const existing = brands.findIndex(b => b.name === name);
-            if (existing >= 0) brands[existing] = { ...brandData, savedAt: new Date().toISOString() };
-            else brands.push({ ...brandData, savedAt: new Date().toISOString() });
-            localStorage.setItem('savedBrands', JSON.stringify(brands));
-            await loadSavedBrandsList();
-            alert(`"${name}" 브랜드가 로컬에 저장되었습니다!`);
+            } else {
+                alert('로그인이 필요합니다.');
+            }
 
             btnSaveBrand.innerHTML = '<i class="fa-solid fa-floppy-disk" style="margin-right: 0.3rem;"></i> 저장';
             btnSaveBrand.disabled = false;
@@ -498,7 +490,7 @@ document.addEventListener("DOMContentLoaded", () => {
             } catch (err) { console.error('브랜드 데이터 파싱 실패:', err); }
             savedBrandSelect.value = '';
         });
-        loadSavedBrandsList();
+        window.loadSavedBrandsList();
     }
 
     // ═══════════════════════════════════════════════════════

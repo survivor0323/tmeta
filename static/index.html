@@ -40,6 +40,12 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="#" class="nav-link" id="navMonitor">
+                        <i class="fa-solid fa-satellite-dish"></i>
+                        <span>경쟁사 모니터링</span>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="#" class="nav-link" id="navCreative">
                         <i class="fa-solid fa-wand-magic-sparkles"></i>
                         <span>크리에이티브</span>
@@ -174,6 +180,10 @@
                             <p class="pulsing-text">AI 에이전트가 완벽한 레퍼런스를 탐색하고 있습니다...</p>
                         </div>
 
+                        <!-- 브랜드 추출 결과 오버뷰 (추천 모드) -->
+                        <div id="extractedBrandCardContainer" class="hidden" style="margin-bottom: 2rem; width: 100%;">
+                        </div>
+
                         <!-- 4. 광고 카드 그리드 영역 -->
                         <div class="ad-grid" id="adGrid">
                             <!-- 스크립트에 의해 카드들이 렌더링 됩니다 -->
@@ -184,6 +194,470 @@
                         </div>
                     </section>
                 </main>
+            </div>
+
+
+            <!-- 📡 경쟁사 모니터링 뷰 -->
+            <div id="monitorView" class="hidden"
+                style="display: flex; min-height: calc(100vh - 80px); width: 100%; background: #ffffff;">
+
+                <!-- Left Inner Sidebar -->
+                <div id="monitorSidebarContainer"
+                    style="width: 280px; background: #f8fafc; border-right: 1px solid #e2e8f0; padding: 1.5rem; display: flex; flex-direction: column; position: relative; max-height: 100vh; overflow: visible; z-index: 60;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; position: relative;">
+                        <div>
+                            <h3
+                                style="margin: 0; font-size: 1.1rem; color: var(--text-main); font-weight: 700; margin-bottom: 0.3rem;">
+                                경쟁사 모니터링</h3>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">0개 경쟁사 모니터링 중</span>
+                        </div>
+                        <button id="addMonitorBtn"
+                            style="background: #3b82f6; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.3rem; transition: background 0.2s;">
+                            <i class="fa-solid fa-plus"></i> 추가
+                        </button>
+                    </div>
+
+                    <!-- Add Menu Dropdown -->
+                    <div id="addMonitorDropdown" class="hidden"
+                        style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); position: absolute; top: 4.5rem; right: 1.5rem; width: 230px; z-index: 9999;">
+                        <ul
+                            style="list-style: none; padding: 0; margin: 0; font-size: 0.85rem; color: var(--text-main);">
+                            <li id="addFolderMenu"
+                                style="padding: 0.8rem 1rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid #f1f5f9; transition: background 0.2s; border-radius: 8px 8px 0 0;"
+                                onmouseover="this.style.background='#f1f5f9'"
+                                onmouseout="this.style.background='white'">
+                                <i class="fa-regular fa-folder"
+                                    style="color: #64748b; width: 16px; text-align: center;"></i> 폴더 추가
+                            </li>
+                            <li id="addMetaMenu"
+                                style="padding: 0.8rem 1rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; transition: background 0.2s;"
+                                onmouseover="this.style.background='#f1f5f9'"
+                                onmouseout="this.style.background='white'">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <i class="fa-brands fa-meta"
+                                        style="color: #0668E1; width: 16px; text-align: center;"></i> Meta 광고 추가
+                                </div>
+                            </li>
+                            <li id="addInstagramMenu"
+                                style="padding: 0.8rem 1rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; transition: background 0.2s;"
+                                onmouseover="this.style.background='#f1f5f9'"
+                                onmouseout="this.style.background='white'">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <i class="fa-brands fa-instagram"
+                                        style="color: #e1306c; width: 16px; text-align: center;"></i> Instagram 리스트 추가
+                                </div>
+                            </li>
+                            <li id="addGoogleMenu"
+                                style="padding: 0.8rem 1rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; transition: background 0.2s;"
+                                onmouseover="this.style.background='#f1f5f9'"
+                                onmouseout="this.style.background='white'">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <i class="fa-brands fa-google"
+                                        style="color: #ea4335; width: 16px; text-align: center;"></i> Google Ads 추가
+                                </div>
+                            </li>
+                            <li id="addTiktokMenu"
+                                style="padding: 0.8rem 1rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; transition: background 0.2s;"
+                                onmouseover="this.style.background='#f1f5f9'"
+                                onmouseout="this.style.background='white'">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <i class="fa-brands fa-tiktok"
+                                        style="color: #000000; width: 16px; text-align: center;"></i> TikTok 추가
+                                </div>
+                            </li>
+                            <li
+                                style="padding: 0.8rem 1rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between; background: #fff1f2; opacity: 0.7;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <i class="fa-brands fa-tiktok"
+                                        style="color: #000000; width: 16px; text-align: center;"></i> TikTok
+                                </div>
+                                <span
+                                    style="font-size: 0.65rem; background: #be185d; color: white; padding: 2px 6px; border-radius: 10px; font-weight: 700;">PREMIUM</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div id="monitorSidebarList" class="hidden"
+                        style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem;">
+                        <!-- JS injected folder items -->
+                    </div>
+
+                    <div id="monitorSidebarEmpty" style="text-align: center; margin-top: 3rem; opacity: 0.8;">
+                        <i class="fa-brands fa-pinterest-p"
+                            style="font-size: 1.5rem; color: #64748b; margin-bottom: 1.5rem;"></i>
+                        <h4
+                            style="font-size: 0.95rem; color: var(--text-main); margin-bottom: 0.8rem; font-weight: 600;">
+                            모니터링 중인 경쟁사가 없습니다.</h4>
+                        <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.5;">경쟁사 브랜드를 추가하면
+                            <br />모티버스가 매일 자동으로<br />콘텐츠를 수집하여 저장합니다.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Main Content Area -->
+                <main class="content-area" style="flex: 1; padding: 2rem 4rem; overflow-y: auto;">
+                    <!-- 1) Welcome / Empty State Section -->
+                    <div id="monitorWelcomeSection">
+                        <section class="hero-section" style="padding-top: 1rem; padding-bottom: 2rem;">
+                            <div class="hero-label">다른 마케터들은 이 경쟁사를 추가했어요</div>
+                            <h1>
+                                <span class="text-gradient">분야별 추천 경쟁사</span>
+                                <span
+                                    style="font-size: 0.8rem; border: 1px solid #c084fc; color: #c084fc; padding: 4px 8px; border-radius: 12px; font-weight: 600; vertical-align: middle; margin-left: 0.5rem; letter-spacing: 0;">BETA</span>
+                            </h1>
+                        </section>
+
+                        <!-- Categories -->
+                        <div
+                            style="display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; margin-bottom: 3rem; max-width: 900px; margin-left: auto; margin-right: auto;">
+                            <button class="monitor-chip"
+                                style="padding: 0.4rem 1rem; border: 1px solid #e2e8f0; background: white; border-radius: 20px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer;">전체</button>
+                            <button class="monitor-chip active"
+                                style="padding: 0.4rem 1rem; border: 1px solid #3b82f6; background: #3b82f6; border-radius: 20px; font-size: 0.85rem; color: white; cursor: pointer; font-weight:600; box-shadow: 0 4px 6px rgba(59,130,246,0.2);">뷰티</button>
+                            <button class="monitor-chip"
+                                style="padding: 0.4rem 1rem; border: 1px solid #e2e8f0; background: white; border-radius: 20px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer;">패션</button>
+                            <button class="monitor-chip"
+                                style="padding: 0.4rem 1rem; border: 1px solid #e2e8f0; background: white; border-radius: 20px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer;">식품</button>
+                            <button class="monitor-chip"
+                                style="padding: 0.4rem 1rem; border: 1px solid #e2e8f0; background: white; border-radius: 20px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer;">홈·생활</button>
+                            <button class="monitor-chip"
+                                style="padding: 0.4rem 1rem; border: 1px solid #e2e8f0; background: white; border-radius: 20px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer;">가전·디지털</button>
+                            <button class="monitor-chip"
+                                style="padding: 0.4rem 1rem; border: 1px solid #e2e8f0; background: white; border-radius: 20px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer;">취미·반려동물</button>
+                            <button class="monitor-chip"
+                                style="padding: 0.4rem 1rem; border: 1px solid #e2e8f0; background: white; border-radius: 20px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer;">건강</button>
+                            <button class="monitor-chip"
+                                style="padding: 0.4rem 1rem; border: 1px solid #e2e8f0; background: white; border-radius: 20px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer;">IT
+                                솔루션·SaaS</button>
+                            <button class="monitor-chip"
+                                style="padding: 0.4rem 1rem; border: 1px solid #e2e8f0; background: white; border-radius: 20px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer;">커머스·쇼핑</button>
+                            <button class="monitor-chip"
+                                style="padding: 0.4rem 1rem; border: 1px solid #e2e8f0; background: white; border-radius: 20px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer;">금융·핀테크</button>
+                            <button class="monitor-chip"
+                                style="padding: 0.4rem 1rem; border: 1px solid #e2e8f0; background: white; border-radius: 20px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer;">교육</button>
+                            <button class="monitor-chip"
+                                style="padding: 0.4rem 1rem; border: 1px solid #e2e8f0; background: white; border-radius: 20px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer;">커뮤니티·콘텐츠</button>
+                            <button class="monitor-chip"
+                                style="padding: 0.4rem 1rem; border: 1px solid #e2e8f0; background: white; border-radius: 20px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer;">라이프스타일
+                                서비스</button>
+                        </div>
+
+                        <div style="max-width: 900px; margin: 0 auto;">
+                            <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+                                <select
+                                    style="padding: 0.5rem 1rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; outline: none; background: white; color: var(--text-main); min-width: 150px; cursor: pointer;">
+                                    <option value="meta">Meta 광고</option>
+                                </select>
+                            </div>
+
+                            <div style="display: flex; flex-direction: column; gap: 1rem;">
+
+                                <div
+                                    style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; background: white; transition: border-color 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                                    <div style="display: flex; gap: 1.5rem; align-items: center;">
+                                        <div
+                                            style="font-weight: 800; font-family: sans-serif; letter-spacing: -1px; color: var(--text-main); font-size: 1.2rem; min-width: 60px;">
+                                            minix</div>
+                                        <div>
+                                            <div
+                                                style="font-weight: 700; font-size: 1.1rem; color: var(--text-main); margin-bottom: 0.3rem; display: flex; align-items: center;">
+                                                미닉스 <span
+                                                    style="font-size: 0.7rem; color: #10b981; background: #ecfdf5; padding: 2px 6px; border-radius: 4px; font-weight: 600; margin-left: 0.5rem;">52개
+                                                    게재 중</span></div>
+                                            <div
+                                                style="font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem;">
+                                                <i class="fa-brands fa-instagram"></i> @minix_official
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button
+                                        style="color: #3b82f6; background: none; border: none; font-weight: 600; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; transition: opacity 0.2s;"
+                                        onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
+                                        <i class="fa-solid fa-plus"></i> 모니터링에 추가
+                                    </button>
+                                </div>
+
+                                <div
+                                    style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; background: white; transition: border-color 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                                    <div style="display: flex; gap: 1.5rem; align-items: center;">
+                                        <div
+                                            style="font-weight: 900; color: #ea580c; font-size: 1.3rem; letter-spacing: 1px; min-width: 60px;">
+                                            S·A·R</div>
+                                        <div>
+                                            <div
+                                                style="font-weight: 700; font-size: 1.1rem; color: var(--text-main); margin-bottom: 0.3rem; display: flex; align-items: center;">
+                                                스파알 <span
+                                                    style="font-size: 0.7rem; color: #10b981; background: #ecfdf5; padding: 2px 6px; border-radius: 4px; font-weight: 600; margin-left: 0.5rem;">7개
+                                                    게재 중</span></div>
+                                            <div
+                                                style="font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem;">
+                                                <i class="fa-brands fa-instagram"></i> @spa_r_official
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button
+                                        style="color: #3b82f6; background: none; border: none; font-weight: 600; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; transition: opacity 0.2s;"
+                                        onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
+                                        <i class="fa-solid fa-plus"></i> 모니터링에 추가
+                                    </button>
+                                </div>
+
+                                <div
+                                    style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; background: white; transition: border-color 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                                    <div style="display: flex; gap: 1.5rem; align-items: center;">
+                                        <div
+                                            style="font-weight: 800; color: #0284c7; font-size: 1.2rem; min-width: 60px; font-family: serif; letter-spacing: -0.5px;">
+                                            coway</div>
+                                        <div>
+                                            <div
+                                                style="font-weight: 700; font-size: 1.1rem; color: var(--text-main); margin-bottom: 0.3rem; display: flex; align-items: center;">
+                                                코웨이 <span
+                                                    style="font-size: 0.7rem; color: #10b981; background: #ecfdf5; padding: 2px 6px; border-radius: 4px; font-weight: 600; margin-left: 0.5rem;">177개
+                                                    게재 중</span></div>
+                                            <div
+                                                style="font-size: 0.85rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.4rem;">
+                                                <span><i class="fa-brands fa-facebook"></i> @coway.kr</span>
+                                                <span><i class="fa-brands fa-instagram"></i> @coway.kr <i
+                                                        class="fa-solid fa-circle-check"
+                                                        style="color: #3b82f6;"></i></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button
+                                        style="color: #3b82f6; background: none; border: none; font-weight: 600; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; transition: opacity 0.2s;"
+                                        onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
+                                        <i class="fa-solid fa-plus"></i> 모니터링에 추가
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div> <!-- End of #monitorWelcomeSection -->
+
+                    <!-- 2) Competitor Detail Section (Hidden by default) -->
+                    <section id="monitorCompetitorDetail" class="hidden" style="width: 100%;">
+                        <!-- Header Area -->
+                        <div style="margin-bottom: 2rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 1.5rem;">
+                            <div
+                                style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <h2 id="monitorCompetitorTitle"
+                                        style="font-size: 1.5rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 0.5rem; color: var(--text-main);">
+                                        <!-- Injected by JS -->
+                                    </h2>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
+                                    <button
+                                        style="background: #3b82f6; color: white; border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center;"><i
+                                            class="fa-solid fa-arrows-rotate"></i></button>
+                                </div>
+                            </div>
+
+                            <!-- Stats Row -->
+                            <div id="monitorCompetitorStats"
+                                style="display: flex; align-items: center; gap: 1.5rem; font-size: 0.85rem; color: var(--text-main);">
+                                <div style="display: flex; align-items: center; gap: 0.4rem;"><span
+                                        style="color: #10b981;">●</span> 수집된 광고 56개</div>
+                                <div style="display: flex; align-items: center; gap: 0.4rem;"><i
+                                        class="fa-regular fa-image"></i> 이미지 17개</div>
+                                <div style="display: flex; align-items: center; gap: 0.4rem;"><i
+                                        class="fa-solid fa-layer-group"></i> 캐러셀 1개</div>
+                                <div style="display: flex; align-items: center; gap: 0.4rem;"><i
+                                        class="fa-brands fa-youtube" style="color:#ef4444;"></i> 영상 14개</div>
+                                <div style="display: flex; align-items: center; gap: 0.4rem;"><i
+                                        class="fa-solid fa-share-nodes"></i> DCO / DPA 24개</div>
+                            </div>
+
+                            <!-- Info Alert -->
+                            <div
+                                style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 0.8rem 1rem; margin-top: 1rem; font-size: 0.8rem; color: #1e3a8a; display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fa-solid fa-circle-info"></i>
+                                수집된 미디어는 처리 과정에 따라 순차적으로 화면에 표시되며, 반영까지 시간이 소요될 수 있습니다. 모니터링 등록 시점부터 광고가 수집됩니다. (2026년
+                                3월 7일~)
+                            </div>
+                        </div>
+
+                        <!-- Tabs Area -->
+                        <div id="monitorTabsRow"
+                            style="display: flex; gap: 2rem; border-bottom: 2px solid #e2e8f0; margin-bottom: 1.5rem;">
+                            <div id="monitorTabAds" class="monitor-tab active"
+                                style="padding-bottom: 0.8rem; border-bottom: 2px solid #3b82f6; color: #3b82f6; font-weight: 700; cursor: pointer; margin-bottom: -2px;"
+                                onclick="window.switchMonitorTab('ads')">
+                                수집된 광고</div>
+                            <div id="monitorTabHistory" class="monitor-tab"
+                                style="padding-bottom: 0.8rem; color: var(--text-muted); font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px;"
+                                onclick="window.switchMonitorTab('history')">
+                                게재 히스토리</div>
+                            <div id="monitorTabTimeline" class="monitor-tab"
+                                style="padding-bottom: 0.8rem; color: var(--text-muted); font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px;"
+                                onclick="window.switchMonitorTab('timeline')">
+                                게재 타임라인</div>
+                            <div id="monitorTabDashboard" class="monitor-tab"
+                                style="padding-bottom: 0.8rem; color: var(--text-muted); font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px;"
+                                onclick="window.switchMonitorTab('dashboard')">
+                                분석 대시보드</div>
+                        </div>
+
+                        <!-- 탭 내용 영역 -->
+                        <div id="monitorTabContentContainer">
+                            <!-- [1] 수집된 광고 탭 -->
+                            <div id="monitorAdsView">
+                                <!-- Filter Row -->
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                                    <div style="display: flex; gap: 0.8rem;">
+                                        <button id="bookmarkToggleBtn" data-mode="all"
+                                            style="padding: 0.4rem 1rem; border: 1px solid #e2e8f0; background: white; border-radius: 20px; font-size: 0.85rem; color: var(--text-main); font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; transition: background 0.2s;">
+                                            <i class="fa-solid fa-bookmark" style="color:#3b82f6;"></i> <span
+                                                class="btn-text">북마크</span>
+                                        </button>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 1rem;">
+                                        <i class="fa-solid fa-arrow-down-short-wide" style="color: #94a3b8;"></i>
+                                        <select id="monitorSortSelect"
+                                            style="padding: 0.4rem 1rem; border: 1px solid #e2e8f0; background: white; border-radius: 20px; font-size: 0.85rem; color: var(--text-main); font-weight: 600; outline: none; cursor: pointer;">
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Cards Grid (Using Reference Menu Style) -->
+                                <div class="ad-grid" id="monitorAdGrid">
+                                    <!-- JS injected reference-styled cards -->
+                                </div>
+                            </div>
+
+                            <!-- [2] 게재 히스토리 탭 -->
+                            <div id="monitorHistoryView" class="hidden">
+                                <!-- 여기에 히스토리가 렌더링됩니다 -->
+                            </div>
+
+                            <!-- [3] 게재 타임라인 탭 -->
+                            <div id="monitorTimelineView" class="hidden"
+                                style="width: 100%; overflow-x: auto; padding-bottom: 2rem;">
+                                <!-- 여기에 타임라인이 렌더링됩니다 -->
+                            </div>
+                        </div>
+                    </section>
+                </main>
+            </div>
+
+            <div id="modalAddFolder" class="modal hidden"
+                style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(2px);">
+                <div
+                    style="background: white; border-radius: 12px; width: 400px; max-width: 90%; padding: 2rem; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+                    <button id="closeFolderModal"
+                        style="position: absolute; right: 1.5rem; top: 1.5rem; background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #94a3b8; transition: color 0.2s;"
+                        onmouseover="this.style.color='#64748b'" onmouseout="this.style.color='#94a3b8'"><i
+                            class="fa-solid fa-xmark"></i></button>
+                    <h3 style="margin: 0 0 0.5rem 0; font-size: 1.2rem; color: var(--text-main);">새로운 폴더 추가</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">폴더별로 분야별, 클라이언트별
+                        경쟁사들을 한 번에 관리하세요.</p>
+
+                    <input type="text" id="newFolderNameInput" placeholder="새로운 폴더"
+                        style="width: 100%; box-sizing: border-box; padding: 0.8rem 1rem; border: 1px solid #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); border-radius: 8px; font-size: 0.95rem; outline: none; margin-bottom: 0.3rem;" />
+                    <div style="text-align: right; font-size: 0.75rem; color: #94a3b8; margin-bottom: 1.5rem;">0/50
+                    </div>
+
+                    <div style="display: flex; gap: 0.8rem;">
+                        <button id="cancelFolderModal"
+                            style="flex: 1; padding: 0.8rem; border: 1px solid #e2e8f0; background: white; border-radius: 8px; font-weight: 600; color: var(--text-main); cursor: pointer; transition: background 0.2s;"
+                            onmouseover="this.style.background='#f8fafc'"
+                            onmouseout="this.style.background='white'">취소</button>
+                        <button id="confirmFolderBtn"
+                            style="flex: 1; padding: 0.8rem; border: none; background: #3b82f6; border-radius: 8px; font-weight: 600; color: white; cursor: pointer;">확인</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="modalAddCompetitor" class="modal hidden"
+                style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(2px);">
+                <div
+                    style="background: white; border-radius: 12px; width: 500px; max-width: 90%; padding: 2rem; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+                    <button id="closeCompetitorModal"
+                        style="position: absolute; right: 1.5rem; top: 1.5rem; background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #3b82f6;"><i
+                            class="fa-solid fa-circle-xmark"></i></button>
+
+                    <h3 id="competitorModalTitle"
+                        style="margin: 0 0 0.5rem 0; font-size: 1.2rem; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+                        경쟁사 추가하기 - <span
+                            style="background:none; border:none; padding:0; display:inline-flex; align-items:center; gap:0.4rem;"><i
+                                class="fa-brands fa-meta" style="color: #0668E1;"></i> Meta 광고</span>
+                    </h3>
+                    <p id="competitorModalDesc"
+                        style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5;">
+                        Instagram, Facebook 등 Meta 플랫폼에 게재된 광고 콘텐츠를 매일 자동으로 수집·저장합니다. 저장된 광고는 이후 게재가 종료되더라도 모티버스에서 확인할 수
+                        있습니다.</p>
+
+                    <label
+                        style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">브랜드
+                        검색 <i class="fa-regular fa-circle-question" style="color: #94a3b8;"></i></label>
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; position: relative;">
+                        <div style="position: relative; flex: 1;">
+                            <i class="fa-solid fa-magnifying-glass"
+                                style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
+                            <input type="text" id="competitorSearchInput" placeholder="경쟁사 브랜드명 입력 (예: 올리브영, 무신사)"
+                                style="width: 100%; box-sizing: border-box; padding: 0.8rem 1rem 0.8rem 2.5rem; border: 1px solid #3b82f6; border-radius: 8px; font-size: 0.95rem; outline: none; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);" />
+                            <!-- Search Results Dropdown -->
+                            <div id="competitorSearchResults" class="hidden"
+                                style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #3b82f6; border-top: none; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); z-index: 10; overflow: hidden; margin-top: -3px; max-height: 250px; overflow-y: auto;">
+                                <!-- Dynamically populated -->
+                            </div>
+                        </div>
+                        <button id="competitorSearchActionBtn"
+                            style="padding: 0 1.5rem; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s;"
+                            onmouseover="this.style.background='#2563eb'"
+                            onmouseout="this.style.background='#3b82f6'">검색</button>
+                    </div>
+
+                    <div
+                        style="text-align: center; color: #94a3b8; font-size: 0.8rem; margin: 1.5rem 0; position: relative;">
+                        <span style="background: white; padding: 0 15px; position: relative; z-index: 1;">또는</span>
+                        <div
+                            style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #e2e8f0; z-index: 0;">
+                        </div>
+                    </div>
+
+                    <label
+                        style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">링크로
+                        추가 <i class="fa-regular fa-circle-question" style="color: #94a3b8;"></i></label>
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
+                        <div style="position: relative; flex: 1;">
+                            <i class="fa-solid fa-link"
+                                style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
+                            <input type="text" placeholder="예: https://www.facebook.com/ads/library/?...&view..."
+                                style="width: 100%; box-sizing: border-box; padding: 0.8rem 1rem 0.8rem 2.5rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.95rem; outline: none; background: #f8fafc;"
+                                disabled />
+                        </div>
+                        <button
+                            style="padding: 0 1.5rem; background: #f1f5f9; color: #94a3b8; border: none; border-radius: 8px; font-weight: 600; cursor: not-allowed;">확인</button>
+                    </div>
+
+                    <label
+                        style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">
+                        광고 게재 국가 <i class="fa-regular fa-circle-question" style="color: #94a3b8;"></i>
+                        <span
+                            style="font-size: 0.65rem; background: #d946ef; color: white; padding: 2px 6px; border-radius: 10px; font-weight: 700; margin-left: 0.3rem;">PREMIUM</span>
+                    </label>
+                    <select
+                        style="width: 100%; box-sizing: border-box; padding: 0.8rem 1rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.95rem; outline: none; margin-bottom: 1.5rem; background: white; appearance: none; color: var(--text-main); cursor: pointer;">
+                        <option>대한민국 (KR)</option>
+                    </select>
+
+                    <label
+                        style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">메모</label>
+                    <textarea placeholder="경쟁사 브랜드에 대한 메모를 작성하세요"
+                        style="width: 100%; box-sizing: border-box; padding: 0.8rem 1rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.95rem; outline: none; min-height: 80px; resize: none; margin-bottom: 1.5rem; font-family: 'Inter', sans-serif;"></textarea>
+
+                    <div style="display: flex; gap: 0.8rem;">
+                        <button id="cancelCompetitorModal"
+                            style="flex: 1; padding: 0.8rem; border: 1px solid #e2e8f0; background: white; border-radius: 8px; font-weight: 600; color: var(--text-main); cursor: pointer; transition: background 0.2s;"
+                            onmouseover="this.style.background='#f8fafc'"
+                            onmouseout="this.style.background='white'">취소</button>
+                        <button id="submitCompetitorModalBtn"
+                            style="flex: 1; padding: 0.8rem; border: none; background: #e2e8f0; border-radius: 8px; font-weight: 600; color: #94a3b8; cursor: pointer;"
+                            disabled>추가</button>
+                    </div>
+                </div>
             </div>
 
             <!-- 🎨 크리에이티브 스튜디오 뷰 -->
@@ -242,7 +716,8 @@
                                     </button>
                                 </div>
                             </div>
-                            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem;">브랜드 정보를 입력하면
+                            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem;">브랜드 정보를
+                                입력하면
                                 AI가 최적의 광고 전략을 생성합니다.</p>
 
                             <div
@@ -315,7 +790,8 @@
                             <h2
                                 style="font-family: var(--font-heading); font-size: 1.5rem; color: var(--text-main); margin-bottom: 0.5rem;">
                                 AI Strategy & Copy</h2>
-                            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem;">레퍼런스를 선택하고 AI가
+                            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem;">레퍼런스를 선택하고
+                                AI가
                                 브랜드에 맞는 광고 카피와 전략을 자동 생성합니다.</p>
 
                             <!-- 레퍼런스 가져오기 -->
@@ -328,7 +804,8 @@
                                     </h4>
                                     <button class="btn" id="btnLoadReferences"
                                         style="background: white; color: var(--text-main); border: 1px solid var(--border-color); padding: 0.8rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: all 0.2s;">
-                                        <i class="fa-solid fa-rotate" style="margin-right: 0.3rem;"></i> 모니터링 데이터에서 불러오기
+                                        <i class="fa-solid fa-rotate" style="margin-right: 0.3rem;"></i> 모니터링 데이터에서
+                                        불러오기
                                     </button>
                                 </div>
                                 <div id="referenceList"
@@ -337,7 +814,8 @@
                                         style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 1rem;">
                                         모니터링 데이터에서 레퍼런스 광고를 불러와 선택하세요.</div>
                                 </div>
-                                <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-muted);">선택된 레퍼런스:
+                                <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-muted);">선택된
+                                    레퍼런스:
                                     <span id="selectedRefCount"
                                         style="font-weight: 700; color: var(--accent-blue);">0</span>개
                                 </div>
@@ -355,13 +833,15 @@
                                         <div
                                             style="font-weight: 700; color: var(--text-main); font-size: 1.1rem; font-family: var(--font-heading);">
                                             Generate strategy & texts with AI</div>
-                                        <div style="font-size: 0.9rem; color: var(--text-muted);">선택한 레퍼런스와 내 브랜드를 분석하여
+                                        <div style="font-size: 0.9rem; color: var(--text-muted);">선택한 레퍼런스와 내 브랜드를
+                                            분석하여
                                             고효율 카피와 레이아웃 전략을 추천합니다.</div>
                                     </div>
                                 </div>
                                 <button class="btn" id="btnGenerateAI"
                                     style="background: var(--text-main); color: white; padding: 0.8rem 2rem; border-radius: 8px; font-weight: 600; font-size: 0.95rem; white-space: nowrap; border: none; cursor: pointer; box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2); transition: all 0.2s;">
-                                    <i class="fa-solid fa-wand-magic-sparkles" style="margin-right: 0.3rem;"></i> AI 전략
+                                    <i class="fa-solid fa-wand-magic-sparkles" style="margin-right: 0.3rem;"></i> AI
+                                    전략
                                     생성
                                 </button>
                             </div>
@@ -424,7 +904,8 @@
                                         <button class="btn" id="btnAutoPrompt"
                                             style="background: white; border: 1px solid #e2e8f0; color: var(--text-sub); font-size: 0.8rem; padding: 0.4rem 0.8rem; border-radius: 6px;">
                                             <i class="fa-solid fa-wand-magic-sparkles"
-                                                style="margin-right: 0.3rem; color: var(--accent-blue);"></i> AI 자동 프롬프트
+                                                style="margin-right: 0.3rem; color: var(--accent-blue);"></i> AI 자동
+                                            프롬프트
                                         </button>
                                     </div>
                                     <div
@@ -432,7 +913,8 @@
                                         <i class="fa-regular fa-lightbulb"
                                             style="color: #ca8a04; margin-top: 0.2rem; font-size: 1.1rem;"></i>
                                         <div style="font-size: 0.85rem; color: #475569; line-height: 1.6;">
-                                            <span style="font-weight: 600; color: #1e40af;">팁:</span> 장면을 설명하고 키워드만 나열하지
+                                            <span style="font-weight: 600; color: #1e40af;">팁:</span> 장면을 설명하고 키워드만
+                                            나열하지
                                             마세요.
                                         </div>
                                     </div>
@@ -451,14 +933,17 @@
                                         onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#cbd5e1';">
                                         <span style="color: #64748b; font-size: 0.95rem; font-weight: 600;"><i
                                                 class="fa-solid fa-plus"
-                                                style="margin-right:0.5rem; font-size: 0.8rem;"></i> 제품 이미지 업로드</span>
+                                                style="margin-right:0.5rem; font-size: 0.8rem;"></i> 제품
+                                            이미지 업로드</span>
                                     </div>
                                     <div id="productPreviewArea" style="margin-top: 0.8rem;" class="hidden">
                                         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;"
-                                            id="productThumbnails"></div>
+                                            id="productThumbnails">
+                                        </div>
                                     </div>
                                     <div id="productEmptyMsg"
-                                        style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.8rem;">업로드된
+                                        style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.8rem;">
+                                        업로드된
                                         제품이 없습니다.</div>
                                 </div>
 
@@ -484,7 +969,8 @@
                                             <i class="fa-solid fa-k" style="font-size: 1.5rem; color: #fae100;"></i>
                                             <div>
                                                 <div style="font-weight: 700; font-size: 0.9rem;">Kakao Moment</div>
-                                                <div style="font-size: 0.75rem; opacity: 0.7;">Bizboard & Display</div>
+                                                <div style="font-size: 0.75rem; opacity: 0.7;">Bizboard & Display
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="tab-chip platform-card" data-platform="meta"
@@ -603,10 +1089,12 @@
                                         style="margin-top: 1.5rem; margin-bottom: 2rem; background: #fdf8f6; border: 1px solid #fed7aa; border-radius: 12px; padding: 1.2rem; display: flex; flex-direction: column; gap: 0.6rem;">
                                         <label
                                             style="font-size: 0.95rem; font-weight: 700; color: #ea580c; display: flex; align-items: center; gap: 0.5rem;"><i
-                                                class="fa-solid fa-wand-magic-sparkles text-gradient"></i> AI 프롬프트 지시창
+                                                class="fa-solid fa-wand-magic-sparkles text-gradient"></i> AI 프롬프트
+                                            지시창
                                             (생성물
                                             및 톤 수정)</label>
-                                        <span style="font-size: 0.8rem; color: #f97316;">* AI가 생성해준 기존 프롬프트를 편집하거나 새로운
+                                        <span style="font-size: 0.8rem; color: #f97316;">* AI가 생성해준 기존 프롬프트를 편집하거나
+                                            새로운
                                             지시사항(예: 피사체를 정중앙에 배치, 배경 더 밝게)을 넣어주시면 캔버스가 다시 생성됩니다.</span>
                                         <textarea id="creativePrompt"
                                             placeholder="AI 전략 단계에서 프롬프트가 자동으로 채워집니다. 변경사항을 원하시면 지시어를 입력하고 Generate 버튼을 다시 눌러주세요."
@@ -623,7 +1111,8 @@
                                             <button class="btn" id="btnPreviewRender"
                                                 style="background: var(--accent-blue); color: white; padding: 0.8rem 2.5rem; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); font-size: 1rem; border: none; cursor: pointer; transition: all 0.2s;">
                                                 <i class="fa-solid fa-wand-magic-sparkles"
-                                                    style="margin-right: 0.3rem;"></i> Generate Creative
+                                                    style="margin-right: 0.3rem;"></i>
+                                                Generate Creative
                                             </button>
                                         </div>
                                     </div>
@@ -651,7 +1140,8 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="labsProductUrl" class="form-label" style="font-weight: 600;">제품 URL 또는 제품
+                                <label for="labsProductUrl" class="form-label" style="font-weight: 600;">제품 URL 또는
+                                    제품
                                     설명</label>
                                 <textarea id="labsProductUrl" class="form-textarea"
                                     placeholder="제품 특징이나 관련 URL을 적어주세요..." rows="3"></textarea>
@@ -665,7 +1155,8 @@
 
                             <div class="form-group"
                                 style="padding-top: 0.5rem; border-top: 1px dashed var(--border-color);">
-                                <label class="form-label" style="font-weight: 600; margin-bottom: 0.8rem;">실사 모델(인물) 노출
+                                <label class="form-label" style="font-weight: 600; margin-bottom: 0.8rem;">실사 모델(인물)
+                                    노출
                                     여부</label>
                                 <div style="display: flex; gap: 1.5rem; align-items: center; font-size: 0.95rem;">
                                     <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
@@ -726,7 +1217,8 @@
             <div id="aiModal" class="modal hidden">
                 <div class="modal-content">
                     <span class="close-btn" id="closeModalBtn">&times;</span>
-                    <h2 class="modal-title"><i class="fa-solid fa-wand-magic-sparkles text-gradient"></i> AI 심층 기획 포인트
+                    <h2 class="modal-title"><i class="fa-solid fa-wand-magic-sparkles text-gradient"></i> AI 심층 기획
+                        포인트
                     </h2>
 
                     <div id="modalLoading" class="loading-state hidden">
@@ -741,7 +1233,8 @@
                             <p class="analysis-text" id="modalHook"></p>
                         </div>
                         <div class="ai-analysis-block">
-                            <span class="analysis-label"><i class="fa-solid fa-bars-staggered"></i> 2. Body (핵심 소구점 및
+                            <span class="analysis-label"><i class="fa-solid fa-bars-staggered"></i> 2. Body (핵심 소구점
+                                및
                                 전개)</span>
                             <p class="analysis-text" id="modalBody"></p>
                         </div>
@@ -759,7 +1252,8 @@
                 <div class="modal-content" style="max-width:700px;">
                     <span class="close-btn"
                         onclick="document.getElementById('monitorModal').classList.add('hidden')">&times;</span>
-                    <h2 class="modal-title"><i class="fa-solid fa-satellite-dish text-gradient"></i> 경쟁사 자동 모니터링</h2>
+                    <h2 class="modal-title"><i class="fa-solid fa-satellite-dish text-gradient"></i> 경쟁사 자동 모니터링
+                    </h2>
 
                     <div style="display:flex;gap:0.5rem;margin-bottom:1.5rem;">
                         <input type="text" id="monitorBrandInput" placeholder="브랜드명 입력 (예: 벨킨, 삼성전자)"
@@ -778,9 +1272,11 @@
                     <div id="monitorList" style="max-height:250px;overflow-y:auto;margin-bottom:1rem;"></div>
 
                     <button id="checkNowBtn" class="btn-search" style="width:100%;justify-content:center;gap:0.5rem;"><i
-                            class="fa-solid fa-sync"></i> 지금 체크하기</button>
+                            class="fa-solid fa-sync"></i> 지금
+                        체크하기</button>
 
-                    <h3 style="margin-top:1.5rem;font-size:1rem;color:#334155;"><i class="fa-solid fa-bell"></i> 최근 알림
+                    <h3 style="margin-top:1.5rem;font-size:1rem;color:#334155;"><i class="fa-solid fa-bell"></i> 최근
+                        알림
                     </h3>
                     <div id="alertList" style="max-height:200px;overflow-y:auto;margin-top:0.5rem;"></div>
                 </div>
@@ -805,27 +1301,47 @@
                     <div id="boardList"></div>
                 </div>
             </div>
+        </div>
 
-            <!-- ═══ P4: 랜딩페이지 분석 모달 ═══ -->
-            <div id="landingModal" class="modal hidden">
-                <div class="modal-content" style="max-width:650px;">
-                    <span class="close-btn"
-                        onclick="document.getElementById('landingModal').classList.add('hidden')">&times;</span>
-                    <h2 class="modal-title"><i class="fa-solid fa-globe text-gradient"></i> 랜딩페이지 분석</h2>
-                    <div id="landingLoading" class="loading-state hidden">
-                        <div class="spinner"></div>
-                        <p class="pulsing-text">랜딩페이지를 분석하고 있습니다...</p>
-                    </div>
-                    <div id="landingResult"></div>
+        <!-- ═══ P4: 랜딩페이지 분석 모달 ═══ -->
+        <div id="landingModal" class="modal hidden">
+            <div class="modal-content" style="max-width:650px;">
+                <span class="close-btn"
+                    onclick="document.getElementById('landingModal').classList.add('hidden')">&times;</span>
+                <h2 class="modal-title"><i class="fa-solid fa-globe text-gradient"></i> 랜딩페이지 분석</h2>
+                <div id="landingLoading" class="loading-state hidden">
+                    <div class="spinner"></div>
+                    <p class="pulsing-text">랜딩페이지를 분석하고 있습니다...</p>
+                </div>
+                <div id="landingResult"></div>
+            </div>
+        </div>
+
+        <!-- ═══ 광고 상세 뷰 모달 (원본 미디어 & 상세 정보) ═══ -->
+        <div id="adDetailModal" class="modal hidden">
+            <div class="modal-content" style="max-width:600px; padding:0; overflow:hidden; border-radius:16px;">
+                <div
+                    style="padding: 1rem 1.5rem; border-bottom: 1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; background:#f8fafc;">
+                    <h2 class="modal-title" style="margin:0; font-size:1.1rem;"><i
+                            class="fa-solid fa-circle-info text-gradient"></i> 광고 세부정보</h2>
+                    <span class="close-btn" style="position:static; padding:0;"
+                        onclick="document.getElementById('adDetailModal').classList.add('hidden'); const v = document.getElementById('adDetailModalBody').querySelector('video'); if(v) v.pause();">&times;</span>
+                </div>
+
+                <div id="adDetailModalBody"
+                    style="max-height: 80vh; overflow-y: auto; background: #fbfbfb; padding: 1.5rem;">
+                    <!-- Content injected via JS -->
                 </div>
             </div>
+        </div>
 
-            <!-- 자바스크립트 -->
-            <script src="/static/auth.js?v=24"></script>
-            <script src="/static/script.js?v=24"></script>
-            <script src="/static/features.js?v=2"></script>
-            <script src="/static/creative.js?v=10"></script>
-            <script src="/static/labs.js?v=1"></script>
+        <!-- 자바스크립트 -->
+        <script src="/static/auth.js?v=25"></script>
+        <script src="/static/script.js?v=26"></script>
+        <script src="/static/features.js?v=3"></script>
+        <script src="/static/creative.js?v=11"></script>
+        <script src="/static/labs.js?v=1"></script>
+        <script src="/static/monitor.js?v=1"></script>
 </body>
 
 </html>

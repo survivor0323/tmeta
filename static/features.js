@@ -16,23 +16,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // ═══════════════════════════════════════════════════
 
     const monitorBtn = document.getElementById('monitorBtn');
-    const monitorModal = document.getElementById('monitorModal');
 
     monitorBtn?.addEventListener('click', () => {
-        monitorModal.classList.remove('hidden');
-        loadMonitors();
-        loadAlerts();
+        const navMonitor = document.getElementById('navMonitor');
+        if (navMonitor) navMonitor.click();
     });
 
-    // 모달 외부 클릭 닫기
-    monitorModal?.addEventListener('click', e => {
-        if (e.target === monitorModal) monitorModal.classList.add('hidden');
-    });
-
-    // 브랜드 등록
-    document.getElementById('addMonitorBtn')?.addEventListener('click', async () => {
-        const brand = document.getElementById('monitorBrandInput').value.trim();
-        const platform = document.getElementById('monitorPlatformSelect').value;
+    // 브랜드 등록 (구 로직 - 일시 중지)
+    /* document.getElementById('addMonitorBtn')?.addEventListener('click', async () => {
+        const brand = document.getElementById('monitorBrandInput')?.value?.trim();
+        const platform = document.getElementById('monitorPlatformSelect')?.value;
         if (!brand) { alert('브랜드명을 입력하세요.'); return; }
         if (!window._motiverseSession) { alert('로그인이 필요합니다.'); return; }
 
@@ -44,10 +37,12 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const json = await res.json();
             if (json.status === 'error') { alert(json.message); return; }
-            document.getElementById('monitorBrandInput').value = '';
+            if (document.getElementById('monitorBrandInput')) {
+                document.getElementById('monitorBrandInput').value = '';
+            }
             loadMonitors();
         } catch (e) { alert('등록 실패: ' + e.message); }
-    });
+    }); */
 
     // 모니터링 목록 로드
     async function loadMonitors() {

@@ -146,33 +146,42 @@ def fetch_competitor_ads_batch(brand_names: List[str], country: str = "KR") -> D
                 # Step 2: page_id를 이용해 실제 구동 중인 광고 목록 조회
                 # country 파라미터를 추가하여 해당 국가를 타겟으로 한 광고만 수집 (기본: KR)
                 url_ads = "https://api.scrapecreators.com/v1/facebook/adLibrary/company/ads"
-                ads_params = {"pageId": page_id}
+                ads_params = {"pageId": page_id, "limit": 100}
                 if country:
                     ads_params["country"] = country
-                logger.info(f"[{brand}] 실전 메타 광고 데이터 요청 중 (Page Name: {page_info.get('page_name', 'Unknown')}, ID: {page_id}, Country: {country})")
                 
-                res_ads = requests.get(url_ads, headers=headers, params=ads_params)
+                has_next = True
+                cursor = None
+                pages_fetched = 0
+                max_pages = 4
                 
-                if res_ads.status_code == 401:
-                    raise ScrapeCreatorsCreditError("API 키 인증 실패(401 Unauthorized). 키를 점검하거나 새로 발급받아주세요.")
-                elif res_ads.status_code == 429:
-                    raise RateLimitExceededError("Meta 광고 스크래핑 한도 초과(429).")
-                elif res_ads.status_code != 200:
-                    logger.error(f"Ads 서버 응답 실패 ({res_ads.status_code}): {res_ads.text}")
-                    continue
+                while has_next and pages_fetched < max_pages:
+                    if cursor:
+                        ads_params["cursor"] = cursor
+                        
+                    logger.info(f"[{brand}] 실전 메타 광고 데이터 요청 중 (Page Name: {page_info.get('page_name', 'Unknown')}, Page: {pages_fetched+1}/{max_pages})")
                     
-                ads_data = res_ads.json()
-                items = ads_data.get('results', [])
-                if not isinstance(items, list):
-                    items = []
+                    res_ads = requests.get(url_ads, headers=headers, params=ads_params)
                     
-                for item in items[:50]: # 각 페이지당 최대 50개 제한
+                    if res_ads.status_code == 401:
+                        raise ScrapeCreatorsCreditError("API 키 인증 실패(401 Unauthorized)")
+                    elif res_ads.status_code == 429:
+                        raise RateLimitExceededError("Meta 광고 스크래핑 한도 초과(429)")
+                    elif res_ads.status_code != 200:
+                        logger.error(f"Ads 서버 응답 실패 ({res_ads.status_code}): {res_ads.text}")
+                        break
+                        
+                    ads_data = res_ads.json()
+                    items = ads_data.get('results', [])
+                    if not isinstance(items, list):
+                        items = []
+                        
+                    for item in items:
                         snapshot = item.get('snapshot', {})
                         cards = snapshot.get('cards', [])
                         videos = snapshot.get('videos', [])
                         images = snapshot.get('images', [])
                         
-                        # 비디오/이미지 미디어 적절히 파싱
                         video_url = ""
                         image_url = ""
                         
@@ -188,21 +197,33 @@ def fetch_competitor_ads_batch(brand_names: List[str], country: str = "KR") -> D
                             
                         body_dict = snapshot.get('body') or {}
                         body_text = body_dict.get('text', '')
+                        if not body_text and snapshot.get('message'):
+                            body_text = snapshot.get('message', '')
+                        if not body_text and snapshot.get('title'):
+                            body_text = snapshot.get('title', '')
+                            
                         if not body_text and cards:
-                            body_text = cards[0].get('body', '')
+                            card = cards[0]
+                            body_text = card.get('body', '')
+                            if not body_text:
+                                body_text = card.get('caption', card.get('title', card.get('message', '')))
+                        
+                        if not body_text:
+                            body_text = snapshot.get('caption', '')
                             
                         start_date_string = item.get('start_date_string', '')
                         start_date = start_date_string[:10] if start_date_string else "2024-01-01"
                         
-                        # 광고 고유 ID 추출 (메타 라이브러리 링크 연동용)
                         ad_id = item.get('id', '')
 
                         ad_format = {
                             "ad_id": ad_id,
                             "brand": snapshot.get('page_name', brand),
+                            "platform": "meta",
                             "media_type": "video" if video_url else "image",
                             "media_url": video_url if video_url else image_url,
                             "start_date": start_date,
+                            "body": body_text,
                             "analysis_report": {
                                 "hook": "해당 실제 광고 영상의 시각적 요소 분석 대기 중...",
                                 "body": body_text[:150] if body_text else "수집된 실제 메타 광고 카피가 없습니다.", 
@@ -210,6 +231,12 @@ def fetch_competitor_ads_batch(brand_names: List[str], country: str = "KR") -> D
                             }
                         }
                         ads_list.append(ad_format)
+                        
+                    cursor = ads_data.get("cursor")
+                    if not cursor:
+                        has_next = False
+                        
+                    pages_fetched += 1
                 
             if ads_list:
                 results[brand] = ads_list
@@ -224,7 +251,7 @@ def fetch_competitor_ads_batch(brand_names: List[str], country: str = "KR") -> D
 
     return results
 
-def fetch_tiktok_creatives(keyword: str, country: str = "KR", search_type: str = "keyword", max_pages: int = 1) -> List[Dict]:
+def fetch_tiktok_creatives(keyword: str, country: str = "KR", search_type: str = "keyword", max_pages: int = 3) -> List[Dict]:
     """ScrapeCreators TikTok API를 활용해 바이럴 영상을 가져옵니다."""
     logger.info(f"[*] TikTok API 검색 시작: {keyword} (Country: {country}, Type: {search_type})")
     api_key = os.getenv("SCRAPECREATORS_API_KEY")
@@ -249,178 +276,206 @@ def fetch_tiktok_creatives(keyword: str, country: str = "KR", search_type: str =
     creatives = []
     
     try:
-        response = requests.get(url, headers=headers, params=params)
+        cursor = 0
+        for page in range(1, max_pages + 1):
+            if search_type == "hashtag":
+                params["cursor"] = cursor
+            else:
+                params["offset"] = cursor
+                
+            response = requests.get(url, headers=headers, params=params)
+            
+            if response.status_code != 200:
+                logger.error(f"[!] TikTok API 오류: {response.text}")
+                break
+                
+            data = response.json()
+            
+            # 해시태그 검색과 키워드 검색의 응답 구조가 다름
+            if search_type == "hashtag":
+                items = data.get("aweme_list", [])
+            else:
+                items = data.get("search_item_list", [])
+                
+            if not items:
+                break
         
-        if response.status_code != 200:
-            logger.error(f"[!] TikTok API 오류: {response.text}")
-            return creatives
-            
-        data = response.json()
-        
-        # 해시태그 검색과 키워드 검색의 응답 구조가 다름
-        if search_type == "hashtag":
-            items = data.get("aweme_list", [])
-        else:
-            items = data.get("search_item_list", [])
-        
-        for item in items:
-            aweme = item if search_type == "hashtag" else item.get("aweme_info", {})
-            if not aweme:
-                continue
+            for item in items:
+                aweme = item if search_type == "hashtag" else item.get("aweme_info", {})
+                if not aweme:
+                    continue
+                    
+                desc = aweme.get("desc", "")
+                create_time = aweme.get("create_time", 0)
                 
-            desc = aweme.get("desc", "")
-            create_time = aweme.get("create_time", 0)
-            
-            start_date = "N/A"
-            if create_time:
-                start_date = datetime.fromtimestamp(create_time).strftime('%Y-%m-%d')
+                start_date = "N/A"
+                if create_time:
+                    start_date = datetime.fromtimestamp(create_time).strftime('%Y-%m-%d')
+                    
+                stats = aweme.get("statistics", {})
+                likes = stats.get("digg_count", 0)
+                comments = stats.get("comment_count", 0)
                 
-            stats = aweme.get("statistics", {})
-            likes = stats.get("digg_count", 0)
-            comments = stats.get("comment_count", 0)
-            
-            author = aweme.get("author", {})
-            page_name = author.get("nickname", "Unknown TikToker")
-            page_profile_uri = ""
-            if author.get("avatar_thumb") and author["avatar_thumb"].get("url_list"):
-                page_profile_uri = author["avatar_thumb"]["url_list"][0]
-            
-            video_info = aweme.get("video", {})
-            video_url = ""
-            if "download_no_watermark_addr" in video_info and video_info["download_no_watermark_addr"].get("url_list"):
-                video_url = video_info["download_no_watermark_addr"]["url_list"][0]
-            elif "play_addr" in video_info and video_info["play_addr"].get("url_list"):
-                video_url = video_info["play_addr"]["url_list"][0]
+                author = aweme.get("author", {})
+                page_name = author.get("nickname", "Unknown TikToker")
+                page_profile_uri = ""
+                if author.get("avatar_thumb") and author["avatar_thumb"].get("url_list"):
+                    page_profile_uri = author["avatar_thumb"]["url_list"][0]
                 
-            cover_url = ""
-            if "cover" in video_info and video_info["cover"].get("url_list"):
-                cover_url = video_info["cover"]["url_list"][0]
-                
-            if not video_url and not cover_url: 
-                continue
-                
-            ad_id = str(aweme.get("id", ""))
-            hashtags = []
-            text_extra = aweme.get("text_extra", [])
-            if isinstance(text_extra, list):
-                for extra in text_extra:
-                    hashtag_name = extra.get("hashtag_name")
-                    if hashtag_name:
-                        hashtags.append(f"#{hashtag_name}")
+                video_info = aweme.get("video", {})
+                video_url = ""
+                if "download_no_watermark_addr" in video_info and video_info["download_no_watermark_addr"].get("url_list"):
+                    video_url = video_info["download_no_watermark_addr"]["url_list"][0]
+                elif "play_addr" in video_info and video_info["play_addr"].get("url_list"):
+                    video_url = video_info["play_addr"]["url_list"][0]
+                    
+                cover_url = ""
+                if "cover" in video_info and video_info["cover"].get("url_list"):
+                    cover_url = video_info["cover"]["url_list"][0]
+                    
+                if not video_url and not cover_url: 
+                    continue
+                    
+                ad_id = str(aweme.get("id", ""))
+                hashtags = []
+                text_extra = aweme.get("text_extra", [])
+                if isinstance(text_extra, list):
+                    for extra in text_extra:
+                        hashtag_name = extra.get("hashtag_name")
+                        if hashtag_name:
+                            hashtags.append(f"#{hashtag_name}")
 
-            creatives.append({
-                "ad_id": ad_id,
-                "brand": page_name,
-                "page_name": page_name,
-                "page_profile_uri": page_profile_uri,
-                "start_date": start_date,
-                "end_date": "Currently Active",
-                "media_type": "video",
-                "media_url": video_url,
-                "image_url": cover_url,
-                "body": desc,
-                "likes": likes,
-                "comments": comments,
-                "hashtags": hashtags,
-                "platform": "tiktok",
-                "direct_link": f"https://www.tiktok.com/@{author.get('unique_id', 'user')}/video/{ad_id}",
-                "analysis_report": {
-                    "hook": "TikTok 분석 대기 중...",
-                    "body": desc[:150] if desc else "본문 정보 없음",
-                    "cta": "TikTok 바이럴 유도"
-                }
-            })
-            
+                creatives.append({
+                    "ad_id": ad_id,
+                    "brand": page_name,
+                    "page_name": page_name,
+                    "page_profile_uri": page_profile_uri,
+                    "start_date": start_date,
+                    "end_date": "Currently Active",
+                    "media_type": "video",
+                    "media_url": video_url,
+                    "image_url": cover_url,
+                    "body": desc,
+                    "likes": likes,
+                    "comments": comments,
+                    "hashtags": hashtags,
+                    "platform": "tiktok",
+                    "direct_link": f"https://www.tiktok.com/@{author.get('unique_id', 'user')}/video/{ad_id}",
+                    "analysis_report": {
+                        "hook": "TikTok 분석 대기 중...",
+                        "body": desc[:150] if desc else "본문 정보 없음",
+                        "cta": "TikTok 바이럴 유도"
+                    }
+                })
+                
+            # 페이지네이션 처리
+            has_more = data.get("has_more")
+            if not has_more:
+                break
+                
+            cursor = data.get("cursor", 0)
+            if not cursor:
+                break
+                
     except Exception as e:
         logger.error(f"[!] TikTok API 요청 중 예외 발생: {e}")
         
     logger.info(f"[*] TikTok 검색 완료. 추출된 소재 수: {len(creatives)}")
     return creatives
 
-def fetch_instagram_reels(keyword: str, max_pages: int = 1) -> List[Dict]:
+def fetch_instagram_reels(keyword: str, max_pages: int = 3) -> List[Dict]:
     """ScrapeCreators Instagram API를 활용해 릴스 영상을 가져옵니다."""
     logger.info(f"[*] Instagram Reels API 검색 시작: {keyword}")
     api_key = os.getenv("SCRAPECREATORS_API_KEY")
     url = "https://api.scrapecreators.com/v2/instagram/reels/search"
     headers = {"x-api-key": api_key}
-    params = {
-        "query": keyword, # 인스타 릴스 검색어
-        "page": 1
-    }
     
     creatives = []
     
     try:
-        response = requests.get(url, headers=headers, params=params)
-        
-        if response.status_code != 200:
-            logger.error(f"[!] Instagram API 오류: {response.text}")
-            return creatives
+        for page in range(1, max_pages + 1):
+            params = {
+                "query": keyword, # 인스타 릴스 검색어
+                "page": page
+            }
+            logger.info(f"[*] Instagram Reels API 요청: {keyword} (Page {page}/{max_pages})")
+            response = requests.get(url, headers=headers, params=params)
             
-        # 응답 구조가 reels 배열을 내려줌 
-        res_json = response.json()
-        items = res_json.get("reels", [])
-        
-        for item in items:
-            if not isinstance(item, dict): continue
-            
-            # API 응답 구조를 기반으로 추출 (인스타그램 릴스 json 구조)
-            ad_id = str(item.get("id", item.get("shortcode", "")))
-            if not ad_id: continue
-            
-            owner = item.get("owner", {})
-            page_name = owner.get("username", "Unknown Instagrammer")
-            page_profile_uri = owner.get("profile_pic_url", "")
-            
-            desc = item.get("caption", "")
-            
-            start_date_str = item.get("taken_at", "")
-            start_date = start_date_str[:10] if start_date_str else "N/A"
+            if response.status_code != 200:
+                logger.error(f"[!] Instagram API 오류: {response.text}")
+                break
                 
-            # 비디오/이미지 URL 추출
-            video_url = item.get("video_url", "")
-            cover_url = item.get("thumbnail_src", item.get("display_url", ""))
+            # 응답 구조가 reels 배열을 내려줌 
+            res_json = response.json()
+            items = res_json.get("reels", [])
+            
+            if not items:
+                break
+            
+            for item in items:
+                if not isinstance(item, dict): continue
                 
-            if not video_url and not cover_url: 
-                continue
+                # API 응답 구조를 기반으로 추출 (인스타그램 릴스 json 구조)
+                ad_id = str(item.get("id", item.get("shortcode", "")))
+                if not ad_id: continue
                 
-            likes = item.get("like_count", 0)
-            if likes == -1: likes = 0 # 숨김 처리된 좋아요 방어
-            comments = item.get("comment_count", 0)
+                owner = item.get("owner", {})
+                page_name = owner.get("username", "Unknown Instagrammer")
+                page_profile_uri = owner.get("profile_pic_url", "")
+                
+                desc = item.get("caption", "")
+                
+                start_date_str = item.get("taken_at", "")
+                start_date = start_date_str[:10] if start_date_str else "N/A"
+                    
+                # 비디오/이미지 URL 추출
+                video_url = item.get("video_url", "")
+                cover_url = item.get("thumbnail_src", item.get("display_url", ""))
+                    
+                if not video_url and not cover_url: 
+                    continue
+                    
+                likes = item.get("like_count", 0)
+                if likes == -1: likes = 0 # 숨김 처리된 좋아요 방어
+                comments = item.get("comment_count", 0)
+                
+                shortcode = item.get("shortcode")
+                direct_link = f"https://www.instagram.com/reel/{shortcode}/" if shortcode else f"https://www.instagram.com/{page_name}/"
+                
+                creatives.append({
+                    "ad_id": ad_id,
+                    "brand": page_name,
+                    "page_name": page_name,
+                    "page_profile_uri": page_profile_uri,
+                    "start_date": start_date,
+                    "end_date": "Currently Active",
+                    "media_type": "video" if video_url else "image",
+                    "media_url": video_url or cover_url,
+                    "image_url": cover_url,
+                    "body": desc,
+                    "likes": likes,
+                    "comments": comments,
+                    "hashtags": [],
+                    "platform": "instagram",
+                    "direct_link": direct_link,
+                    "analysis_report": {
+                        "hook": "Instagram 분석 대기 중...",
+                        "body": desc[:150] if desc else "본문 정보 없음",
+                        "cta": "Instagram 바이럴 유도"
+                    }
+                })
             
-            shortcode = item.get("shortcode")
-            direct_link = f"https://www.instagram.com/reel/{shortcode}/" if shortcode else f"https://www.instagram.com/{page_name}/"
-            
-            creatives.append({
-                "ad_id": ad_id,
-                "brand": page_name,
-                "page_name": page_name,
-                "page_profile_uri": page_profile_uri,
-                "start_date": start_date,
-                "end_date": "Currently Active",
-                "media_type": "video" if video_url else "image",
-                "media_url": video_url or cover_url,
-                "image_url": cover_url,
-                "body": desc,
-                "likes": likes,
-                "comments": comments,
-                "hashtags": [],
-                "platform": "instagram",
-                "direct_link": direct_link,
-                "analysis_report": {
-                    "hook": "Instagram 분석 대기 중...",
-                    "body": desc[:150] if desc else "본문 정보 없음",
-                    "cta": "Instagram 바이럴 유도"
-                }
-            })
-            
+            # 다음 페이지가 없으면 루프 탈출
+            if res_json.get("has_more") is False:
+                break
+                
     except Exception as e:
         logger.error(f"[!] Instagram API 요청 중 예외 발생: {e}")
         
     logger.info(f"[*] Instagram 검색 완료. 추출된 소재 수: {len(creatives)}")
     return creatives
 
-def fetch_google_ads(keyword: str, country: str = None, max_ads: int = 10) -> List[Dict]:
+def fetch_google_ads(keyword: str, country: str = None, max_ads: int = 30) -> List[Dict]:
     """ScrapeCreators Google Ad Transparency API로 Google 광고를 검색합니다.
     
     흐름: 광고주 검색(advertisers or websites.domain) -> 광고 목록 조회 -> 광고 상세 조회
@@ -691,10 +746,10 @@ def search_in_archived_vault(brand: str = None, color: str = None, media_type: s
     
     return cached_results
 
-def analyze_single_creative_with_ai(media_url: str, media_type: str) -> dict:
+def analyze_single_creative_with_ai(media_url: str, media_type: str, video_frames: list = None) -> dict:
     """
-    단일 미디어 URL을 받아 OpenCV로 프레임을 추출(비디오의 경우)하거나
-    이미지를 바로 다운로드하여 OpenAI GPT-4o Vision API에 분석을 요청합니다.
+    브라우저 프론트엔드에서 캡처하여 전달한 video_frames (Base64)를 활용하거나,
+    이미지일 경우 직접 다운로드하여 OpenAI GPT-4o Vision API에 분석을 요청합니다. (서버/OpenCV 프리)
     """
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     if not client.api_key:
@@ -703,44 +758,11 @@ def analyze_single_creative_with_ai(media_url: str, media_type: str) -> dict:
     base64_images = []
     
     if media_type == 'video':
-        # 비디오 다운로드
-        res = requests.get(media_url, stream=True)
-        if res.status_code != 200:
-            raise Exception("비디오 미디어를 다운로드할 수 없습니다.")
-            
-        # 임시 파일로 저장
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as temp_video:
-            for chunk in res.iter_content(chunk_size=8192):
-                temp_video.write(chunk)
-            temp_video_path = temp_video.name
-            
-        try:
-            if not CV2_AVAILABLE:
-                # cv2 없는 환경(Vercel): 이미 저장된 임시파일에서 첫 청크를 읽어 jpeg로 전달 시도
-                with open(temp_video_path, 'rb') as vf:
-                    chunk_data = vf.read(65536)
-                if chunk_data:
-                    base64_images.append(base64.b64encode(chunk_data).decode('utf-8'))
-            else:
-                # OpenCV로 프레임 추출
-                cap = cv2.VideoCapture(temp_video_path)
-                total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-                if total_frames <= 0:
-                    total_frames = 30
-                target_frames = [0, int(total_frames * 0.33), int(total_frames * 0.66)]
-                for frame_index in target_frames:
-                    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
-                    ret, frame = cap.read()
-                    if ret:
-                        frame = cv2.resize(frame, (640, 360))
-                        _, buffer = cv2.imencode('.jpg', frame)
-                        base64_image = base64.b64encode(buffer).decode('utf-8')
-                        base64_images.append(base64_image)
-                cap.release()
-        finally:
-            if os.path.exists(temp_video_path):
-                os.remove(temp_video_path)
-            
+        if video_frames and isinstance(video_frames, list) and len(video_frames) > 0:
+            # 프론트엔드에서 넘어온 base64 문자열들
+            base64_images = video_frames
+        else:
+            raise Exception("비디오 프레임이 전송되지 않아 AI가 분석할 수 없습니다.")
     else: # media_type == 'image'
         res = requests.get(media_url)
         if res.status_code != 200:

@@ -58,6 +58,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     window.addEventListener("click", (e) => {
         if (e.target === aiModal) aiModal.classList.add("hidden");
+        const adDetailModal = document.getElementById('adDetailModal');
+        if (adDetailModal && e.target === adDetailModal) {
+            adDetailModal.classList.add('hidden');
+            const v = document.getElementById('adDetailModalBody').querySelector('video');
+            if (v) v.pause();
+        }
     });
 
     const aiRecommendations = document.getElementById("aiRecommendations");
@@ -74,6 +80,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const existingLoadMore = document.getElementById("loadMoreBtnContainer");
         if (existingLoadMore) existingLoadMore.classList.add("hidden");
         aiRecommendations.classList.add("hidden");
+
+        const brandCardContainer = document.getElementById("extractedBrandCardContainer");
+        if (brandCardContainer) brandCardContainer.classList.add("hidden");
 
         resultsSection.classList.remove("hidden");
         loadingState.classList.remove("hidden");
@@ -112,6 +121,8 @@ document.addEventListener("DOMContentLoaded", () => {
             loadingState.classList.add("hidden");
 
             if (jsonResponse.status === "error") {
+                const brandCardContainer = document.getElementById("extractedBrandCardContainer");
+                if (brandCardContainer) brandCardContainer.classList.add("hidden");
                 adGrid.innerHTML = `<div style="text-align:center;width:100%;grid-column:1 / -1;padding:3rem;color:#64748b;font-size:1rem;line-height:1.6;word-break:keep-all;">${jsonResponse.message}</div>`;
                 return;
             }
@@ -121,6 +132,91 @@ document.addEventListener("DOMContentLoaded", () => {
             window.currentAdsPage = 1;
             window._lastSearchQuery = rawInput;
             window._lastSearchPlatform = selectedPlatform;
+
+            // Render Extracted Brand profile block similar to Competitor Monitoring
+            const brandCardContainer = document.getElementById("extractedBrandCardContainer");
+            if (brandCardContainer) {
+                if (data && data.length > 0) {
+                    const brandName = data[0].brand || rawInput;
+                    const match = brandName.match(/[A-Z가-힣0-9]/i);
+                    const iconChar = match ? match[0] : 'K';
+
+                    let bgCol = "#3b82f6";
+                    if (selectedPlatform === "instagram") bgCol = "#e1306c";
+                    else if (selectedPlatform === "tiktok") bgCol = "#000000";
+                    else if (selectedPlatform === "google") bgCol = "#ea4335";
+
+                    const platformDisplay = selectedPlatform.charAt(0).toUpperCase() + selectedPlatform.slice(1);
+
+                    // Check if the search query might be a generic keyword rather than a specific brand name.
+                    let isGenericKeyword = false;
+                    const cleanBrand = brandName.toLowerCase();
+                    const cleanRaw = rawInput.toLowerCase();
+
+                    const tiktokSearchType = document.getElementById('tiktokSearchType')?.value;
+                    if (selectedPlatform === 'tiktok' && tiktokSearchType === 'keyword') {
+                        isGenericKeyword = true;
+                    } else if (cleanBrand !== cleanRaw && !cleanBrand.includes(cleanRaw)) {
+                        isGenericKeyword = true;
+                    } else if (cleanBrand === cleanRaw && (/^[가-힣]+$/.test(cleanBrand) || cleanBrand.includes(' '))) {
+                        // If it's a pure Korean word without English account names or contains spaces, treat as keyword
+                        isGenericKeyword = true;
+                    }
+
+                    if (isGenericKeyword) {
+                        // Keyword Search UI
+                        brandCardContainer.innerHTML = `
+                             <div style="padding: 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; border: 1px solid #e2e8f0; border-radius: 12px; background: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                                 <div style="display: flex; align-items: center; gap: 1rem;">
+                                     <div style="width: 50px; height: 50px; border-radius: 50%; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #f1f5f9; flex-shrink: 0;">
+                                         <i class="fa-solid fa-magnifying-glass" style="color: #64748b; font-size: 1.4rem;"></i>
+                                     </div>
+                                     <div style="line-height: 1.4;">
+                                         <div style="font-weight: 700; font-size: 1.1rem; color: var(--text-main); display: flex; align-items: center; gap: 0.4rem;">
+                                             '${rawInput}' 관련 레퍼런스 모음
+                                         </div>
+                                         <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">
+                                             모티버스 AI가 <span style="font-weight: 600; color: ${bgCol};">${platformDisplay}</span>에서 추출한 <strong>${data.length}</strong>개의 실전 게재 레퍼런스
+                                         </div>
+                                     </div>
+                                 </div>
+                                 <div>
+                                     <button data-brand="${rawInput.replace(/"/g, '&quot;')}" data-platform="${selectedPlatform}" style="background: white; border: 1px solid #cbd5e1; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; color: #475569; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'" onclick="if(window.addCompetitorDirectly) { window.addCompetitorDirectly(this.dataset.brand, this.dataset.platform, window.currentAdsData, true); } else { document.getElementById('monitorBtn').click(); }">
+                                         <i class="fa-solid fa-plus" style="margin-right: 0.3rem;"></i> 키워드 모니터링 추가
+                                     </button>
+                                 </div>
+                             </div>
+                         `;
+                    } else {
+                        // Brand Search UI
+                        brandCardContainer.innerHTML = `
+                             <div style="padding: 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; border: 1px solid #e2e8f0; border-radius: 12px; background: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                                 <div style="display: flex; align-items: center; gap: 1rem;">
+                                     <div style="width: 50px; height: 50px; border-radius: 50%; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; overflow: hidden; background: white; flex-shrink: 0;">
+                                         <span style="font-family: sans-serif; display: flex; align-items: center; justify-content: center; background: ${bgCol}; color: white; width: 100%; height: 100%; font-size: 1.4rem; font-weight: bold;">${iconChar}</span>
+                                     </div>
+                                     <div style="line-height: 1.4;">
+                                         <div style="font-weight: 700; font-size: 1.1rem; color: var(--text-main); display: flex; align-items: center; gap: 0.4rem;">
+                                             ${brandName} <i class="fa-solid fa-circle-check" style="color: ${bgCol}; font-size: 0.9rem;"></i>
+                                         </div>
+                                         <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">
+                                             모티버스 AI가 <span style="font-weight: 600; color: ${bgCol};">${platformDisplay}</span>에서 추출한 <strong>${data.length}</strong>개의 실전 게재 레퍼런스
+                                         </div>
+                                     </div>
+                                 </div>
+                                 <div>
+                                     <button data-brand="${brandName.replace(/"/g, '&quot;')}" data-platform="${selectedPlatform}" style="background: white; border: 1px solid #cbd5e1; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; color: #475569; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'" onclick="if(window.addCompetitorDirectly) { window.addCompetitorDirectly(this.dataset.brand, this.dataset.platform, window.currentAdsData); } else { document.getElementById('monitorBtn').click(); }">
+                                         <i class="fa-solid fa-plus" style="margin-right: 0.3rem;"></i> 모니터링 추가
+                                     </button>
+                                 </div>
+                             </div>
+                         `;
+                    }
+                    brandCardContainer.classList.remove("hidden");
+                } else {
+                    brandCardContainer.classList.add("hidden");
+                }
+            }
 
             renderAdsPage();
 
@@ -223,19 +319,16 @@ document.addEventListener("DOMContentLoaded", () => {
             ? `<video class="ad-media" src="${ad.media_url}" autoplay loop muted playsinline></video>`
             : `<img class="ad-media" src="${ad.media_url}" alt="Ad Image">`;
 
-        // Mocking Data for UI
-        const mockLikes = Math.floor(Math.random() * 500) + 10;
-        const mockComments = Math.floor(Math.random() * 50);
-
         card.innerHTML = `
             <div class="ad-media-wrapper">
                 ${mediaTag}
                 
                 <!-- 상단 좌측: 반응도 오버레이 -->
+                ${(ad.likes !== undefined && ad.comments !== undefined) ? `
                 <div class="overlay-top-left">
-                    <div class="reaction-badge"><i class="fa-solid fa-heart"></i> ${mockLikes}</div>
-                    <div class="reaction-badge"><i class="fa-solid fa-comment"></i> ${mockComments}</div>
-                </div>
+                    <div class="reaction-badge"><i class="fa-solid fa-heart"></i> ${ad.likes.toLocaleString()}</div>
+                    <div class="reaction-badge"><i class="fa-solid fa-comment"></i> ${ad.comments.toLocaleString()}</div>
+                </div>` : ''}
 
                 <!-- 상단 우측: 오버레이 -->
                 <div class="overlay-top-right">
@@ -311,6 +404,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 bookmarkBtn.classList.remove('bookmarked');
                 bookmarkBtn.innerHTML = '<i class="fa-regular fa-bookmark"></i>';
                 bookmarkBtn.dataset.bookmarkId = '';
+                ad.is_bookmarked = false;
+                ad.bookmark_id = null;
             } else {
                 const saved = await window.saveBookmarkToDB(
                     ad,
@@ -322,6 +417,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     bookmarkBtn.innerHTML = '<i class="fa-solid fa-bookmark"></i>';
                     bookmarkBtn.dataset.bookmarkId = saved.id;
                     window._bookmarkBtnMap?.set(saved.id, bookmarkBtn);
+                    ad.is_bookmarked = true;
+                    ad.bookmark_id = saved.id;
                 }
             }
         });
@@ -338,14 +435,16 @@ document.addEventListener("DOMContentLoaded", () => {
             modalBody.innerHTML = "";
             modalCta.innerHTML = "";
 
-            // 비디오 타입은 AI 분석 미지원
+            let videoFrames = null;
             if (ad.media_type === "video") {
-                modalLoading.classList.add("hidden");
-                modalHook.innerHTML = `<span style="font-size:1.5rem;">🎬</span>`;
-                modalBody.innerHTML = `<p style="text-align:center;color:#64748b;font-size:1rem;margin-top:0.5rem;">비디오 AI 분석은 개발중입니다.</p>`;
-                modalCta.innerHTML = "";
-                modalResult.classList.remove("hidden");
-                return;
+                try {
+                    const statusP = modalLoading.querySelector('p');
+                    if (statusP) statusP.innerText = "브라우저에서 영상 주요 장면을 추출 중입니다... 최장 10초 소요";
+                    videoFrames = await extractVideoFrames(ad.media_url);
+                    if (statusP) statusP.innerText = "이 AI는 여러 전문가 모델이 연결되어 조금 시간이 걸립니다...";
+                } catch (err) {
+                    console.warn("로컬 비디오 프레임 추출 실패 (CORS 등)", err);
+                }
             }
 
             try {
@@ -354,7 +453,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         media_url: ad.media_url,
-                        media_type: ad.media_type
+                        media_type: ad.media_type,
+                        video_frames: videoFrames
                     })
                 });
                 if (!res.ok) throw new Error("분석 서버 응답 에러");
@@ -362,10 +462,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 const jsonRes = await res.json();
 
                 // 비디오 분석 불가 안내 (alert 대신 모달에 표시)
-                if (jsonRes.status === "error" && jsonRes.message && jsonRes.message.includes("개발중")) {
+                if (jsonRes.status === "error" && jsonRes.message) {
                     modalLoading.classList.add("hidden");
-                    modalHook.innerHTML = `<span style="font-size:1.5rem;">🎬</span>`;
-                    modalBody.innerHTML = `<p style="text-align:center;color:#64748b;font-size:1rem;margin-top:0.5rem;">${jsonRes.message}</p>`;
+                    modalHook.innerHTML = `<span style="font-size:1.5rem;">🚨</span>`;
+                    modalBody.innerHTML = `<p style="text-align:center;color:#ef4444;font-size:1rem;margin-top:0.5rem;">${jsonRes.message}</p>`;
                     modalCta.innerHTML = "";
                     modalResult.classList.remove("hidden");
                     return;
@@ -386,17 +486,27 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        // 카드 전체 클릭 시 비디오 컨트롤 (선택사항)
-        if (ad.media_type === "video") {
-            const videoEl = card.querySelector('video');
-            videoEl.addEventListener('click', () => {
-                videoEl.paused ? videoEl.play() : videoEl.pause();
-                videoEl.muted = !videoEl.muted;
-            });
-        }
+        // 광고 썸네일(미디어 래퍼) 클릭 시 상세 모달 오픈
+        const mediaWrapper = card.querySelector('.ad-media-wrapper');
+        mediaWrapper.style.cursor = 'pointer';
+        mediaWrapper.addEventListener('click', (e) => {
+            // 원본 링크, 북마크 버튼 등 클릭 시 모달 오픈 방지
+            if (e.target.closest('.meta-link-btn') || e.target.closest('.ad-bookmark-btn') || e.target.closest('.single-analyze-btn')) return;
+
+            // 모달 오픈 전 비디오가 있다면 일시정지 (선택사항)
+            if (ad.media_type === "video") {
+                const videoEl = card.querySelector('video');
+                if (videoEl && !videoEl.paused) videoEl.pause();
+            }
+
+            if (typeof window.showAdDetailModal === 'function') {
+                window.showAdDetailModal(ad);
+            }
+        });
 
         return card;
     }
+    window.createAdCard = createAdCard;
 
     // ─── 히스토리 & 북마크 모아보기 (전체 화면) ────────────────────────
     // 오버레이 클릭 시 모달 닫기
@@ -632,6 +742,16 @@ window.loadRecentSearchChips = async () => {
                     });
                 }
 
+                // 이전 검색의 브랜드 카드 및 AI 추천 검색어 숨기기
+                const brandCardContainer = document.getElementById("extractedBrandCardContainer");
+                if (brandCardContainer) {
+                    brandCardContainer.classList.add("hidden");
+                }
+                const aiRecommendations = document.getElementById("aiRecommendations");
+                if (aiRecommendations) {
+                    aiRecommendations.classList.add("hidden");
+                }
+
                 // 저장 시점 배너 표시
                 const savedAt = detail.created_at ? new Date(detail.created_at).toLocaleString('ko-KR') : '';
                 const existingBanner = document.getElementById('historyBanner');
@@ -671,3 +791,127 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// ─── 원본 보기 & 메타광고 상세 모달 오픈 ──────────────────────────
+window.showAdDetailModal = function (ad) {
+    const modal = document.getElementById('adDetailModal');
+    const modalBody = document.getElementById('adDetailModalBody');
+    if (!modal || !modalBody) return;
+
+    // 모달 초기화
+    modalBody.innerHTML = '';
+
+    const bodyText = ad.body ? ad.body.replace(/\n/g, '<br>') : '';
+
+    // 플랫폼별 라벨/아이콘
+    let platformDisplay = 'Meta';
+    let platformIcons = '<i class="fa-brands fa-facebook" style="color:#1877f2"></i> <i class="fa-brands fa-instagram" style="color:#d946ef"></i> <i class="fa-brands fa-facebook-messenger" style="color:#00b2ff"></i>';
+
+    if (ad.platform === 'instagram') {
+        platformDisplay = 'Instagram';
+        platformIcons = '<i class="fa-brands fa-instagram" style="color:#d946ef"></i>';
+    } else if (ad.platform === 'tiktok') {
+        platformDisplay = 'TikTok';
+        platformIcons = '<i class="fa-brands fa-tiktok"></i>';
+    } else if (ad.platform === 'google') {
+        platformDisplay = 'Google Ads';
+        platformIcons = '<i class="fa-brands fa-google" style="color:#ea4335"></i>';
+    }
+
+    const contentHtml = `
+        <div style="display:flex; flex-direction:column; gap: 1rem;">
+            <!-- 모달 헤더 (플랫폼 & 게재 정보) -->
+            <div style="color: #64748b; font-size: 0.9rem; line-height:1.6;">
+                <span style="color: #047857; background: #d1fae5; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; margin-right: 8px; font-weight:bold;">
+                    <i class="fa-solid fa-circle-check"></i> 활성
+                </span><br>
+                ${ad.ad_id ? `<span style="display:inline-block; margin-top:5px;">라이브러리 ID: ${ad.ad_id}</span><br>` : ''}
+                ${ad.start_date && ad.start_date !== 'N/A' ? `<span>${ad.start_date}에 게재 시작함</span><br>` : ''}
+                <span>플랫폼: ${platformIcons}</span>
+            </div>
+            
+            <!-- 광고 실제 보이는 모습 래퍼 -->
+            <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin-top:0.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                <!-- 프로필 영역 -->
+                <div style="display:flex; align-items:center; gap: 10px; padding: 1rem 1.2rem;">
+                    <div style="width:40px; height:40px; border-radius:50%; background:#e2e8f0; display:flex; align-items:center; justify-content:center; font-weight:bold; color:#64748b; overflow: hidden; border: 1px solid #e2e8f0;">
+                        ${ad.brand ? (ad.brand_avatar_url ? `<img src="${ad.brand_avatar_url}" style="width:100%; height:100%; object-fit: cover;" />` : ad.brand.charAt(0).toUpperCase()) : 'B'}
+                    </div>
+                    <div style="line-height:1.2;">
+                        <span style="font-size: 1rem; color:#0f172a; font-weight: bold;">${ad.brand || '광고주'}</span><br>
+                        <span style="color: #64748b; font-size: 0.75rem;">광고</span>
+                    </div>
+                </div>
+                
+                <!-- 본문 텍스트 -->
+                ${bodyText ? `
+                <div style="padding: 0 1.2rem 1rem 1.2rem; font-size: 0.95rem; line-height: 1.5; color:#1e293b;">
+                    ${bodyText}
+                </div>` : ''}
+                
+                <!-- 이미지/영상 원본 -->
+                <div style="background:#f8fafc; text-align:center;">
+                    ${ad.media_type === "video"
+            ? `<video controls autoplay loop playsinline src="${ad.media_url}" style="max-width:100%; max-height: 500px; display:block; margin:0 auto;"></video>`
+            : `<img src="${ad.media_url}" alt="${ad.brand || 'Ad'}" style="width:100%; display:block; margin:0 auto;">`}
+                </div>
+                
+                <!-- 하단 CTA 영역 -->
+                <div style="display:flex; justify-content:space-between; align-items:center; padding: 0.8rem 1.2rem; background:#f0f2f5; border-top: 1px solid #e2e8f0; cursor:pointer;" onclick="window.open('${ad.direct_link || (ad.ad_id ? `https://www.facebook.com/ads/library/?id=${ad.ad_id}` : '#')}', '_blank')">
+                    <div style="display:flex; flex-direction:column; gap:0.2rem;">
+                        ${ad.domain ? `<span style="color: #64748b; font-size:0.75rem; font-weight:600; text-transform:uppercase;">${ad.domain.replace(/^https?:\/\//, '').toUpperCase()}</span>` : `<span style="color: #64748b; font-size:0.75rem; font-weight:600; text-transform:uppercase;">${ad.brand || '광고주'}</span>`}
+                        ${ad.headline ? `<span style="font-weight: bold; color: #1c1e21; font-size:0.95rem; line-height:1.2;">${ad.headline}</span>` : `<span style="font-weight: bold; color: #1c1e21; font-size:0.95rem; line-height:1.2;">${ad.analysis_report?.cta || '자세히 알아보기'}</span>`}
+                    </div>
+                    <a href="${ad.direct_link || (ad.ad_id ? `https://www.facebook.com/ads/library/?id=${ad.ad_id}` : '#')}" target="_blank" style="background: #e2e8f0; color: #1c1e21; padding: 0.4rem 1rem; border-radius: 6px; font-weight: 600; font-size: 0.85rem; text-decoration:none; transition: background 0.2s; white-space:nowrap;" onclick="event.stopPropagation()">${ad.cta_text || '더 알아보기'}</a>
+                </div>
+            </div>
+        </div>
+    `;
+
+    modalBody.innerHTML = contentHtml;
+    modal.classList.remove('hidden');
+};
+
+// --- Video Frame Extraction Logic ---
+async function extractVideoFrames(videoUrl, frameCount = 3) {
+    return new Promise((resolve, reject) => {
+        const video = document.createElement('video');
+        video.crossOrigin = 'anonymous'; // Important for CORS
+        video.muted = true;
+        video.src = videoUrl;
+        video.playsInline = true;
+
+        video.addEventListener('loadedmetadata', async () => {
+            const duration = video.duration || 10;
+            const frames = [];
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            const times = [0.1, duration * 0.33, duration * 0.66];
+
+            for (let t of times) {
+                await new Promise((resSeek) => {
+                    video.onseeked = () => {
+                        const scale = Math.min(640 / (video.videoWidth || 640), 360 / (video.videoHeight || 360), 1);
+                        canvas.width = (video.videoWidth || 640) * scale;
+                        canvas.height = (video.videoHeight || 360) * scale;
+                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        try {
+                            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                            frames.push(dataUrl.split(',')[1]); // only base64 string
+                        } catch (e) {
+                            console.warn("Canvas Tainted (CORS) - cannot extract frame");
+                        }
+                        resSeek();
+                    };
+                    video.onerror = () => resSeek();
+                    video.currentTime = t;
+                });
+            }
+            resolve(frames);
+        });
+
+        video.addEventListener('error', (e) => reject(e));
+        video.load();
+    });
+}

@@ -76,6 +76,7 @@ class AnalyzeRequest(BaseModel):
 class SingleAnalyzeRequest(BaseModel):
     media_url: str
     media_type: str
+    video_frames: Optional[List[str]] = None
 
 class HistorySaveRequest(BaseModel):
     query: str
@@ -388,16 +389,15 @@ async def delete_bookmark(bookmark_id: str, authorization: str = Header(default=
 
 @app.post("/api/v1/analyze-single")
 async def trigger_single_analysis(req: SingleAnalyzeRequest):
-    # 비디오 타입은 AI 분석 미지원
-    if req.media_type and req.media_type.lower() == "video":
+    if req.media_type and req.media_type.lower() == "video" and not getattr(req, "video_frames", None):
         return {
             "status": "error",
-            "message": "비디오 AI 분석은 개발중입니다.",
+            "message": "영상의 원본 링크 구성으로 인해 브라우저에서 주요 장면을 추출할 수 없습니다. (CORS 보안 정책 등)",
             "data": None
         }
     try:
         from anti_gravity_ads_logic import analyze_single_creative_with_ai
-        report = analyze_single_creative_with_ai(req.media_url, req.media_type)
+        report = analyze_single_creative_with_ai(req.media_url, req.media_type, getattr(req, "video_frames", None))
         return {"status": "success", "message": "AI 분석 완료", "data": report}
     except Exception as e:
         logger.error(f"단일 미디어 분석 중 오류 발생: {e}")
