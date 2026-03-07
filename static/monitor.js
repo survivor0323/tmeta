@@ -753,20 +753,12 @@ window.renderMonitorAds = function (page = 1) {
         });
     }
 
-    // Pre-calculate derived fields for sorting if missing
+    // Pre-calculate derived fields for sorting safely
     adsToRender.forEach(ad => {
-        // Start Date fallback
         let sDate = String(ad.start_date || ad.creation_date || '2024-01-01').trim();
 
-        // Fix broken Meta dates from previous truncated cache (e.g. "14 Mar 202" -> "14 Mar 2024")
-        if (/^\d{1,2} [A-Za-z]{3} 202$/.test(sDate)) {
-            sDate += '4';
-        }
-        // Fix Korean format
-        if (sDate.includes('년')) {
-            sDate = sDate.replace(/[년월일]/g, '-').replace(/-\s*-/g, '-').replace(/-$/, '').replace(/\s+/g, '');
-        }
-        // Fix Unix timestamp string
+        if (/^\d{1,2} [A-Za-z]{3} 202$/.test(sDate)) sDate += '4';
+        if (sDate.includes('년')) sDate = sDate.replace(/[년월일]/g, '-').replace(/-\s*-/g, '-').replace(/-$/, '').replace(/\s+/g, '');
         if (/^\d{10,13}$/.test(sDate)) {
             let t = parseInt(sDate);
             if (sDate.length === 10) t *= 1000;
@@ -778,29 +770,30 @@ window.renderMonitorAds = function (page = 1) {
             let hash = 0;
             const str = ad.ad_id || "fallback";
             for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
-            parsedDate = new Date(new Date('2024-01-01').getTime() + (hash % 10000000000));
+            parsedDate = new Date(new Date('2024-01-01').getTime() + (Math.abs(hash) % 10000000000));
         }
-        ad._sortDateStr = parsedDate.getTime();
 
-        // Active days
-        if (ad._runDays === undefined) {
-            if (ad.active_days !== undefined) {
-                ad._runDays = parseInt(ad.active_days) || 1;
-            } else if (ad.start_date) {
-                const diffTime = Math.abs(new Date() - parsedDate);
-                ad._runDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
-            } else {
-                ad._runDays = 14;
-            }
+        ad._sortDateStr = parsedDate.getTime() || 0;
+
+        // Calculate run days safely
+        if (ad.active_days !== undefined && !isNaN(parseInt(ad.active_days))) {
+            ad._runDays = parseInt(ad.active_days);
+        } else if (ad.start_date || ad.creation_date) {
+            const diffTime = Math.abs(new Date() - parsedDate);
+            ad._runDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+        } else {
+            ad._runDays = 14;
         }
+
+        if (isNaN(ad._runDays) || ad._runDays < 1) ad._runDays = 1;
     });
 
-    // Sorting
+    // Valid sorting
     if (sortVal === 'active_desc') {
-        adsToRender.sort((a, b) => b._runDays - a._runDays);
+        adsToRender.sort((a, b) => (b._runDays || 0) - (a._runDays || 0));
     } else if (sortVal === 'date_desc' || sortVal === 'date_asc') {
         adsToRender.sort((a, b) => {
-            return sortVal === 'date_desc' ? b._sortDateStr - a._sortDateStr : a._sortDateStr - b._sortDateStr;
+            return sortVal === 'date_desc' ? (b._sortDateStr || 0) - (a._sortDateStr || 0) : (a._sortDateStr || 0) - (b._sortDateStr || 0);
         });
     } else if (sortVal === 'likes_desc') {
         adsToRender.sort((a, b) => (parseInt(b.likes) || 0) - (parseInt(a.likes) || 0));
