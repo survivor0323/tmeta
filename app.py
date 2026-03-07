@@ -95,6 +95,11 @@ class LabsGenerateRequest(BaseModel):
     image_b64: Optional[str] = None
     include_human_model: bool = False
 
+class GenerateInsightRequest(BaseModel):
+    ads_data: list
+    platform: str
+    query: str
+
 
 # ─── JWT에서 user_id 추출 헬퍼 ───────────────────────────
 def get_user_id_from_token(authorization: str) -> Optional[str]:
@@ -387,8 +392,11 @@ async def delete_bookmark(bookmark_id: str, authorization: str = Header(default=
         return {"status": "error", "message": str(e)}
 
 
-@app.post("/api/v1/analyze-single")
-async def trigger_single_analysis(req: SingleAnalyzeRequest):
+@app.post("/api/v1/analyze/single")
+async def analyze_single_creative(req: SingleAnalyzeRequest):
+    """
+    단일 이미지나 단일 비디오(프레임별 base64)를 입력받아 AI가 hook, body, cta를 분석
+    """
     if req.media_type and req.media_type.lower() == "video" and not getattr(req, "video_frames", None):
         return {
             "status": "error",
@@ -398,9 +406,32 @@ async def trigger_single_analysis(req: SingleAnalyzeRequest):
     try:
         from anti_gravity_ads_logic import analyze_single_creative_with_ai
         report = analyze_single_creative_with_ai(req.media_url, req.media_type, getattr(req, "video_frames", None))
-        return {"status": "success", "message": "AI 분석 완료", "data": report}
+        return {"status": "success", "data": report}
     except Exception as e:
-        logger.error(f"단일 미디어 분석 중 오류 발생: {e}")
+        logger.error(f"Error in single analysis: {e}", exc_info=True)
+        return {"status": "error", "message": str(e)}
+
+class GenerateInsightRequest(BaseModel):
+    ads_data: List[Dict]
+    query: str
+    platform: str
+
+@app.post("/api/v1/generate-insights")
+async def generate_insights(req: GenerateInsightRequest, authorization: str = Header(default="")):
+    """
+    수집된 특정 브랜드/키워드의 광고 목록을 통째로 OpenAI에 던져
+    종합 AI 인사이트 시트를 반환받습니다.
+    """
+    user_id = get_user_id_from_token(authorization)
+    try:
+        from anti_gravity_ads_logic import generate_ai_insight_report
+        if not req.ads_data:
+            return {"status": "error", "message": "분석할 소재 데이터가 부족합니다."}
+            
+        report = generate_ai_insight_report(req.ads_data, req.query, req.platform)
+        return {"status": "success", "data": report}
+    except Exception as e:
+        logger.error(f"[AI Insights Error]: {e}", exc_info=True)
         return {"status": "error", "message": str(e), "data": None}
 
 class RecommendRequest(BaseModel):

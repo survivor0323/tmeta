@@ -1031,3 +1031,74 @@ def suggest_alternative_keyword(original_query: str, tried_keywords: List[str]) 
     except Exception as e:
         logger.error(f"대체 키워드 제안 중 에러 발생: {e}")
         return ""
+
+def generate_ai_insight_report(ads_data: List[Dict], query: str, platform: str) -> str:
+    """수집된 광고 데이터를 기반으로 GPT-4o를 사용해 종합 인사이트 리포트를 생성합니다."""
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    if not client.api_key:
+        raise Exception("OpenAI API 키가 설정되지 않았습니다.")
+
+    # Sort ads based on active days and engagement to help the prompt context
+    sorted_by_active = sorted(ads_data, key=lambda x: x.get('active_days', 0) if isinstance(x.get('active_days'), (int, float)) else 0, reverse=True)
+    sorted_by_engagement = sorted(ads_data, key=lambda x: (int(x.get('likes') or 0)) + (int(x.get('comments') or 0)), reverse=True)
+    sorted_by_date = sorted(ads_data, key=lambda x: x.get('start_date', '2000-01-01'), reverse=True)
+
+    long_run = sorted_by_active[:5]
+    high_engagement = sorted_by_engagement[:5]
+    new_ads = sorted_by_date[:5]
+
+    def ad_summary(ad):
+        body_text = str(ad.get('body', ''))[:150].replace('\n', ' ')
+        return f"- [미디어: {ad.get('media_type')}] 시작일: {ad.get('start_date')}, 게재일수: {ad.get('active_days', 0)}, 좋아요: {ad.get('likes', 0)}, 본문: {body_text}..."
+
+    context = f"타겟 브랜드/키워드: {query} (플랫폼: {platform})\n\n"
+    context += "[Long-run 소재 (게재일수 높은 순)]\n" + "\n".join([ad_summary(ad) for ad in long_run]) + "\n\n"
+    context += "[High-Engagement 소재 (인게이지먼트 높은 순)]\n" + "\n".join([ad_summary(ad) for ad in high_engagement]) + "\n\n"
+    context += "[최신 등록 소재 (가장 최근 순)]\n" + "\n".join([ad_summary(ad) for ad in new_ads]) + "\n\n"
+    
+    prompt = f"""당신은 엘리트 퍼포먼스 마케터 및 크리에이티브 디렉터입니다.
+입력된 경쟁사({query})의 광고 소재 메타데이터를 바탕으로 'AI 인사이트' 분석 리포트를 작성해주세요.
+
+# Context
+{context}
+
+# Tasks
+1. 데이터 스크리닝: 
+   - '게재 기간'이 긴 광고(Long-run): 검증된 성과 소재로 분류하여 '신뢰/안정성' 요소 분석.
+   - '인게이지먼트(좋아요/댓글)'가 높은 광고: '바이럴/공감' 요소 분석.
+   - '최신 등록' 광고: 최신 트렌드 및 경쟁사의 새로운 가설 분석.
+
+2. 크리에이티브 리버스 엔지니어링:
+   - [Hooking]: 사용자 시선을 끈 결정적 문구나 이미지 요소는 무엇인가?
+   - [Messaging]: 고객의 어떤 Pain Point를 건드리고 있는가?
+   - [Visual Strategy]: 사용된 메인 컬러, 레이아웃, 폰트 스타일의 의도는 무엇인가?
+
+3. 당사 적용 전략 (Action Plan):
+   - 위 분석을 바탕으로 우리 브랜드가 벤치마킹해야 할 점과 '차별화(Edge)'를 줄 수 있는 전략 제안.
+   - 구체적인 카피라이팅 3종과 비주얼 가이드 제시.
+
+# Output Format (반드시 마크다운으로 아래 구조를 따를 것)
+## 1. 경쟁사 크리에이티브 패턴 분석 (Table 등 가독성 좋은 뷰 활용)
+[분석 내용 작성...]
+
+## 2. High-Performance 소재의 핵심 성공 방정식
+[분석 내용 작성...]
+
+## 3. 당사 도입을 위한 크리에이티브 가이드라인
+[분석 내용 작성...]
+"""
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "당신은 최고의 마케팅 전문가입니다. Markdown 포맷으로 깔끔하게 리포트를 작성하세요."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=3000
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        logger.error(f"AI Insight 리포트 생성 중 에러 발생: {e}")
+        raise Exception("AI 인사이트 리포트를 생성하는 중 오류가 발생했습니다.")

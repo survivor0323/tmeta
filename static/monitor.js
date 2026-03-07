@@ -1299,3 +1299,101 @@ window.showCompetitorDetail = function (brandName, platform, adsData = null, isK
         }
     }
 };
+
+document.addEventListener('DOMContentLoaded', () => {
+    const generateAiInsightBtn = document.getElementById('generateAiInsightBtn');
+    const aiInsightContent = document.getElementById('aiInsightContent');
+
+    if (generateAiInsightBtn) {
+        generateAiInsightBtn.addEventListener('click', async () => {
+            const adsData = window._currentMonitorAds || [];
+            const platform = window._currentMonitorPlatform || 'meta';
+            const queryName = document.getElementById('monitorCompetitorTitle')?.innerText.trim() || '선택된 검색어';
+
+            if (adsData.length === 0) {
+                alert("현재 표시할 수집된 광고 데이터가 없습니다.");
+                return;
+            }
+
+            // Show loading state
+            generateAiInsightBtn.disabled = true;
+            generateAiInsightBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 분석 리포트 생성 중...';
+            generateAiInsightBtn.style.background = '#9ca3af';
+
+            if (aiInsightContent) {
+                aiInsightContent.innerHTML = `
+                    <div style="text-align: center; color: #8b5cf6; padding: 4rem 0;">
+                        <i class="fa-solid fa-circle-notch fa-spin fa-3x" style="margin-bottom: 1.5rem;"></i>
+                        <p style="font-size: 1.1rem; font-weight: 700;">Motiverse AI가 데이터를 심층 분석 중입니다...</p>
+                        <p style="font-size: 0.9rem; color: #64748b; margin-top: 0.5rem;">이 작업은 최대 30~60초 정도 소요될 수 있습니다. (GPT-4o Vision API 연동)</p>
+                    </div>
+                `;
+            }
+
+            try {
+                const headers = typeof window.getAuthHeaders === 'function' ? window.getAuthHeaders() : { 'Content-Type': 'application/json' };
+                const res = await fetch("/api/v1/generate-insights", {
+                    method: 'POST',
+                    headers: { ...headers, "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        ads_data: adsData,
+                        query: queryName,
+                        platform: platform
+                    })
+                });
+
+                const json = await res.json();
+                if (res.ok && json.status === "success" && aiInsightContent) {
+                    let markdownText = json.data;
+                    let renderedHtml = markdownText;
+                    if (window.marked && typeof window.marked.parse === 'function') {
+                        renderedHtml = window.marked.parse(markdownText);
+                    }
+                    aiInsightContent.innerHTML = `
+                        <div class="ai-insight-result" style="line-height: 1.7; font-size: 0.95rem; color: #1e293b;">
+                            ${renderedHtml}
+                        </div>
+                    `;
+                    // Basic styling for rendered markdown table/headers
+                    const resultDiv = aiInsightContent.querySelector('.ai-insight-result');
+                    if (resultDiv) {
+                        const tables = resultDiv.querySelectorAll('table');
+                        tables.forEach(t => {
+                            t.style.width = '100%';
+                            t.style.borderCollapse = 'collapse';
+                            t.style.marginBottom = '1.5rem';
+                            t.querySelectorAll('th, td').forEach(cell => {
+                                cell.style.border = '1px solid #e2e8f0';
+                                cell.style.padding = '0.75rem';
+                            });
+                            t.querySelectorAll('th').forEach(th => {
+                                th.style.background = '#f8fafc';
+                                th.style.fontWeight = '600';
+                            });
+                        });
+                        resultDiv.querySelectorAll('h2, h3').forEach(h => {
+                            h.style.color = '#0f172a';
+                            h.style.marginTop = '1.5rem';
+                            h.style.marginBottom = '1rem';
+                            h.style.borderBottom = '1px solid #e2e8f0';
+                            h.style.paddingBottom = '0.5rem';
+                        });
+                    }
+                } else if (aiInsightContent) {
+                    alert('인사이트 리포트 생성 중 오류가 발생했습니다: ' + (json.message || '알 수 없는 오류'));
+                    aiInsightContent.innerHTML = `<div style="padding:2rem;text-align:center;color:#ef4444;"><i class="fa-solid fa-triangle-exclamation fa-2x mb-4"></i><p>생성 실패: ${json.message}</p></div>`;
+                }
+            } catch (e) {
+                console.error(e);
+                alert("네트워크 또는 서버 오류가 발생했습니다.");
+                if (aiInsightContent) {
+                    aiInsightContent.innerHTML = `<div style="padding:2rem;text-align:center;color:#ef4444;"><i class="fa-solid fa-triangle-exclamation fa-2x mb-4"></i><p>네트워크 오류</p></div>`;
+                }
+            } finally {
+                generateAiInsightBtn.disabled = false;
+                generateAiInsightBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> AI 리포트 생성하기';
+                generateAiInsightBtn.style.background = '#8b5cf6';
+            }
+        });
+    }
+});

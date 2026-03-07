@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     <link rel="stylesheet" href="/static/styles.css?v=9">
 </head>
@@ -535,6 +536,30 @@
                             <div id="monitorTimelineView" class="hidden"
                                 style="width: 100%; overflow-x: auto; padding-bottom: 2rem;">
                                 <!-- 여기에 타임라인이 렌더링됩니다 -->
+                            </div>
+
+                            <!-- [4] AI 인사이트 탭 -->
+                            <div id="monitorDashboardView" class="hidden" style="width: 100%; padding-bottom: 2rem;">
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                                    <h3 style="margin: 0; font-size: 1.2rem; color: var(--text-main);">AI 크리에이티브 인사이트
+                                    </h3>
+                                    <button id="generateAiInsightBtn"
+                                        style="padding: 0.6rem 1.2rem; background: #8b5cf6; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: background 0.2s;"
+                                        onmouseover="this.style.background='#7c3aed'"
+                                        onmouseout="this.style.background='#8b5cf6'">
+                                        <i class="fa-solid fa-wand-magic-sparkles"></i> AI 리포트 생성하기
+                                    </button>
+                                </div>
+                                <div id="aiInsightContent"
+                                    style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 2rem; min-height: 200px;">
+                                    <div style="text-align: center; color: #94a3b8; padding: 3rem 0;">
+                                        <i class="fa-solid fa-robot fa-3x"
+                                            style="margin-bottom: 1rem; color: #cbd5e1;"></i>
+                                        <p style="font-weight: 600;">상단 'AI 리포트 생성하기' 버튼을 눌러보세요.</p>
+                                        <p style="font-size: 0.85rem;">현재 수집된 소재들을 분석하여 성과 패턴과 당사 적용 전략을 제안합니다.</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </section>
