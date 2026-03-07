@@ -898,6 +898,22 @@ window.showCompetitorDetail = function (brandName, platform, adsData = null, isK
     if (welcomeSection) welcomeSection.classList.add("hidden");
     if (detailSection) detailSection.classList.remove("hidden");
 
+    // AI 인사이트 탭 내용 초기화 및 이전 리포트 불러오기
+    const aiInsightContent = document.getElementById('aiInsightContent');
+    if (aiInsightContent) {
+        aiInsightContent.innerHTML = `
+            <div style="text-align: center; color: #94a3b8; padding: 3rem 0;">
+                <i class="fa-solid fa-robot fa-3x" style="margin-bottom: 1rem; color: #cbd5e1;"></i>
+                <p style="font-weight: 600;">상단 'AI 리포트 생성하기' 버튼을 눌러보세요.</p>
+                <p style="font-size: 0.85rem;">현재 수집된 소재들을 분석하여 성과 패턴과 당사 적용 전략을 제안합니다.</p>
+            </div>
+        `;
+    }
+    const cleanBrandNameForStorage = (brandName || "").replace(/['"]/g, '');
+    if (typeof window.loadAndRenderAiReports === 'function') {
+        window.loadAndRenderAiReports(cleanBrandNameForStorage, platform);
+    }
+
     let isKeyword = false;
     let cleanName = brandName || "";
     if (brandName) {
@@ -1354,6 +1370,27 @@ document.addEventListener('DOMContentLoaded', () => {
                             ${renderedHtml}
                         </div>
                     `;
+
+                    // Save to local storage for history
+                    try {
+                        const storageKey = `ai_reports_${platform}_${queryName}`;
+                        const existing = JSON.parse(localStorage.getItem(storageKey) || '[]');
+                        const now = new Date();
+                        const timestampStr = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                        existing.unshift({
+                            id: Date.now().toString(),
+                            date: timestampStr,
+                            content: markdownText
+                        });
+                        // Keep last 10
+                        if (existing.length > 10) existing.length = 10;
+                        localStorage.setItem(storageKey, JSON.stringify(existing));
+
+                        if (typeof window.loadAndRenderAiReports === 'function') {
+                            window.loadAndRenderAiReports(queryName, platform);
+                        }
+                    } catch (err) { console.error("History Save Error:", err); }
+
                     // Basic styling for rendered markdown table/headers
                     const resultDiv = aiInsightContent.querySelector('.ai-insight-result');
                     if (resultDiv) {
@@ -1397,3 +1434,81 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+window.loadAndRenderAiReports = function (brandName, platform) {
+    const container = document.getElementById('aiPreviousReportsContainer');
+    const list = document.getElementById('aiPreviousReportsList');
+    if (!container || !list) return;
+
+    try {
+        const storageKey = `ai_reports_${platform}_${brandName}`;
+        const existing = JSON.parse(localStorage.getItem(storageKey) || '[]');
+
+        if (existing.length === 0) {
+            container.style.display = 'none';
+            return;
+        }
+
+        container.style.display = 'block';
+        list.innerHTML = '';
+
+        existing.forEach(report => {
+            const btn = document.createElement('button');
+            btn.innerHTML = `<i class="fa-regular fa-file-lines" style="color: #64748b;"></i> ${report.date}`;
+            btn.style.cssText = "padding: 0.5rem 1rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.85rem; font-weight: 500; cursor: pointer; color: #475569; background: white; white-space: nowrap; transition: all 0.2s;";
+
+            btn.onmouseover = () => { btn.style.background = '#f8fafc'; };
+            btn.onmouseout = () => { btn.style.background = 'white'; };
+
+            btn.onclick = () => {
+                const aiInsightContent = document.getElementById('aiInsightContent');
+                if (!aiInsightContent) return;
+
+                let renderedHtml = report.content;
+                if (window.marked && typeof window.marked.parse === 'function') {
+                    renderedHtml = window.marked.parse(report.content);
+                }
+
+                aiInsightContent.innerHTML = `
+                    <div class="ai-insight-result" style="line-height: 1.7; font-size: 0.95rem; color: #1e293b;">
+                        ${renderedHtml}
+                    </div>
+                `;
+
+                // Styling
+                const resultDiv = aiInsightContent.querySelector('.ai-insight-result');
+                if (resultDiv) {
+                    const tables = resultDiv.querySelectorAll('table');
+                    tables.forEach(t => {
+                        t.style.width = '100%';
+                        t.style.borderCollapse = 'collapse';
+                        t.style.marginBottom = '1.5rem';
+                        t.querySelectorAll('th, td').forEach(cell => {
+                            cell.style.border = '1px solid #e2e8f0';
+                            cell.style.padding = '0.75rem';
+                        });
+                        t.querySelectorAll('th').forEach(th => {
+                            th.style.background = '#f8fafc';
+                            th.style.fontWeight = '600';
+                        });
+                    });
+                    resultDiv.querySelectorAll('h2, h3').forEach(h => {
+                        h.style.color = '#0f172a';
+                        h.style.marginTop = '1.5rem';
+                        h.style.marginBottom = '1rem';
+                        h.style.borderBottom = '1px solid #e2e8f0';
+                        h.style.paddingBottom = '0.5rem';
+                    });
+                    resultDiv.querySelectorAll('img').forEach(img => {
+                        if (img.width > 300) img.style.width = '300px';
+                        img.style.borderRadius = '8px';
+                    });
+                }
+            };
+
+            list.appendChild(btn);
+        });
+    } catch (err) {
+        console.error("Failed to load AI reports from local storage", err);
+    }
+};

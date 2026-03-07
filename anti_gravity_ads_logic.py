@@ -1047,15 +1047,19 @@ def generate_ai_insight_report(ads_data: List[Dict], query: str, platform: str) 
     high_engagement = sorted_by_engagement[:5]
     new_ads = sorted_by_date[:5]
 
-    def ad_summary(ad):
+    def ad_summary(ad, title=""):
         body_text = str(ad.get('body', ''))[:150].replace('\n', ' ')
-        return f"- [미디어: {ad.get('media_type')}] 시작일: {ad.get('start_date')}, 게재일수: {ad.get('active_days', 0)}, 좋아요: {ad.get('likes', 0)}, 본문: {body_text}..."
+        media_url = ad.get('media_url', '')
+        thumb_md = f"<img src='{media_url}' style='width: 150px; border-radius: 8px;' alt='ad_thumbnail' />" if media_url else ""
+        return f"- [{title}] 미디어: {ad.get('media_type')}, 시작일: {ad.get('start_date')}, 게재일수: {ad.get('active_days', 0)}, 좋아요: {ad.get('likes', 0)}\n  미디어썸네일태그: `{thumb_md}`\n  본문: {body_text}..."
 
     context = f"타겟 브랜드/키워드: {query} (플랫폼: {platform})\n\n"
-    context += "[Long-run 소재 (게재일수 높은 순)]\n" + "\n".join([ad_summary(ad) for ad in long_run]) + "\n\n"
-    context += "[High-Engagement 소재 (인게이지먼트 높은 순)]\n" + "\n".join([ad_summary(ad) for ad in high_engagement]) + "\n\n"
-    context += "[최신 등록 소재 (가장 최근 순)]\n" + "\n".join([ad_summary(ad) for ad in new_ads]) + "\n\n"
+    context += "[Long-run 소재 (게재일수 높은 순)]\n" + "\n".join([ad_summary(ad, "Long-run") for ad in long_run]) + "\n\n"
+    context += "[High-Engagement 소재 (인게이지먼트 높은 순)]\n" + "\n".join([ad_summary(ad, "High-Engagement") for ad in high_engagement]) + "\n\n"
+    context += "[최신 등록 소재 (가장 최근 순)]\n" + "\n".join([ad_summary(ad, "최신등록") for ad in new_ads]) + "\n\n"
     
+    current_time = datetime.now().strftime("%Y년 %m월 %d일 %H시 %M분")
+
     prompt = f"""당신은 엘리트 퍼포먼스 마케터 및 크리에이티브 디렉터입니다.
 입력된 경쟁사({query})의 광고 소재 메타데이터를 바탕으로 'AI 인사이트' 분석 리포트를 작성해주세요.
 
@@ -1069,7 +1073,8 @@ def generate_ai_insight_report(ads_data: List[Dict], query: str, platform: str) 
    - '최신 등록' 광고: 최신 트렌드 및 경쟁사의 새로운 가설 분석.
 
 2. 크리에이티브 리버스 엔지니어링:
-   - [Hooking]: 사용자 시선을 끈 결정적 문구나 이미지 요소는 무엇인가?
+   - 각 분석 파트에서 반드시 제공된 **`미디어썸네일태그`** 를 그대로 복사해 붙여넣어 해당 소재를 시각적으로 참고할 수 있게 할 것. (이미지를 너무 크게 하지 마세요. 제공된 <img .../> 태그를 그대로 쓰면 됩니다.)
+   - [Hooking]: 사용자 시선을 끈 결정적 문구나 이미지 요소는 무엇인가? 썸네일과 매칭하여 설명할 것.
    - [Messaging]: 고객의 어떤 Pain Point를 건드리고 있는가?
    - [Visual Strategy]: 사용된 메인 컬러, 레이아웃, 폰트 스타일의 의도는 무엇인가?
 
@@ -1077,12 +1082,14 @@ def generate_ai_insight_report(ads_data: List[Dict], query: str, platform: str) 
    - 위 분석을 바탕으로 우리 브랜드가 벤치마킹해야 할 점과 '차별화(Edge)'를 줄 수 있는 전략 제안.
    - 구체적인 카피라이팅 3종과 비주얼 가이드 제시.
 
-# Output Format (반드시 마크다운으로 아래 구조를 따를 것)
+# Output Format (반드시 마크다운으로 작성하고 아래 구조를 따를 것)
+> **리포트 생성 일시**: {current_time}
+
 ## 1. 경쟁사 크리에이티브 패턴 분석 (Table 등 가독성 좋은 뷰 활용)
-[분석 내용 작성...]
+[해당하는 소재의 미디어썸네일태그를 함께 배치하며 분석 설명...]
 
 ## 2. High-Performance 소재의 핵심 성공 방정식
-[분석 내용 작성...]
+[해당하는 소재의 미디어썸네일태그를 함께 배치하며 분석 설명...]
 
 ## 3. 당사 도입을 위한 크리에이티브 가이드라인
 [분석 내용 작성...]
