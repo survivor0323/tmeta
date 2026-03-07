@@ -839,7 +839,7 @@ window.renderMonitorAds = function (page = 1) {
         return;
     }
 
-    const PAGE_SIZE = 12;
+    const PAGE_SIZE = 24;
     const currentPage = window._currentMonitorPage || 1;
     const totalPages = Math.ceil(adsToRender.length / PAGE_SIZE);
     const paginatedAds = adsToRender.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
