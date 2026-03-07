@@ -1013,6 +1013,7 @@ window.showCompetitorDetail = function (brandName, platform, adsData = null, isK
         // 글로벌 상태로 저장하여 렌더링 함수에서 참조할 수 있게 함
         window._currentMonitorPlatform = platform;
         window._currentMonitorAds = targetAds;
+        window._currentMonitorBrand = cleanName;
 
         const sortSelect = document.getElementById('monitorSortSelect');
         if (sortSelect) {
@@ -1324,7 +1325,7 @@ document.addEventListener('DOMContentLoaded', () => {
         generateAiInsightBtn.addEventListener('click', async () => {
             const adsData = window._currentMonitorAds || [];
             const platform = window._currentMonitorPlatform || 'meta';
-            const queryName = document.getElementById('monitorCompetitorTitle')?.innerText.trim() || '선택된 검색어';
+            const queryName = window._currentMonitorBrand || document.getElementById('monitorCompetitorTitle')?.innerText.trim() || '선택된 검색어';
 
             if (adsData.length === 0) {
                 alert("현재 표시할 수집된 광고 데이터가 없습니다.");

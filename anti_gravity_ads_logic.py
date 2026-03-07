@@ -1050,7 +1050,16 @@ def generate_ai_insight_report(ads_data: List[Dict], query: str, platform: str) 
     def ad_summary(ad, title=""):
         body_text = str(ad.get('body', ''))[:150].replace('\n', ' ')
         media_url = ad.get('media_url', '')
-        thumb_md = f"<img src='{media_url}' style='width: 150px; border-radius: 8px;' alt='ad_thumbnail' />" if media_url else ""
+        media_type = str(ad.get('media_type', 'image')).lower()
+        
+        if media_url:
+            if media_type == 'video':
+                thumb_md = f"<video src='{media_url}' style='width: 150px; border-radius: 8px;' autoplay loop muted playsinline controls></video>"
+            else:
+                thumb_md = f"<img src='{media_url}' style='width: 150px; border-radius: 8px;' alt='ad_thumbnail' />"
+        else:
+            thumb_md = ""
+            
         return f"- [{title}] 미디어: {ad.get('media_type')}, 시작일: {ad.get('start_date')}, 게재일수: {ad.get('active_days', 0)}, 좋아요: {ad.get('likes', 0)}\n  미디어썸네일: {thumb_md}\n  본문: {body_text}..."
 
     context = f"타겟 브랜드/키워드: {query} (플랫폼: {platform})\n\n"
