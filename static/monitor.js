@@ -616,6 +616,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const monitorSidebarList = document.getElementById("monitorSidebarList");
         const monitorSidebarEmpty = document.getElementById("monitorSidebarEmpty");
 
+        // Clear existing list to prevent duplicates when reloading
+        if (monitorSidebarList) {
+            monitorSidebarList.innerHTML = '';
+        }
+
         // 1. Load Folders
         let folders = [];
         if (typeof window.loadMonitorFoldersDB === 'function') {
