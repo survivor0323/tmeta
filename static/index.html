@@ -516,6 +516,7 @@
                                     <div style="display: flex; align-items: center; gap: 1rem;">
                                         <i class="fa-solid fa-arrow-down-short-wide" style="color: #94a3b8;"></i>
                                         <select id="monitorSortSelect"
+                                            onchange="if(typeof window.renderMonitorAds === 'function') window.renderMonitorAds();"
                                             style="padding: 0.4rem 1rem; border: 1px solid #e2e8f0; background: white; border-radius: 20px; font-size: 0.85rem; color: var(--text-main); font-weight: 600; outline: none; cursor: pointer;">
                                         </select>
                                     </div>
@@ -1372,11 +1373,11 @@
         <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
         <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
         <script src="/static/auth.js?v=26"></script>
-        <script src="/static/script.js?v=27"></script>
-        <script src="/static/features.js?v=4"></script>
-        <script src="/static/creative.js?v=12"></script>
-        <script src="/static/labs.js?v=3"></script>
-        <script src="/static/monitor.js?v=3"></script>
+        <script src="/static/script.js?v=28"></script>
+        <script src="/static/features.js?v=5"></script>
+        <script src="/static/creative.js?v=13"></script>
+        <script src="/static/labs.js?v=4"></script>
+        <script src="/static/monitor.js?v=5"></script>
 </body>
 
 </html>

@@ -341,7 +341,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     : ad.platform === 'google'
                         ? `<div class="status-badge"><i class="fa-brands fa-google"></i> 광고</div>
                            <div class="status-badge active">Google Ads</div>`
-                        : `<div class="status-badge"><i class="fa-regular fa-calendar"></i> ${ad.active_days || 30}일간 게재</div>
+                        : `<div class="status-badge"><i class="fa-regular fa-calendar"></i> ${window._runDaysFallback ? ad._runDays : (ad._runDays || ad.active_days || 30)}일간 게재</div>
                            <div class="status-badge active">게재 중</div>`
             }
                 </div>
