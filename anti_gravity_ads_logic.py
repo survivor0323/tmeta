@@ -133,7 +133,7 @@ def fetch_competitor_ads_batch(brand_names: List[str], country: str = "KR") -> D
             # 2. 검색어와 정확히 일치하는(또는 매우 유사한) 이름을 가진 페이지 우선
             # 우선순위: (정확도 매치 여부, 좋아요 수)
             def score_page(p):
-                name = p.get('page_name', '').lower()
+                name = p.get('name', p.get('page_name', '')).lower()
                 q = brand.lower()
                 # 쿼리와 정확히 일치하면 아주 높은 가산점
                 exact_match = 1 if q == name else 0
@@ -168,7 +168,7 @@ def fetch_competitor_ads_batch(brand_names: List[str], country: str = "KR") -> D
                     if cursor:
                         ads_params["cursor"] = cursor
                         
-                    logger.info(f"[{brand}] 실전 메타 광고 데이터 요청 중 (Page Name: {page_info.get('page_name', 'Unknown')}, Page: {pages_fetched+1}/{max_pages})")
+                    logger.info(f"[{brand}] 실전 메타 광고 데이터 요청 중 (Page Name: {page_info.get('name', page_info.get('page_name', 'Unknown'))}, Page: {pages_fetched+1}/{max_pages})")
                     
                     res_ads = requests.get(url_ads, headers=headers, params=ads_params)
                     
@@ -227,7 +227,7 @@ def fetch_competitor_ads_batch(brand_names: List[str], country: str = "KR") -> D
 
                         ad_format = {
                             "ad_id": ad_id,
-                            "brand": snapshot.get('page_name', brand),
+                            "brand": snapshot.get('page_name', page_info.get('name', brand)),
                             "platform": "meta",
                             "media_type": "video" if video_url else "image",
                             "media_url": video_url if video_url else image_url,
