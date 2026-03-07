@@ -431,9 +431,10 @@ async def generate_insights(req: GenerateInsightRequest, authorization: str = He
         report = generate_ai_insight_report(req.ads_data, req.query, req.platform)
         
         # Save to Supabase DB
-        if user_id and supabase_admin: # or supabase, using admin to avoid some RLS issues if auth gets tricky, but let's use supabase
+        client = supabase_admin if supabase_admin else supabase
+        if user_id and client: 
             try:
-                supabase.table("ai_insights").insert({
+                client.table("ai_insights").insert({
                     "user_id": user_id,
                     "brand_name": req.query,
                     "platform": req.platform,
@@ -454,11 +455,12 @@ async def get_ai_insights(brand: str, platform: str, authorization: str = Header
     if not user_id:
         return {"status": "error", "message": "로그인이 필요합니다."}
         
-    if not supabase:
+    client = supabase_admin if supabase_admin else supabase
+    if not client:
         return {"status": "error", "message": "Supabase 클라이언트가 초기화되지 않았습니다."}
     
     try:
-        response = supabase.table("ai_insights").select("*").eq("user_id", user_id).eq("brand_name", brand).eq("platform", platform).order("created_at", desc=True).limit(10).execute()
+        response = client.table("ai_insights").select("*").eq("user_id", user_id).eq("brand_name", brand).eq("platform", platform).order("created_at", desc=True).limit(10).execute()
         return {"status": "success", "data": response.data}
     except Exception as e:
         logger.error(f"AI insights fetch error: {e}")
