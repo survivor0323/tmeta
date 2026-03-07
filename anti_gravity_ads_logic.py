@@ -129,13 +129,22 @@ def fetch_competitor_ads_batch(brand_names: List[str], country: str = "KR") -> D
                 results[brand] = []
                 continue
                 
-            # 필터링 및 정확도 확보: 'Ktvlights' 같은 무관한 페이지를 걸러내기 위해
-            # Facebook 페이지의 좋아요 수('likes') 기준으로 내림차순 정렬
-            # 대형 공식 브랜드 페이지의 좋아요가 압도적으로 높으므로 오탐지를 획기적으로 방지합니다.
-            search_results.sort(key=lambda x: (x.get('likes') or 0), reverse=True)
+            # 1. 좋아요(likes) 기준 상위 정렬
+            # 2. 검색어와 정확히 일치하는(또는 매우 유사한) 이름을 가진 페이지 우선
+            # 우선순위: (정확도 매치 여부, 좋아요 수)
+            def score_page(p):
+                name = p.get('page_name', '').lower()
+                q = brand.lower()
+                # 쿼리와 정확히 일치하면 아주 높은 가산점
+                exact_match = 1 if q == name else 0
+                # 부분 일치
+                partial_match = 1 if q in name else 0
+                return (exact_match, partial_match, p.get('likes') or 0)
+                
+            search_results.sort(key=score_page, reverse=True)
             
-            # 검색어가 포함된 최상위 메타 페이지 중 좋아요 상위 2개를 추출하여 순회
-            top_pages = search_results[:2]
+            # 상위 4개 페이지를 순회하며 실제로 광고가 있는 페이지의 데이터가 확보되면 해당 브랜드 스크래핑 완료 처리
+            top_pages = search_results[:4]
             ads_list = []
             
             for page_info in top_pages:
@@ -237,6 +246,12 @@ def fetch_competitor_ads_batch(brand_names: List[str], country: str = "KR") -> D
                         has_next = False
                         
                     pages_fetched += 1
+                
+                # 만약 이 페이지에서 실제 광고 데이터를 찾았다면 (보통 공식 페이지),
+                # 엉뚱한 동명이인/유사 페이지를 계속 긁지 않고 바로 넘어갑니다.
+                if ads_list:
+                    break
+
                 
             if ads_list:
                 results[brand] = ads_list
