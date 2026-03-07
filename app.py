@@ -626,7 +626,14 @@ async def check_monitors_now(authorization: str = Header(default="")):
                 slim_ads = [{"ad_id": a.get("ad_id"), "brand": a.get("brand"),
                              "media_url": a.get("media_url"), "media_type": a.get("media_type"),
                              "body": (a.get("body") or "")[:200], "direct_link": a.get("direct_link"),
-                             "platform": platform} for a in ads[:20]]
+                             "platform": platform,
+                             "start_date": a.get("start_date", "2024-01-01"),
+                             "active_days": a.get("active_days"),
+                             "likes": a.get("likes", 0),
+                             "comments": a.get("comments", 0),
+                             "views": a.get("views", 0),
+                             "hashtags": a.get("hashtags", []),
+                             "analysis_report": a.get("analysis_report")} for a in ads[:20]]
                 supabase_admin.table("monitor_alerts").insert({
                     "user_id": user_id,
                     "monitor_id": mon["id"],
@@ -636,10 +643,14 @@ async def check_monitors_now(authorization: str = Header(default="")):
                 }).execute()
                 total_new += len(ads)
 
-            # last_checked_at 갱신
+            # last_checked_at 및 ads_data 갱신
             from datetime import datetime, timezone
+            update_data = {"last_checked_at": datetime.now(timezone.utc).isoformat()}
+            if ads:
+                update_data["ads_data"] = ads[:50]
+                
             supabase_admin.table("monitored_brands")\
-                .update({"last_checked_at": datetime.now(timezone.utc).isoformat()})\
+                .update(update_data)\
                 .eq("id", mon["id"]).execute()
 
         return {"status": "success", "message": f"체크 완료! 총 {total_new}개의 새 광고를 발견했습니다."}
