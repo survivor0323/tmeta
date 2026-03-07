@@ -489,8 +489,50 @@ class MonitorRequest(BaseModel):
     platform: str = "meta"
     country: str = "KR"
 
+def classify_brand_category_bg(brand_name: str):
+    """
+    브랜드가 모니터링에 추가될 때 비동기로 실행되어, 
+    해당 브랜드가 어느 분야(카테고리)에 속하는지 AI로 분류한 뒤 global_brands에 저장합니다.
+    """
+    try:
+        # 백그라운드이므로 이미 등록되어 있는지 체크
+        existing_global = supabase_admin.table("global_brands").select("id").eq("brand_name", brand_name).execute()
+        if existing_global.data:
+            return
+
+        from openai import OpenAI
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        prompt = (
+            f"당신은 브랜드 마케팅 전문가입니다. 검색된 브랜드명 '{brand_name}'이(가) "
+            "다음 14가지 분야 중 어디에 속하는지 가장 알맞은 단수형 카테고리 1개만 정확하게 한국어로 말해주세요.\n\n"
+            "[카테고리 목록]\n"
+            "뷰티, 패션, 식품, 홈·생활, 가전·디지털, 취미·반려동물, 이커머스·쇼핑, 금융·핀테크, 교육, 헬스·건강, IT 솔루션·SaaS, 라이프스타일 서비스, 콘텐츠·미디어, 기타\n\n"
+            "[응답 예시]\n뷰티\n\n(부가 설명이나 마침표 없이 카테고리 이름만 답할 것)"
+        )
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=20,
+            temperature=0.0
+        )
+        category = response.choices[0].message.content.strip().replace('.', '')
+        
+        # 목록에 없는 값이 나왔을 경우 fallback
+        valid_categories = ["뷰티", "패션", "식품", "홈·생활", "가전·디지털", "취미·반려동물", "이커머스·쇼핑", "금융·핀테크", "교육", "헬스·건강", "IT 솔루션·SaaS", "라이프스타일 서비스", "콘텐츠·미디어", "기타"]
+        if category not in valid_categories:
+            category = "기타"
+
+        # global_brands 테이블에 저장 (UPSERT)
+        supabase_admin.table("global_brands").upsert({
+            "brand_name": brand_name,
+            "category": category
+        }).execute()
+        logger.info(f"[Category AI] '{brand_name}' -> {category} 분류 완료 및 global_brands 추가")
+    except Exception as e:
+        logger.error(f"[Category AI] '{brand_name}' 분류 실패: {e}")
+
 @app.post("/api/v1/monitors")
-async def add_monitor(req: MonitorRequest, authorization: str = Header(default="")):
+async def add_monitor(req: MonitorRequest, background_tasks: BackgroundTasks, authorization: str = Header(default="")):
     """모니터링할 브랜드를 등록합니다."""
     user_id = get_user_id_from_token(authorization)
     if not user_id:
@@ -512,6 +554,10 @@ async def add_monitor(req: MonitorRequest, authorization: str = Header(default="
             "platform": req.platform,
             "country": req.country,
         }).execute()
+        
+        # 백그라운드 태스크로 AI 카테고리 분류 트리거
+        background_tasks.add_task(classify_brand_category_bg, req.brand_name)
+        
         return {"status": "success", "data": result.data[0] if result.data else {}}
     except Exception as e:
         logger.error(f"모니터 등록 실패: {e}")
@@ -546,6 +592,18 @@ async def delete_monitor(monitor_id: str, authorization: str = Header(default=""
         return {"status": "success"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+@app.get("/api/v1/recommendations")
+async def get_recommendations():
+    """다른 마케터들이 추가한 분야별 추천 경쟁사를 가져옵니다."""
+    try:
+        # get_recommended_competitors RPC를 호출하여 집계 데이터를 가져옵니다.
+        # RLS 상관없이 데이터를 읽기 위해 supabase_admin 사용 또는 public 가능.
+        result = supabase_admin.rpc("get_recommended_competitors").execute()
+        return {"status": "success", "data": result.data or []}
+    except Exception as e:
+        logger.error(f"추천 경쟁사 로드 에러: {e}")
+        return {"status": "error", "message": str(e), "data": []}
 
 @app.get("/api/v1/monitor-alerts")
 async def get_monitor_alerts(authorization: str = Header(default="")):

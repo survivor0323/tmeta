@@ -1518,3 +1518,155 @@ window.loadAndRenderAiReports = async function (brandName, platform) {
         console.error("Failed to load AI reports from DB", err);
     }
 };
+
+// ==========================================
+// 추천 경쟁사 불러오기 및 필터링 렌더링
+// ==========================================
+window.loadRecommendedBrands = async function () {
+    const listContainer = document.getElementById("recommendedBrandsList");
+    const chipsContainer = document.getElementById("monitorCategoryChips");
+    const platformSelect = document.getElementById("recommendPlatformSelect");
+    if (!listContainer || !chipsContainer) return;
+
+    try {
+        const res = await fetch("/api/v1/recommendations", {
+            headers: window.getAuthHeaders ? window.getAuthHeaders() : {}
+        });
+        const data = await res.json();
+        const recommendations = data.data || [];
+
+        // 고정 카테고리 목록
+        const ALL_CATEGORIES = ["전체", "뷰티", "패션", "식품", "홈·생활", "가전·디지털", "취미·반려동물", "IT 솔루션·SaaS", "커머스·쇼핑", "금융·핀테크", "교육", "커뮤니티·콘텐츠", "라이프스타일 서비스", "헬스·건강", "기타"];
+
+        let activeCategory = "전체";
+        let activePlatform = "all";
+
+        const renderChips = () => {
+            chipsContainer.innerHTML = '';
+            ALL_CATEGORIES.forEach(cat => {
+                const btn = document.createElement("button");
+                btn.className = "monitor-chip";
+                if (cat === activeCategory) {
+                    btn.classList.add("active");
+                    btn.style.cssText = "padding: 0.4rem 1rem; border: 1px solid #3b82f6; background: #3b82f6; border-radius: 20px; font-size: 0.85rem; color: white; cursor: pointer; font-weight:600; box-shadow: 0 4px 6px rgba(59,130,246,0.2);";
+                } else {
+                    btn.style.cssText = "padding: 0.4rem 1rem; border: 1px solid #e2e8f0; background: white; border-radius: 20px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer;";
+                }
+                btn.innerText = cat;
+                btn.onclick = () => {
+                    activeCategory = cat;
+                    renderChips();
+                    renderList();
+                };
+                chipsContainer.appendChild(btn);
+            });
+        };
+
+        const renderList = () => {
+            listContainer.innerHTML = '';
+            let filtered = recommendations;
+
+            if (activeCategory !== "전체") {
+                filtered = filtered.filter(item => item.category === activeCategory);
+            }
+            if (activePlatform !== "all") {
+                filtered = filtered.filter(item => item.platform === activePlatform);
+            }
+
+            if (filtered.length === 0) {
+                listContainer.innerHTML = '<div style="text-align:center; padding: 2rem; color:#94a3b8; font-size:0.9rem;">아직 이 분야에 추천된 경쟁사가 없습니다.</div>';
+                return;
+            }
+
+            filtered.forEach(item => {
+                const el = document.createElement("div");
+                el.style.cssText = "border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; background: white; transition: border-color 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.02);";
+
+                const iconChar = item.brand_name.charAt(0).toUpperCase();
+                let iconColor = "#3b82f6";
+                let iconClass = "fa-brands fa-meta";
+                if (item.platform === "instagram") { iconColor = "#e1306c"; iconClass = "fa-brands fa-instagram"; }
+                if (item.platform === "tiktok") { iconColor = "#000000"; iconClass = "fa-brands fa-tiktok"; }
+
+                el.innerHTML = `
+                    <div style="display: flex; gap: 1.5rem; align-items: center;">
+                        <div style="width: 50px; height: 50px; border-radius: 50%; background: ${iconColor}; color: white; font-weight: 800; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; font-family: sans-serif;">
+                            ${iconChar}
+                        </div>
+                        <div>
+                            <div style="font-weight: 700; font-size: 1.1rem; color: var(--text-main); margin-bottom: 0.3rem; display: flex; align-items: center;">
+                                ${item.brand_name} <span style="font-size: 0.7rem; color: #10b981; background: #ecfdf5; padding: 2px 6px; border-radius: 4px; font-weight: 600; margin-left: 0.5rem;"><i class="fa-solid fa-fire"></i> ${item.monitor_count}명의 마케터가 모니터링 중</span>
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem;">
+                                <i class="${iconClass}"></i> ${item.platform}
+                            </div>
+                        </div>
+                    </div>
+                    <button class="add-recommendation-btn" data-brand="${item.brand_name}" data-platform="${item.platform}" style="color: #3b82f6; background: none; border: none; font-weight: 600; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; transition: opacity 0.2s;">
+                        <i class="fa-solid fa-plus"></i> 모니터링에 추가
+                    </button>
+                `;
+
+                // Add button handler
+                const addBtn = el.querySelector('.add-recommendation-btn');
+                addBtn.addEventListener('click', async () => {
+                    const originalText = addBtn.innerHTML;
+                    addBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 추가 중...';
+                    addBtn.disabled = true;
+                    try {
+                        // Create modal instance behind the scenes or just call save API
+                        if (typeof window.saveMonitoredBrandDB === 'function') {
+                            const params = { brand_name: item.brand_name, platform: item.platform, ads_data: [], country: "KR" };
+                            const r = await fetch('/api/v1/monitors', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', ...window.getAuthHeaders() },
+                                body: JSON.stringify(params)
+                            });
+
+                            if (r.ok) {
+                                addBtn.innerHTML = '<i class="fa-solid fa-check"></i> 추가됨';
+                                addBtn.style.color = '#10b981';
+                                // Refresh sidebar
+                                if (window.loadMonitorState) window.loadMonitorState();
+                            } else {
+                                const err = await r.json();
+                                alert(err.message || '추가 실패');
+                                addBtn.innerHTML = originalText;
+                                addBtn.disabled = false;
+                            }
+                        }
+                    } catch (e) {
+                        alert('오류 발생: ' + e.message);
+                        addBtn.innerHTML = originalText;
+                        addBtn.disabled = false;
+                    }
+                });
+
+                listContainer.appendChild(el);
+            });
+        };
+
+        if (platformSelect) {
+            platformSelect.addEventListener('change', (e) => {
+                activePlatform = e.target.value;
+                renderList();
+            });
+        }
+
+        renderChips();
+        renderList();
+
+    } catch (err) {
+        console.error("추천 리스트 로딩 에러:", err);
+        listContainer.innerHTML = '<div style="text-align:center; padding: 2rem; color:#ef4444;">데이터를 불러오는 데 실패했습니다.</div>';
+    }
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+    // Call load recommended brands
+    setTimeout(() => {
+        if (typeof window.loadRecommendedBrands === 'function') {
+            window.loadRecommendedBrands();
+        }
+    }, 1000);
+});
