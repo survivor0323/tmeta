@@ -262,6 +262,25 @@ async def trigger_analysis(req: AnalyzeRequest, authorization: str = Header(defa
         except Exception as archive_err:
             logger.warning(f"[Archive] 자동 저장 실패: {archive_err}")
 
+        # 캐시 재사용을 위해 search_history에 자동으로 현재 쿼리 및 결과 저장
+        if supabase_admin:
+            try:
+                import json
+                history_data = {
+                    "query": req.query,
+                    "platform": platform,
+                    "country": req.country or "KR",
+                    "ads_data": json.loads(json.dumps(real_responses, default=str)) # 파싱 에러 방지용 안전 직렬화
+                }
+                if user_id:
+                    history_data["user_id"] = user_id
+                
+                # RLS 이슈를 우회하기 위해 admin 클라이언트 사용 (타 브랜드를 검색할 때 로그인 안 한 사용자의 데이터도 캐시로 사용 목적)
+                supabase_admin.table("search_history").insert(history_data).execute()
+                logger.info(f"검색 데이터 자동 캐시 저장 완료: '{req.query}' ({platform})")
+            except Exception as hist_err:
+                logger.warning(f"[History] 자동 캐시 저장 실패: {hist_err}")
+
         return {
             "status": "success",
             "message": success_msg,
