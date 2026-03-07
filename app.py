@@ -429,10 +429,40 @@ async def generate_insights(req: GenerateInsightRequest, authorization: str = He
             return {"status": "error", "message": "분석할 소재 데이터가 부족합니다."}
             
         report = generate_ai_insight_report(req.ads_data, req.query, req.platform)
+        
+        # Save to Supabase DB
+        if user_id and supabase_admin: # or supabase, using admin to avoid some RLS issues if auth gets tricky, but let's use supabase
+            try:
+                supabase.table("ai_insights").insert({
+                    "user_id": user_id,
+                    "brand_name": req.query,
+                    "platform": req.platform,
+                    "report_content": report
+                }).execute()
+            except Exception as e:
+                logger.error(f"Failed to save AI insight to DB: {e}")
+
         return {"status": "success", "data": report}
     except Exception as e:
         logger.error(f"[AI Insights Error]: {e}", exc_info=True)
         return {"status": "error", "message": str(e), "data": None}
+
+@app.get("/api/v1/ai-insights")
+async def get_ai_insights(brand: str, platform: str, authorization: str = Header(default="")):
+    """지정된 브랜드와 플랫폼의 이전 AI 인사이트 리포트를 DB에서 가져옵니다."""
+    user_id = get_user_id_from_token(authorization)
+    if not user_id:
+        return {"status": "error", "message": "로그인이 필요합니다."}
+        
+    if not supabase:
+        return {"status": "error", "message": "Supabase 클라이언트가 초기화되지 않았습니다."}
+    
+    try:
+        response = supabase.table("ai_insights").select("*").eq("user_id", user_id).eq("brand_name", brand).eq("platform", platform).order("created_at", desc=True).limit(10).execute()
+        return {"status": "success", "data": response.data}
+    except Exception as e:
+        logger.error(f"AI insights fetch error: {e}")
+        return {"status": "error", "message": str(e)}
 
 class RecommendRequest(BaseModel):
     keyword: str

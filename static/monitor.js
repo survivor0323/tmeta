@@ -1371,25 +1371,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     `;
 
-                    // Save to local storage for history
-                    try {
-                        const storageKey = `ai_reports_${platform}_${queryName}`;
-                        const existing = JSON.parse(localStorage.getItem(storageKey) || '[]');
-                        const now = new Date();
-                        const timestampStr = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-                        existing.unshift({
-                            id: Date.now().toString(),
-                            date: timestampStr,
-                            content: markdownText
-                        });
-                        // Keep last 10
-                        if (existing.length > 10) existing.length = 10;
-                        localStorage.setItem(storageKey, JSON.stringify(existing));
-
-                        if (typeof window.loadAndRenderAiReports === 'function') {
-                            window.loadAndRenderAiReports(queryName, platform);
-                        }
-                    } catch (err) { console.error("History Save Error:", err); }
+                    // History is automatically saved by backend backend. Update history list
+                    if (typeof window.loadAndRenderAiReports === 'function') {
+                        window.loadAndRenderAiReports(queryName, platform);
+                    }
 
                     // Basic styling for rendered markdown table/headers
                     const resultDiv = aiInsightContent.querySelector('.ai-insight-result');
@@ -1435,14 +1420,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-window.loadAndRenderAiReports = function (brandName, platform) {
+window.loadAndRenderAiReports = async function (brandName, platform) {
     const container = document.getElementById('aiPreviousReportsContainer');
     const list = document.getElementById('aiPreviousReportsList');
     if (!container || !list) return;
 
     try {
-        const storageKey = `ai_reports_${platform}_${brandName}`;
-        const existing = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        const res = await fetch(`/api/v1/ai-insights?brand=${encodeURIComponent(brandName)}&platform=${encodeURIComponent(platform)}`, {
+            headers: window.getAuthHeaders ? window.getAuthHeaders() : {}
+        });
+
+        if (!res.ok) throw new Error("API 요청 실패");
+
+        const json = await res.json();
+        let existing = [];
+        if (json.status === "success" && Array.isArray(json.data)) {
+            existing = json.data;
+        }
 
         if (existing.length === 0) {
             container.style.display = 'none';
@@ -1453,8 +1447,11 @@ window.loadAndRenderAiReports = function (brandName, platform) {
         list.innerHTML = '';
 
         existing.forEach(report => {
+            const dt = new Date(report.created_at);
+            const dateStr = `${dt.getFullYear()}.${String(dt.getMonth() + 1).padStart(2, '0')}.${String(dt.getDate()).padStart(2, '0')} ${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`;
+
             const btn = document.createElement('button');
-            btn.innerHTML = `<i class="fa-regular fa-file-lines" style="color: #64748b;"></i> ${report.date}`;
+            btn.innerHTML = `<i class="fa-regular fa-file-lines" style="color: #64748b;"></i> ${dateStr}`;
             btn.style.cssText = "padding: 0.5rem 1rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.85rem; font-weight: 500; cursor: pointer; color: #475569; background: white; white-space: nowrap; transition: all 0.2s;";
 
             btn.onmouseover = () => { btn.style.background = '#f8fafc'; };
@@ -1464,9 +1461,9 @@ window.loadAndRenderAiReports = function (brandName, platform) {
                 const aiInsightContent = document.getElementById('aiInsightContent');
                 if (!aiInsightContent) return;
 
-                let renderedHtml = report.content;
+                let renderedHtml = report.report_content;
                 if (window.marked && typeof window.marked.parse === 'function') {
-                    renderedHtml = window.marked.parse(report.content);
+                    renderedHtml = window.marked.parse(report.report_content);
                 }
 
                 aiInsightContent.innerHTML = `
@@ -1509,6 +1506,6 @@ window.loadAndRenderAiReports = function (brandName, platform) {
             list.appendChild(btn);
         });
     } catch (err) {
-        console.error("Failed to load AI reports from local storage", err);
+        console.error("Failed to load AI reports from DB", err);
     }
 };
