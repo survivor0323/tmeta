@@ -1447,7 +1447,7 @@ window.loadAndRenderAiReports = async function (brandName, platform) {
         container.style.display = 'block';
         list.innerHTML = '';
 
-        existing.forEach(report => {
+        existing.forEach((report, index) => {
             const dt = new Date(report.created_at);
             const dateStr = `${dt.getFullYear()}.${String(dt.getMonth() + 1).padStart(2, '0')}.${String(dt.getDate()).padStart(2, '0')} ${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`;
 
@@ -1461,6 +1461,16 @@ window.loadAndRenderAiReports = async function (brandName, platform) {
             btn.onclick = () => {
                 const aiInsightContent = document.getElementById('aiInsightContent');
                 if (!aiInsightContent) return;
+
+                // Set active styling on button list for better UX
+                Array.from(list.children).forEach(b => {
+                    b.style.borderColor = '#e2e8f0';
+                    b.style.background = 'white';
+                    b.style.color = '#475569';
+                });
+                btn.style.borderColor = '#3b82f6';
+                btn.style.background = '#eff6ff';
+                btn.style.color = '#1d4ed8';
 
                 let renderedHtml = report.report_content;
                 if (window.marked && typeof window.marked.parse === 'function') {
@@ -1505,6 +1515,11 @@ window.loadAndRenderAiReports = async function (brandName, platform) {
             };
 
             list.appendChild(btn);
+
+            // Automatically click the first button to show the latest report
+            if (index === 0) {
+                btn.click();
+            }
         });
     } catch (err) {
         console.error("Failed to load AI reports from DB", err);
