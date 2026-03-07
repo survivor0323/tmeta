@@ -723,7 +723,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
-window.renderMonitorAds = function () {
+window.renderMonitorAds = function (page = 1) {
+    if (typeof page === 'number') {
+        window._currentMonitorPage = page;
+    } else {
+        window._currentMonitorPage = 1;
+    }
+
     const adGrid = document.getElementById("monitorAdGrid");
     if (!adGrid) return;
     adGrid.innerHTML = '';
@@ -833,10 +839,54 @@ window.renderMonitorAds = function () {
         return;
     }
 
-    adsToRender.forEach(ad => {
+    const PAGE_SIZE = 12;
+    const currentPage = window._currentMonitorPage || 1;
+    const totalPages = Math.ceil(adsToRender.length / PAGE_SIZE);
+    const paginatedAds = adsToRender.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+    paginatedAds.forEach(ad => {
         const card = window.createAdCard(ad);
         adGrid.appendChild(card);
     });
+
+    if (totalPages > 1) {
+        const paginationContainer = document.createElement('div');
+        paginationContainer.style.gridColumn = '1 / -1';
+        paginationContainer.style.display = 'flex';
+        paginationContainer.style.justifyContent = 'center';
+        paginationContainer.style.gap = '0.5rem';
+        paginationContainer.style.marginTop = '2rem';
+        paginationContainer.style.marginBottom = '2rem';
+
+        for (let i = 1; i <= totalPages; i++) {
+            const btn = document.createElement('button');
+            btn.innerText = i;
+            btn.style.padding = '0.5rem 1rem';
+            btn.style.borderRadius = '8px';
+            btn.style.border = '1px solid #e2e8f0';
+            btn.style.cursor = 'pointer';
+            btn.style.fontWeight = '600';
+            btn.style.transition = 'all 0.2s';
+
+            if (i === currentPage) {
+                btn.style.background = '#3b82f6';
+                btn.style.color = 'white';
+                btn.style.borderColor = '#3b82f6';
+            } else {
+                btn.style.background = 'white';
+                btn.style.color = '#64748b';
+                btn.onmouseover = () => { btn.style.background = '#f8fafc'; };
+                btn.onmouseout = () => { btn.style.background = 'white'; };
+            }
+            btn.onclick = () => {
+                window.renderMonitorAds(i);
+                // Scroll to top of grid
+                document.getElementById('monitorTabAds')?.scrollIntoView({ behavior: 'smooth' });
+            };
+            paginationContainer.appendChild(btn);
+        }
+        adGrid.appendChild(paginationContainer);
+    }
 };
 
 window.showCompetitorDetail = function (brandName, platform, adsData = null, isKeywordParam = null) {
