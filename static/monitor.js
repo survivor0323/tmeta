@@ -750,20 +750,40 @@ window.renderMonitorAds = function () {
     // Pre-calculate derived fields for sorting if missing
     adsToRender.forEach(ad => {
         // Start Date fallback
-        const sDate = ad.start_date || ad.creation_date || '2024-01-01';
+        let sDate = String(ad.start_date || ad.creation_date || '2024-01-01').trim();
+
+        // Fix broken Meta dates from previous truncated cache (e.g. "14 Mar 202" -> "14 Mar 2024")
+        if (/^\d{1,2} [A-Za-z]{3} 202$/.test(sDate)) {
+            sDate += '4';
+        }
+        // Fix Korean format
+        if (sDate.includes('년')) {
+            sDate = sDate.replace(/[년월일]/g, '-').replace(/-\s*-/g, '-').replace(/-$/, '').replace(/\s+/g, '');
+        }
+        // Fix Unix timestamp string
+        if (/^\d{10,13}$/.test(sDate)) {
+            let t = parseInt(sDate);
+            if (sDate.length === 10) t *= 1000;
+            sDate = t;
+        }
+
         let parsedDate = new Date(sDate);
-        if (isNaN(parsedDate.getTime())) parsedDate = new Date('2024-01-01');
+        if (isNaN(parsedDate.getTime())) {
+            let hash = 0;
+            const str = ad.ad_id || "fallback";
+            for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            parsedDate = new Date(new Date('2024-01-01').getTime() + (hash % 10000000000));
+        }
         ad._sortDateStr = parsedDate.getTime();
 
         // Active days
         if (ad._runDays === undefined) {
             if (ad.active_days !== undefined) {
-                ad._runDays = ad.active_days;
+                ad._runDays = parseInt(ad.active_days) || 1;
             } else if (ad.start_date) {
                 const diffTime = Math.abs(new Date() - parsedDate);
-                ad._runDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                ad._runDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
             } else {
-                // Determine a stable random based on ad_id or string hash
                 ad._runDays = 14;
             }
         }
@@ -777,11 +797,11 @@ window.renderMonitorAds = function () {
             return sortVal === 'date_desc' ? b._sortDateStr - a._sortDateStr : a._sortDateStr - b._sortDateStr;
         });
     } else if (sortVal === 'likes_desc') {
-        adsToRender.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+        adsToRender.sort((a, b) => (parseInt(b.likes) || 0) - (parseInt(a.likes) || 0));
     } else if (sortVal === 'comments_desc') {
-        adsToRender.sort((a, b) => (b.comments || 0) - (a.comments || 0));
+        adsToRender.sort((a, b) => (parseInt(b.comments) || 0) - (parseInt(a.comments) || 0));
     } else if (sortVal === 'views_desc') {
-        adsToRender.sort((a, b) => (b.views || 0) - (a.views || 0));
+        adsToRender.sort((a, b) => (parseInt(b.views) || 0) - (parseInt(a.views) || 0));
     }
 
     // Stats update locally for this view

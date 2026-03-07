@@ -212,7 +212,7 @@ def fetch_competitor_ads_batch(brand_names: List[str], country: str = "KR") -> D
                             body_text = snapshot.get('caption', '')
                             
                         start_date_string = item.get('start_date_string', '')
-                        start_date = start_date_string[:10] if start_date_string else "2024-01-01"
+                        start_date = start_date_string if start_date_string else "2024-01-01"
                         
                         ad_id = item.get('id', '')
 
@@ -425,8 +425,16 @@ def fetch_instagram_reels(keyword: str, max_pages: int = 3) -> List[Dict]:
                 
                 desc = item.get("caption", "")
                 
-                start_date_str = item.get("taken_at", "")
-                start_date = start_date_str[:10] if start_date_str else "N/A"
+                start_date_str = str(item.get("taken_at", ""))
+                start_date = "N/A"
+                if start_date_str.isdigit():
+                    try:
+                        dt = datetime.fromtimestamp(int(start_date_str))
+                        start_date = dt.strftime('%Y-%m-%d')
+                    except:
+                        pass
+                elif len(start_date_str) > 10:
+                    start_date = start_date_str[:10]
                     
                 # 비디오/이미지 URL 추출
                 video_url = item.get("video_url", "")
