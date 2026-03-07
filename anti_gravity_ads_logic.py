@@ -693,14 +693,16 @@ def extract_winning_creatives(ads: List[Dict], min_months_active: int = 3) -> Li
             
         try:
             # start_date 텍스트를 날짜 객체로 파싱
-            start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
+            if "T" in str(start_date_str):
+                start_date_str = str(start_date_str).split("T")[0]
+            start_date = datetime.strptime(str(start_date_str), "%Y-%m-%d")
             active_days = (current_date - start_date).days
             
             if active_days >= min_days_active:
                 ad['active_days'] = active_days
                 winning_ads.append(ad)
-        except ValueError:
-            logger.error(f"날짜 포맷 파싱 에러: {start_date_str}")
+        except Exception as e:
+            logger.error(f"날짜 포맷 파싱 에러: {start_date_str} - {e}")
             
     # 오래 게재된 광고일수록 위닝 소재일 확률이 높으므로 활성 일수 기준 내림차순 최상단 정렬
     winning_ads.sort(key=lambda x: x.get('active_days', 0), reverse=True)
