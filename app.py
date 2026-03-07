@@ -392,7 +392,7 @@ async def delete_bookmark(bookmark_id: str, authorization: str = Header(default=
         return {"status": "error", "message": str(e)}
 
 
-@app.post("/api/v1/analyze/single")
+@app.post("/api/v1/analyze-single")
 async def analyze_single_creative(req: SingleAnalyzeRequest):
     """
     단일 이미지나 단일 비디오(프레임별 base64)를 입력받아 AI가 hook, body, cta를 분석
