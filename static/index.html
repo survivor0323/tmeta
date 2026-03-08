@@ -51,13 +51,6 @@
                         <i class="fa-solid fa-wand-magic-sparkles"></i>
                         <span>크리에이티브</span>
                     </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" id="navLabs">
-                        <i class="fa-solid fa-flask"></i>
-                        <span>Labs</span>
-                    </a>
-                </li>
             </ul>
         </nav>
 
@@ -1058,91 +1051,6 @@
             </main>
         </div>
 
-        <div id="labsView" class="hidden">
-            <main style="padding: 2rem 3rem; display: flex; gap: 2rem;">
-                <!-- 좌측: 입력 패널 -->
-                <div style="flex: 1; min-width: 400px; display: flex; flex-direction: column; gap: 1.5rem;">
-                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-main);">
-                        <i class="fa-solid fa-flask" style="color: var(--accent-blue); margin-right: 0.5rem;"></i>
-                        Labs: 크리에이티브 방향성 실험
-                    </div>
-
-                    <div class="panel-box" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
-                        <div class="form-group">
-                            <label for="labsBrandName" class="form-label" style="font-weight: 600;">브랜드명</label>
-                            <input type="text" id="labsBrandName" class="form-input" placeholder="브랜드 이름을 입력하세요">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="labsProductUrl" class="form-label" style="font-weight: 600;">제품 URL 또는
-                                제품
-                                설명</label>
-                            <textarea id="labsProductUrl" class="form-textarea" placeholder="제품 특징이나 관련 URL을 적어주세요..."
-                                rows="3"></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label" style="font-weight: 600;">제품 이미지 첨부 (선택)</label>
-                            <input type="file" id="labsProductImage" class="form-input" accept="image/*"
-                                style="padding: 0.5rem;">
-                        </div>
-
-                        <div class="form-group"
-                            style="padding-top: 0.5rem; border-top: 1px dashed var(--border-color);">
-                            <label class="form-label" style="font-weight: 600; margin-bottom: 0.8rem;">실사 모델(인물)
-                                노출
-                                여부</label>
-                            <div style="display: flex; gap: 1.5rem; align-items: center; font-size: 0.95rem;">
-                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                                    <input type="radio" name="labsHumanModel" value="false" checked>
-                                    <span>배제 (제품 누끼컷 강조)</span>
-                                </label>
-                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                                    <input type="radio" name="labsHumanModel" value="true">
-                                    <span>포함 (실사 라이프스타일 컷)</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <button id="btnLabsGenerate" class="btn btn-primary"
-                            style="margin-top: 1rem; font-weight: bold; width: 100%;">
-                            <i class="fa-solid fa-wand-magic-sparkles"></i> 방향성 설계 및 이미지 생성
-                        </button>
-                    </div>
-
-                    <!-- JSON 결과 출력 (방향성) -->
-                    <div class="panel-box" style="padding: 1.5rem;">
-                        <div style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-main);">
-                            분석된 크리에이티브 구조 (JSON)</div>
-                        <pre id="labsResultJson"
-                            style="background: #1e293b; color: #a5b4fc; padding: 1rem; border-radius: 8px; font-size: 0.85rem; overflow-x: auto; max-height: 400px;"></pre>
-                    </div>
-                </div>
-
-                <!-- 우측: 결과 이미지 패널 -->
-                <div class="panel-box" style="flex: 1; padding: 1.5rem; display: flex; flex-direction: column;">
-                    <div
-                        style="padding: 0.8rem 1rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">
-                        <span><i class="fa-solid fa-image"></i> AI Generated Result</span>
-                    </div>
-                    <div id="labsCanvasWrapper"
-                        style="display: flex; align-items: center; justify-content: center; background: repeating-conic-gradient(#f1f5f9 0% 25%, transparent 0% 50%) 50% / 20px 20px; overflow: hidden; position: relative; padding: 1rem; min-height: 500px; flex: 1;">
-                        <img id="labsGeneratedImg" src=""
-                            style="display: none; max-width: 100%; max-height: 100%; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border-radius: 8px;">
-                        <div id="labsCanvasEmptyState" style="text-align: center; color: var(--text-muted);">
-                            <i class="fa-solid fa-image"
-                                style="font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5;"></i><br>
-                            <span>좌측 정보를 입력하고 생성을 클릭하세요.</span>
-                        </div>
-                    </div>
-                    <div id="labsPromptDisplay"
-                        style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted); padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border-color);">
-                        사용한 Gemini 프롬프트가 이 곳에 표시됩니다.
-                    </div>
-                </div>
-            </main>
-        </div>
-
 
 
 
@@ -1275,7 +1183,6 @@
     <script src="/static/script.js?v=31"></script>
     <script src="/static/features.js?v=7"></script>
     <script src="/static/creative.js?v=13"></script>
-    <script src="/static/labs.js?v=4"></script>
     <script src="/static/monitor.js?v=8"></script>
 </body>
 
