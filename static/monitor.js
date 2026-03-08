@@ -283,12 +283,12 @@ document.addEventListener("DOMContentLoaded", () => {
                      <span class="memo-display hidden" style="font-size: 0.75rem; color: #64748b; background: #f8fafc; padding: 4px 8px; border-radius: 4px; border: 1px dashed #cbd5e1; width: fit-content; text-align: left;"></span>
                  </div>
                  
-                    <div style="display: flex; align-items: flex-start; gap: 0.3rem; flex-shrink: 0; padding-top: 2px;">
+                    <div style="display: flex; align-items: flex-start; gap: 0.3rem; flex-shrink: 0; padding-top: 2px; position: relative;">
                         <span style="font-size: 0.7rem; color: #10b981; background: #ecfdf5; padding: 2px 6px; border-radius: 4px; font-weight: 600; white-space: nowrap;">+${savedFetchedAds.length}개</span>
                         <div class="monitor-options-btn" style="padding: 0 4px; color: var(--text-muted); z-index: 2; position: relative;" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('hidden');">
                             <i class="fa-solid fa-ellipsis"></i>
                         </div>
-                        <div class="competitor-dropdown hidden" style="position: absolute; left: calc(100% + 5px); top: 0px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); z-index: 99999; width: 170px; text-align: left;">
+                        <div class="competitor-dropdown hidden" style="position: absolute; right: 0; top: calc(100% + 5px); background: white; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); z-index: 99999; width: 170px; text-align: left;">
                             <div class="edit-memo-btn" style="padding: 0.6rem 1rem; cursor: pointer; font-size: 0.85rem; color: var(--text-main); display: flex; gap: 0.5rem; align-items: center;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
                             <i class="fa-solid fa-pen" style="width: 14px; text-align: center; color: #64748b;"></i> 메모 수정
                          </div>
@@ -536,10 +536,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 <i class="fa-solid fa-angle-left folder-toggle-icon"></i>
                 <span class="folder-name-text">${folderName}</span>
             </div>
-            <div class="folder-options-btn" style="padding: 0 5px;" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('hidden');">
+            <div class="folder-options-btn" style="padding: 0 5px; position: relative;" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('hidden');">
                 <i class="fa-solid fa-ellipsis"></i>
             </div>
-            <div class="folder-dropdown hidden" style="position: absolute; right: -100px; top: 30px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); z-index: 999; width: 120px; text-align: left;">
+            <div class="folder-dropdown hidden" style="position: absolute; right: 10px; top: 40px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); z-index: 999; width: 120px; text-align: left;">
                 <div class="rename-btn" style="padding: 0.5rem 1rem; cursor: pointer; font-size: 0.85rem; color: var(--text-main); border-bottom: 1px solid #e2e8f0;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">폴더명 변경</div>
                 <div class="delete-btn" style="padding: 0.5rem 1rem; cursor: pointer; font-size: 0.85rem; color: #ef4444;" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='white'">폴더 삭제</div>
             </div>
