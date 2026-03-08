@@ -94,6 +94,9 @@ class GenerateInsightRequest(BaseModel):
     platform: str
     query: str
 
+class ChatRequest(BaseModel):
+    message: str
+
 # ─── JWT에서 user_id 추출 헬퍼 ───────────────────────────
 def get_user_id_from_token(authorization: str) -> Optional[str]:
     """Authorization: Bearer <token> 헤더에서 user_id를 파싱합니다."""
@@ -479,6 +482,86 @@ async def get_ai_insights(brand: str, platform: str, authorization: str = Header
 
 class RecommendRequest(BaseModel):
     keyword: str
+    platform: str
+
+@app.post("/api/v1/chat")
+async def chat_with_bot(req: ChatRequest, authorization: str = Header(default="")):
+    """
+    챗봇 기능. 단순 질문 답변 또는 새로운 기능 요청을 처리하며,
+    새로운 기능 요청일 경우 관리자 대시보드(DB) 테이블에 저장합니다.
+    """
+    user_id = get_user_id_from_token(authorization)
+    try:
+        from openai import OpenAI
+        import os
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        if not client.api_key:
+            return {"status": "error", "message": "API Key not configured."}
+            
+        system_prompt = """당신은 Motiverse 서비스의 너무나 친절하고 똑똑한 어시스턴트(AI 챗봇)입니다.
+현재 시스템은 다음과 같은 기능들을 제공하고 있습니다:
+1. 레퍼런스 검색: 여러 플랫폼(메타, 인스타그램, 구글, 틱톡)의 광고들을 키워드 혹은 해시태그로 검색해주는 기능.
+2. 경쟁사 모니터링: 특정 브랜드를 등록하면 서버에서 매일 자동으로 최신 광고 데이터를 수집해주며, 14일 이상 등 기간별, 참여도별로 확인할 수 있고 AI 리포트를 생성할 수 있는 기능.
+3. 브랜드 폴더 & 저장(북마크): 즐겨찾기, 레퍼런스들을 폴더별로 카테고리라이징하여 저장 및 모아보는 기능.
+4. AI 크리에이티브 인사이트: 수집된 소재들의 Hook, Messaging, Visual 전략을 AI가 해체해주는 기능.
+
+# 업무 규칙:
+- 사용자의 메시지를 보고 [질문/사용법 문의] 라면 현재 제공되는 기능 내에서 친절하게 답변해주세요. (마크다운 포맷팅 사용)
+- 사용자의 메시지가 [새로운 기능 요청] 이라면, 
+   1) 현재 기능으로 이미 할 수 있는 건지 확인하고, 가능하다면 어떻게 쓰면 되는지 알려주세요.
+   2) 현재 없는 기능이라면, 건의사항으로 잘 접수했다고 답변해주세요.
+- 그리고 무조건 답변의 가장 마지막에 아래의 형태를 지키는 JSON 블록을 반환해주세요 (이 블록 외에 다른 텍스트는 자유롭게 작성하세요).
+
+```json
+{
+  "is_feature_request": boolean (진짜로 서비스에 추가해달라는 신규 개발 요청일 경우 true, 단순 질문이거나 이미 있는 기능이면 false),
+  "request_summary": "신규 개발 요청일 경우, 관리자가 알아보기 쉽게 요약. 아니면 빈 문자열"
+}
+```
+"""
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": req.message}
+            ],
+            temperature=0.7,
+        )
+        
+        reply_text = response.choices[0].message.content
+        import re, json
+        
+        # 파싱
+        json_str = ""
+        is_request = False
+        request_summary = ""
+        clean_reply = reply_text
+        
+        json_match = re.search(r'```json\n(.*?)\n```', reply_text, re.DOTALL)
+        if json_match:
+            try:
+                data = json.loads(json_match.group(1))
+                is_request = data.get("is_feature_request", False)
+                request_summary = data.get("request_summary", "")
+                clean_reply = reply_text.replace(json_match.group(0), "").strip()
+            except:
+                pass
+
+        if is_request and request_summary and user_id:
+            # DB에 저장
+            db_client = supabase_admin if supabase_admin else supabase
+            if db_client:
+                db_client.table("feature_requests").insert({
+                    "user_id": user_id,
+                    "request_text": request_summary
+                }).execute()
+                
+        return {"status": "success", "data": {"reply": clean_reply}}
+
+    except Exception as e:
+        logger.error(f"Chatbot error: {e}")
+        return {"status": "error", "message": "채팅 서버에 문제가 발생했습니다."}
 
 @app.post("/api/v1/recommend-keywords")
 async def get_recommended_keywords(req: RecommendRequest):

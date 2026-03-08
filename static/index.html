@@ -1174,6 +1174,112 @@
     <script src="/static/features.js?v=7"></script>
     <script src="/static/creative.js?v=13"></script>
     <script src="/static/monitor.js?v=8"></script>
+
+    <!-- 💬 챗봇 플로팅 버튼 및 위젯 -->
+    <div id="chatbotContainer"
+        style="position: fixed; bottom: 2rem; right: 2rem; z-index: 9999; display: flex; flex-direction: column; align-items: flex-end;">
+        <div id="chatbotWindow" class="hidden"
+            style="width: 350px; height: 500px; background: white; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); display: flex; flex-direction: column; overflow: hidden; margin-bottom: 1rem; border: 1px solid #e2e8f0; transition: opacity 0.3s ease;">
+            <div
+                style="background: #3b82f6; color: white; padding: 1rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <span><i class="fa-solid fa-robot"></i> Motiverse AI 챗봇</span>
+                <i class="fa-solid fa-xmark" id="closeChatbot" style="cursor:pointer; font-size: 1.2rem;"></i>
+            </div>
+            <div id="chatMessages"
+                style="flex: 1; padding: 1rem; overflow-y: auto; background: #f8fafc; display: flex; flex-direction: column; gap: 0.8rem; font-size: 0.95rem;">
+                <div
+                    style="background: white; padding: 0.8rem 1rem; border-radius: 12px; border: 1px solid #e2e8f0; align-self: flex-start; max-width: 85%; color: #334155;">
+                    안녕하세요! Motiverse의 사용법이 궁금하시거나 필요한 기능(개발 요청)이 있으시면 편하게 말씀해주세요 😊
+                </div>
+            </div>
+            <div
+                style="padding: 0.8rem; background: white; border-top: 1px solid #e2e8f0; display: flex; gap: 0.5rem; align-items: center;">
+                <input type="text" id="chatInput" placeholder="질문이나 기능 요청을 입력하세요..."
+                    style="flex: 1; padding: 0.7rem 1rem; border: 1px solid #e2e8f0; border-radius: 20px; outline: none; font-size: 0.9rem;"
+                    onkeypress="if(event.key === 'Enter') window.sendChatMessage()" />
+                <button id="chatSendBtn" onclick="window.sendChatMessage()"
+                    style="background: #3b82f6; color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;"><i
+                        class="fa-solid fa-paper-plane"></i></button>
+            </div>
+        </div>
+        <button id="chatbotToggleBtn"
+            style="background: #3b82f6; color: white; border: none; width: 60px; height: 60px; border-radius: 50%; box-shadow: 0 4px 12px rgba(59,130,246,0.4); cursor: pointer; font-size: 1.8rem; display: flex; align-items: center; justify-content: center; transition: transform 0.2s;">
+            <i class="fa-solid fa-comment-dots"></i>
+        </button>
+    </div>
+
+    <script>
+        document.getElementById('chatbotToggleBtn').addEventListener('click', () => {
+            const win = document.getElementById('chatbotWindow');
+            win.classList.toggle('hidden');
+            if (!win.classList.contains('hidden')) {
+                document.getElementById('chatInput').focus();
+            }
+        });
+        document.getElementById('closeChatbot').addEventListener('click', () => {
+            document.getElementById('chatbotWindow').classList.add('hidden');
+        });
+
+        window.sendChatMessage = async function () {
+            const input = document.getElementById('chatInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            const chatMessages = document.getElementById('chatMessages');
+
+            const userDiv = document.createElement('div');
+            userDiv.style.cssText = "background: #3b82f6; color: white; padding: 0.8rem 1rem; border-radius: 12px; align-self: flex-end; max-width: 85%; word-break: break-word;";
+            userDiv.innerText = msg;
+            chatMessages.appendChild(userDiv);
+            input.value = "";
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            const loadingDiv = document.createElement('div');
+            loadingDiv.style.cssText = "background: white; padding: 0.8rem 1rem; border-radius: 12px; border: 1px solid #e2e8f0; align-self: flex-start; max-width: 85%; color: #94a3b8;";
+            loadingDiv.innerHTML = '<i class="fa-solid fa-ellipsis fa-bounce"></i>';
+            chatMessages.appendChild(loadingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            try {
+                const res = await fetch('/api/v1/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(window.getAuthHeaders ? window.getAuthHeaders() : {})
+                    },
+                    body: JSON.stringify({ message: msg })
+                });
+                const json = await res.json();
+                chatMessages.removeChild(loadingDiv);
+
+                if (res.ok && json.status === 'success') {
+                    const botDiv = document.createElement('div');
+                    botDiv.style.cssText = "background: white; padding: 0.8rem 1rem; border-radius: 12px; border: 1px solid #e2e8f0; align-self: flex-start; max-width: 85%; word-break: keep-all; line-height: 1.6; color: #334155;";
+
+                    let htmlText = json.data.reply;
+                    if (window.marked) {
+                        htmlText = window.marked.parse(htmlText);
+                    }
+                    botDiv.innerHTML = htmlText;
+
+                    botDiv.querySelectorAll('ul, ol').forEach(list => { list.style.paddingLeft = '1.5rem'; list.style.marginTop = '0.5rem'; });
+                    botDiv.querySelectorAll('p').forEach(p => p.style.margin = '0 0 0.5rem 0');
+                    botDiv.querySelectorAll('strong').forEach(s => s.style.color = '#000');
+
+                    chatMessages.appendChild(botDiv);
+                } else {
+                    throw new Error(json.message || 'Error from Server');
+                }
+            } catch (e) {
+                if (chatMessages.contains(loadingDiv)) chatMessages.removeChild(loadingDiv);
+                const errDiv = document.createElement('div');
+                errDiv.style.cssText = "background: #fee2e2; color: #ef4444; padding: 0.8rem 1rem; border-radius: 12px; align-self: flex-start; max-width: 85%;";
+                errDiv.innerText = "오류가 발생했습니다: " + e.message;
+                chatMessages.appendChild(errDiv);
+            }
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    </script>
 </body>
 
 </html>
