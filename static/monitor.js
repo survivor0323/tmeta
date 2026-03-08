@@ -692,7 +692,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('monitorHistoryView')?.classList.add('hidden');
         document.getElementById('monitorTimelineView')?.classList.add('hidden');
         document.getElementById('monitorDashboardView')?.classList.add('hidden');
-        document.getElementById('monitorContactView')?.classList.add('hidden');
 
         // 선택된 탭 활성화
         const selectedTab = document.getElementById(`monitorTab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`);
@@ -708,17 +707,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const selectedView = document.getElementById(`monitor${capitalizedTab}View`);
         if (selectedView) {
             selectedView.classList.remove('hidden');
-        }
-
-        // Contact 탭 진입 시 데이터 자동 로드
-        if (tabId === 'contact') {
-            const activeItem = document.querySelector('#monitorSidebarList .competitor-item.active');
-            if (activeItem) {
-                const brandName = activeItem.dataset.brand;
-                if (typeof window.loadContactInfo === 'function') {
-                    window.loadContactInfo(brandName);
-                }
-            }
         }
     };
 
@@ -946,14 +934,6 @@ window.showCompetitorDetail = function (brandName, platform, adsData = null, isK
     const cleanBrandNameForStorage = (brandName || "").replace(/['"]/g, '');
     if (typeof window.loadAndRenderAiReports === 'function') {
         window.loadAndRenderAiReports(cleanBrandNameForStorage, platform);
-    }
-
-    // Contact 활성화 상태면 바로 로드 
-    const contactTab = document.getElementById('monitorTabContact');
-    if (contactTab && contactTab.classList.contains('active')) {
-        if (typeof window.loadContactInfo === 'function') {
-            window.loadContactInfo(cleanBrandNameForStorage);
-        }
     }
 
     let isKeyword = false;
@@ -1358,74 +1338,6 @@ window.showCompetitorDetail = function (brandName, platform, adsData = null, isK
         }
     }
 };
-
-window.loadContactInfo = async function (brandName) {
-    if (!brandName) return;
-
-    const placeholder = document.getElementById('contactInfoPlaceholder');
-    const loading = document.getElementById('contactInfoLoading');
-    const display = document.getElementById('contactInfoDisplay');
-
-    if (placeholder) placeholder.classList.add('hidden');
-    if (display) display.classList.add('hidden');
-    if (loading) loading.classList.remove('hidden');
-
-    try {
-        const token = localStorage.getItem('supabase_token');
-        const reqBody = { brand_name: brandName };
-
-        const response = await fetch('/api/v1/contact', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(reqBody)
-        });
-
-        const result = await response.json();
-
-        if (loading) loading.classList.add('hidden');
-
-        if (result.status === 'success' && result.data) {
-            const elWeb = document.getElementById('ci_website');
-            const elPhone = document.getElementById('ci_phone');
-            const elEmail = document.getElementById('ci_email');
-            const elAddress = document.getElementById('ci_address');
-
-            if (elWeb) {
-                if (result.data.website) {
-                    elWeb.href = result.data.website;
-                    elWeb.innerText = result.data.website;
-                    elWeb.style.display = 'inline-block';
-                } else {
-                    elWeb.innerText = '정보 없음';
-                    elWeb.removeAttribute('href');
-                    elWeb.style.color = '#94a3b8';
-                }
-            }
-
-            if (elPhone) elPhone.innerText = result.data.phone || '정보 없음';
-            if (elEmail) elEmail.innerText = result.data.email || '정보 없음';
-            if (elAddress) elAddress.innerText = result.data.address || '정보 없음';
-
-            if (display) display.classList.remove('hidden');
-        } else {
-            console.warn('Contact info load warning:', result.message);
-            if (placeholder) {
-                placeholder.classList.remove('hidden');
-                placeholder.querySelector('p').innerText = `정보를 가져오는데 실패했습니다: ${result.message || '알 수 없는 오류'}`;
-            }
-        }
-    } catch (e) {
-        console.error('Failed to load contact info:', e);
-        if (loading) loading.classList.add('hidden');
-        if (placeholder) {
-            placeholder.classList.remove('hidden');
-            placeholder.querySelector('p').innerText = '네트워크 오류가 발생했습니다.';
-        }
-    }
-}
 
 document.addEventListener('DOMContentLoaded', () => {
     const generateAiInsightBtn = document.getElementById('generateAiInsightBtn');
