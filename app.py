@@ -99,6 +99,7 @@ class ChatRequest(BaseModel):
 
 class RefineReplyRequest(BaseModel):
     draft_reply: str
+    user_request: str
 
 # ─── JWT에서 user_id 추출 헬퍼 ───────────────────────────
 def get_user_id_from_token(authorization: str) -> Optional[str]:
@@ -579,13 +580,13 @@ async def admin_refine_reply(req: RefineReplyRequest, authorization: str = Heade
         import os
         client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         
-        system_prompt = "당신은 IT 서비스의 친절하고 전문적인 고객 지원 담당자입니다. 제공된 초안을 바탕으로 고객에게 보내는 최종 답변을 작성해주세요. 내용은 자연스럽고 정중하며 이모지를 적절히 사용하여 따뜻한 느낌을 주어야 합니다. 그리고 답변만 텍스트로 바로 출력하세요."
+        system_prompt = "당신은 IT 서비스의 전문적이고 다정한 고객 지원 팀(운영진)입니다. 사용자의 '서비스 개선/기능 도입 요청'에 대해, 서비스 담당자로서 검토 결과를 공식 답변하는 상황입니다.\n작성된 답변 '초안'의 의도를 파악하여 직관적이고 친절한 최종 답변 텍스트로 다듬어주세요.\n[수정 가이드라인]\n1. '기능을 제안해 주셔서 감사하다'는 인사를 가볍게 포함하세요.\n2. 말투는 정중하면서도 친근한 해요체/하십시오체를 사용하세요.\n3. 너무 과하지 않게 적절한 이모지를 사용하여 따뜻한 느낌을 주세요.\n4. 반드시 서비스 제공자(운영진)의 입장에서 답변해야 합니다. 사용자가 답변하는 것처럼 보이지 않게 하세요.\n5. 인사말과 맺음말을 포함해 주세요.\n6. 불필요한 서론 없이 답변 내용만 바로 출력하세요."
         
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"초안: {req.draft_reply}"}
+                {"role": "user", "content": f"[사용자 요청 내용]\n{req.user_request}\n\n[운영진 답변 초안]\n{req.draft_reply}"}
             ],
             temperature=0.7,
         )

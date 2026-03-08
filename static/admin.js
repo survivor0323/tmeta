@@ -395,7 +395,7 @@ function renderRequests(requests) {
                             'Content-Type': 'application/json',
                             ...(window.getAuthHeaders ? window.getAuthHeaders() : {})
                         },
-                        body: JSON.stringify({ draft_reply: draft })
+                        body: JSON.stringify({ draft_reply: draft, user_request: originalReq })
                     });
                     const resJson = await res.json();
                     if (resJson.status === 'success') {
