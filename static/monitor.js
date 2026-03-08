@@ -295,7 +295,7 @@ document.addEventListener("DOMContentLoaded", () => {
                          <div class="move-folder-btn" style="position: relative; padding: 0.6rem 1rem; cursor: pointer; font-size: 0.85rem; color: var(--text-main); display: flex; justify-content: space-between; align-items: center;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
                             <div style="display: flex; gap: 0.5rem; align-items: center;"><i class="fa-regular fa-folder" style="width: 14px; text-align: center; color: #64748b;"></i> 폴더로 이동</div>
                             <i class="fa-solid fa-angle-right" style="color: #64748b; font-size: 0.75rem;"></i>
-                            <div class="folder-list-sub hidden" style="position: absolute; right: 100%; top: 0; margin-right: 5px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); width: 150px; z-index: 999999; display: flex; flex-direction: column; overflow: hidden;">
+                            <div class="folder-list-sub hidden" style="position: fixed; background: white; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); width: 150px; z-index: 999999; display: flex; flex-direction: column; overflow: hidden;">
                                 <!-- Populated dynamically -->
                             </div>
                          </div>
@@ -383,6 +383,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             }
             sub.classList.remove('hidden');
+            const rect = moveFolderBtn.getBoundingClientRect();
+            sub.style.top = rect.top + 'px';
+            sub.style.left = rect.right + 'px';
         });
 
         moveFolderBtn.addEventListener('mouseleave', () => {
