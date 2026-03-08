@@ -1047,20 +1047,26 @@ def generate_ai_insight_report(ads_data: List[Dict], query: str, platform: str) 
     high_engagement = sorted_by_engagement[:5]
     new_ads = sorted_by_date[:5]
 
+    media_map = {}
+    ad_index = 0
+
     def ad_summary(ad, title=""):
+        nonlocal ad_index
         body_text = str(ad.get('body', ''))[:150].replace('\n', ' ')
         media_url = ad.get('media_url', '')
         media_type = str(ad.get('media_type', 'image')).lower()
         
+        placeholder = ""
         if media_url:
+            ad_index += 1
+            placeholder = f"[MEDIA_TAG_{ad_index}]"
             if media_type == 'video':
                 thumb_md = f"<video src='{media_url}' style='width: 150px; border-radius: 8px;' autoplay loop muted playsinline controls></video>"
             else:
                 thumb_md = f"<img src='{media_url}' style='width: 150px; border-radius: 8px;' alt='ad_thumbnail' />"
-        else:
-            thumb_md = ""
+            media_map[placeholder] = thumb_md
             
-        return f"- [{title}] 미디어: {ad.get('media_type')}, 시작일: {ad.get('start_date')}, 게재일수: {ad.get('active_days', 0)}, 좋아요: {ad.get('likes', 0)}\n  미디어썸네일: {thumb_md}\n  본문: {body_text}..."
+        return f"- [{title}] 미디어: {ad.get('media_type')}, 시작일: {ad.get('start_date')}, 게재일수: {ad.get('active_days', 0)}, 좋아요: {ad.get('likes', 0)}\n  미디어썸네일: {placeholder}\n  본문: {body_text}..."
 
     context = f"타겟 브랜드/키워드: {query} (플랫폼: {platform})\n\n"
     context += "[Long-run 소재 (게재일수 높은 순)]\n" + "\n".join([ad_summary(ad, "Long-run") for ad in long_run]) + "\n\n"
@@ -1114,7 +1120,10 @@ def generate_ai_insight_report(ads_data: List[Dict], query: str, platform: str) 
             temperature=0.7,
             max_tokens=3000
         )
-        return response.choices[0].message.content
+        output_text = response.choices[0].message.content
+        for placeholder, html_tag in media_map.items():
+            output_text = output_text.replace(placeholder, html_tag)
+        return output_text
     except Exception as e:
         logger.error(f"AI Insight 리포트 생성 중 에러 발생: {e}")
         raise Exception("AI 인사이트 리포트를 생성하는 중 오류가 발생했습니다.")
