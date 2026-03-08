@@ -1643,11 +1643,12 @@ window.loadRecommendedBrands = async function () {
                             ${iconChar}
                         </div>
                         <div>
-                            <div style="font-weight: 700; font-size: 1.1rem; color: var(--text-main); margin-bottom: 0.3rem; display: flex; align-items: center;">
+                            <div style="font-weight: 700; font-size: 1.1rem; color: var(--text-main); margin-bottom: 0.3rem; display: flex; align-items: center; flex-wrap: wrap;">
                                 ${item.brand_name} <span style="font-size: 0.7rem; color: #10b981; background: #ecfdf5; padding: 2px 6px; border-radius: 4px; font-weight: 600; margin-left: 0.5rem;"><i class="fa-solid fa-fire"></i> ${item.monitor_count}명의 마케터가 모니터링 중</span>
                             </div>
-                            <div style="font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem;">
-                                <i class="${iconClass}"></i> ${item.platform}
+                            <div style="font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.8rem;">
+                                <span><i class="${iconClass}"></i> ${item.platform}</span>
+                                ${item.ads_count !== undefined ? `<span><i class="fa-solid fa-rectangle-ad"></i> 수집된 광고 ${item.ads_count}개</span>` : ''}
                             </div>
                         </div>
                     </div>

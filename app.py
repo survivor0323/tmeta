@@ -611,7 +611,25 @@ async def get_recommendations():
         # get_recommended_competitors RPC를 호출하여 집계 데이터를 가져옵니다.
         # RLS 상관없이 데이터를 읽기 위해 supabase_admin 사용 또는 public 가능.
         result = supabase_admin.rpc("get_recommended_competitors").execute()
-        return {"status": "success", "data": result.data or []}
+        brands = result.data or []
+        
+        try:
+            mb_result = supabase_admin.table("monitored_brands").select("brand_name, ads_data").execute()
+            ads_count_map = {}
+            for row in (mb_result.data or []):
+                b_name = row.get("brand_name")
+                ads_len = len(row.get("ads_data") or [])
+                if b_name not in ads_count_map or ads_len > ads_count_map[b_name]:
+                    ads_count_map[b_name] = ads_len
+                    
+            for b in brands:
+                b["ads_count"] = ads_count_map.get(b.get("brand_name"), 0)
+        except Exception as inner_e:
+            logger.error(f"ads_count 조회 실패: {inner_e}")
+            for b in brands:
+                b["ads_count"] = 0
+
+        return {"status": "success", "data": brands}
     except Exception as e:
         logger.error(f"추천 경쟁사 로드 에러: {e}")
         return {"status": "error", "message": str(e), "data": []}
