@@ -73,10 +73,12 @@ async function loadAdminData() {
         }
 
         globalAdminData = data;
+        globalAdminData = data;
         renderOverview(data);
         renderUsers(data.users);
         populateUserDetailSelect(data.users);
         renderAllQueries(data.history);
+        renderRequests(data.feature_requests || []);
 
         content.classList.remove('hidden');
     } catch (e) {
@@ -141,6 +143,7 @@ function renderUsers(users) {
 let udCurrentPage = 1;
 let bmkCurrentPage = 1;
 let gqCurrentPage = 1;
+let reqCurrentPage = 1;
 const ITEMS_PER_PAGE = 30;
 
 function filterByDate(dataArray, startStr, endStr) {
@@ -196,6 +199,11 @@ window.changeUdBookmarkPage = function (page) {
 window.changeGqPage = function (page) {
     gqCurrentPage = page;
     renderAllQueries(globalAdminData?.history || []);
+};
+
+window.changeReqPage = function (page) {
+    reqCurrentPage = page;
+    renderRequests(globalAdminData?.feature_requests || []);
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -326,4 +334,111 @@ function renderUserDetail(userId) {
         `}).join('');
     }
     renderPaginationControls('udBookmarkPagination', bookmarks.length, bmkCurrentPage, 'changeUdBookmarkPage');
+}
+
+function renderRequests(requests) {
+    const tbody = document.getElementById('adminRequestsTbody');
+    if (!tbody) return;
+
+    const startIndex = (reqCurrentPage - 1) * ITEMS_PER_PAGE;
+    const paginatedReqs = requests.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+    if (paginatedReqs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;">기능 요청이 없습니다.</td></tr>';
+    } else {
+        const statusMap = {
+            'pending': '<span style="color:#f59e0b;font-weight:600;"><i class="fa-solid fa-clock"></i> 대기중</span>',
+            'in_progress': '<span style="color:#3b82f6;font-weight:600;"><i class="fa-solid fa-gears"></i> 진행중</span>',
+            'completed': '<span style="color:#10b981;font-weight:600;"><i class="fa-solid fa-check"></i> 완료</span>',
+            'rejected': '<span style="color:#ef4444;font-weight:600;"><i class="fa-solid fa-xmark"></i> 반려</span>'
+        };
+
+        tbody.innerHTML = paginatedReqs.map(r => `
+            <tr>
+                <td>${r.email || '알 수 없음'}</td>
+                <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">
+                    <strong style="color:var(--text-main);">${r.request_text}</strong>
+                    ${r.admin_reply ? `<div style="font-size:0.8rem; color:#64748b; margin-top:0.4rem; border-left:2px solid #3b82f6; padding-left:0.5rem;">[답변] ${r.admin_reply}</div>` : ''}
+                </td>
+                <td>${statusMap[r.status] || r.status}</td>
+                <td>${r.created_at ? new Date(r.created_at).toLocaleString() : '-'}</td>
+                <td><button class="btn admin-reply-btn" style="padding: 0.4rem 0.8rem; border-radius: 6px;" 
+                        data-id="${r.id}" data-origin="${encodeURIComponent(r.request_text)}" data-status="${r.status}" data-reply="${encodeURIComponent(r.admin_reply || '')}">
+                    ${r.admin_reply ? '답변 수정' : '답변 작성'}
+                </button></td>
+            </tr>
+        `).join('');
+    }
+    renderPaginationControls('adminRequestsPagination', requests.length, reqCurrentPage, 'changeReqPage');
+
+    document.querySelectorAll('.admin-reply-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const reqId = e.currentTarget.dataset.id;
+            const originalReq = decodeURIComponent(e.currentTarget.dataset.origin);
+            const currStatus = e.currentTarget.dataset.status;
+            let currReply = decodeURIComponent(e.currentTarget.dataset.reply);
+
+            let draft = prompt(`[요청내용]: ${originalReq}\n\n사용자에게 전할 답변의 '초안'을 입력하세요 (AI가 친절하게 다듬어 줍니다):`, currReply);
+            if (draft === null) return;
+
+            if (draft.trim() !== '') {
+                // 초안을 AI로 다듬기
+                try {
+                    const aiBtn = e.currentTarget;
+                    const prevText = aiBtn.innerHTML;
+                    aiBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 다듬는 중';
+                    aiBtn.disabled = true;
+
+                    const res = await fetch('/api/v1/admin/refine-reply', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...(window.getAuthHeaders ? window.getAuthHeaders() : {})
+                        },
+                        body: JSON.stringify({ draft_reply: draft })
+                    });
+                    const resJson = await res.json();
+                    if (resJson.status === 'success') {
+                        let refined = resJson.data.refined;
+                        if (confirm(`AI가 다듬은 답변 내용입니다. 이대로 전송하시겠습니까?\n\n[다듬어진 답변]\n${refined}`)) {
+                            currReply = refined;
+                        } else {
+                            if (confirm(`그럼 원래 입력하신 초안 그대로 전송할까요?\n\n[입력하신 초안]\n${draft}`)) {
+                                currReply = draft;
+                            } else {
+                                aiBtn.innerHTML = prevText; aiBtn.disabled = false;
+                                return; // 취소
+                            }
+                        }
+                    } else {
+                        alert(resJson.message || "AI 교정에 실패했습니다. 초안 그대로 반영합니다.");
+                        currReply = draft;
+                    }
+
+                    aiBtn.innerHTML = prevText;
+                    aiBtn.disabled = false;
+                } catch (err) {
+                    alert("AI 교정 오류. 작성한 내용이 그대로 저장됩니다.");
+                    currReply = draft;
+                }
+            } else {
+                currReply = ""; // 답변 삭제
+            }
+
+            let newStatus = prompt(`상태를 입력하세요 (pending / in_progress / completed / rejected 중 택 1)`, currStatus || 'completed');
+            if (newStatus === null) newStatus = currStatus;
+
+            const { error: rpcErr } = await window.supabaseClient.rpc('update_feature_request_reply', {
+                p_request_id: reqId,
+                p_reply_text: currReply,
+                p_status: newStatus
+            });
+            if (rpcErr) {
+                alert("답변 등록 실패: " + rpcErr.message);
+            } else {
+                alert("답변이 성공적으로 등록되었습니다.");
+                loadAdminData(); // Refresh Data
+            }
+        });
+    });
 }

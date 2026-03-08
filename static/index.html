@@ -1215,6 +1215,87 @@
             document.getElementById('chatbotWindow').classList.add('hidden');
         });
 
+        // 사용자의 문의에 대한 관리자 답변 로딩
+        window.loadChatbotReplies = async function () {
+            if (!window._motiverseSession || !window.supabaseClient) return;
+            try {
+                const { data, error } = await window.supabaseClient.rpc('get_user_feature_requests');
+                if (error) return;
+
+                if (data && data.length > 0) {
+                    const chatMessages = document.getElementById('chatMessages');
+                    let newReplyCount = 0;
+
+                    // 오래된 순으로 렌더링 (가장 최근이 밑으로 가도록 시간순 정렬)
+                    const sorted = [...data].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+                    sorted.forEach(req => {
+                        // 내가 보낸 질문 기록
+                        const userDiv = document.createElement('div');
+                        userDiv.style.cssText = "background: #3b82f6; color: white; padding: 0.8rem 1rem; border-radius: 12px; align-self: flex-end; max-width: 85%; word-break: break-word;";
+                        userDiv.innerText = req.request_text;
+                        chatMessages.appendChild(userDiv);
+
+                        // 서버로부터의 답변 (있으면)
+                        if (req.admin_reply) {
+                            newReplyCount++;
+                            const botDiv = document.createElement('div');
+                            botDiv.style.cssText = "background: white; padding: 0.8rem 1rem; border-radius: 12px; border: 1px solid #e2e8f0; align-self: flex-start; max-width: 85%; word-break: keep-all; line-height: 1.6; color: #334155;";
+
+                            let htmlText = req.admin_reply;
+                            if (window.marked) htmlText = window.marked.parse(htmlText);
+                            botDiv.innerHTML = `<div style="font-size: 0.75rem; color: #10b981; font-weight: 700; margin-bottom: 0.3rem;"><i class="fa-solid fa-bell"></i> 답변이 도착했습니다!</div>` + htmlText;
+
+                            botDiv.querySelectorAll('ul, ol').forEach(list => { list.style.paddingLeft = '1.5rem'; list.style.marginTop = '0.5rem'; });
+                            botDiv.querySelectorAll('p').forEach(p => p.style.margin = '0 0 0.5rem 0');
+                            botDiv.querySelectorAll('strong').forEach(s => s.style.color = '#000');
+
+                            chatMessages.appendChild(botDiv);
+                        } else {
+                            // 대기 중인 경우
+                            const paddingDiv = document.createElement('div');
+                            paddingDiv.style.cssText = "background: transparent; color: #94a3b8; font-size: 0.8rem; align-self: flex-start; padding: 0 0.5rem;";
+                            paddingDiv.innerText = "요청사항 확인 중입니다...";
+                            chatMessages.appendChild(paddingDiv);
+                        }
+                    });
+
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                    // 새 답변 알림 표시 (배지)
+                    if (newReplyCount > 0) {
+                        const toggleBtn = document.getElementById('chatbotToggleBtn');
+                        const badge = document.createElement('div');
+                        badge.style.cssText = "position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; font-size: 0.75rem; font-weight: bold; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white;";
+                        badge.innerText = newReplyCount;
+                        // 중복 방지
+                        if (!toggleBtn.querySelector('.badge')) {
+                            badge.className = 'badge';
+                            toggleBtn.appendChild(badge);
+                            toggleBtn.style.position = 'relative';
+
+                            // 챗봇 열면 배지 제거
+                            toggleBtn.addEventListener('click', function removeBadge() {
+                                if (badge.parentNode) badge.parentNode.removeChild(badge);
+                                toggleBtn.removeEventListener('click', removeBadge);
+                            });
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn("Failed to load replies", err);
+            }
+        };
+
+        // DOMContentLoaded 후 또는 로그인 세션 확인 후 loadChatbotReplies 호출
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                if (window._motiverseSession) {
+                    window.loadChatbotReplies();
+                }
+            }, 2000); // 딜레이를 줘서 auth.js 가 세션을 세팅할 시간을 줌
+        });
+
         window.sendChatMessage = async function () {
             const input = document.getElementById('chatInput');
             const msg = input.value.trim();

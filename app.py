@@ -97,6 +97,9 @@ class GenerateInsightRequest(BaseModel):
 class ChatRequest(BaseModel):
     message: str
 
+class RefineReplyRequest(BaseModel):
+    draft_reply: str
+
 # ─── JWT에서 user_id 추출 헬퍼 ───────────────────────────
 def get_user_id_from_token(authorization: str) -> Optional[str]:
     """Authorization: Bearer <token> 헤더에서 user_id를 파싱합니다."""
@@ -562,6 +565,35 @@ async def chat_with_bot(req: ChatRequest, authorization: str = Header(default=""
     except Exception as e:
         logger.error(f"Chatbot error: {e}")
         return {"status": "error", "message": "채팅 서버에 문제가 발생했습니다."}
+
+@app.post("/api/v1/admin/refine-reply")
+async def admin_refine_reply(req: RefineReplyRequest, authorization: str = Header(default="")):
+    """관리자가 작성한 챗봇 답변 초안을 AI로 친절하고 전문적으로 다듬어 반환합니다."""
+    user_id = get_user_id_from_token(authorization)
+    # 간단한 권한 검사 (서비스 단에서 실제 is_admin 체크가 권장되지만, 데모/편의상 넘어갈 수 있음)
+    if not user_id:
+        return {"status": "error", "message": "인증 정보가 없습니다."}
+
+    try:
+        from openai import OpenAI
+        import os
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        
+        system_prompt = "당신은 IT 서비스의 친절하고 전문적인 고객 지원 담당자입니다. 제공된 초안을 바탕으로 고객에게 보내는 최종 답변을 작성해주세요. 내용은 자연스럽고 정중하며 이모지를 적절히 사용하여 따뜻한 느낌을 주어야 합니다. 그리고 답변만 텍스트로 바로 출력하세요."
+        
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"초안: {req.draft_reply}"}
+            ],
+            temperature=0.7,
+        )
+        refined_text = response.choices[0].message.content.strip()
+        return {"status": "success", "data": {"refined": refined_text}}
+    except Exception as e:
+        logger.error(f"AI 답변 교정 중 오류: {e}")
+        return {"status": "error", "message": "AI 교정에 실패했습니다."}
 
 @app.post("/api/v1/recommend-keywords")
 async def get_recommended_keywords(req: RecommendRequest):

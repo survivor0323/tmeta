@@ -84,6 +84,7 @@
             <div class="tab-chip" data-target="adminViewUsers">유저 및 통계</div>
             <div class="tab-chip" data-target="adminViewUserDetail">개별 유저 상세 (히스토리/북마크)</div>
             <div class="tab-chip" data-target="adminViewQueries">전체 검색어 로그</div>
+            <div class="tab-chip" data-target="adminViewRequests">기능 요청 및 문의</div>
         </div>
 
         <div id="adminLoading" class="loading-state">
@@ -229,6 +230,24 @@
                     <tbody id="adminQueriesTbody"></tbody>
                 </table>
                 <div class="pagination-container" id="adminQueriesPagination"
+                    style="margin-top: 1.5rem; display: flex; justify-content: center; gap: 0.5rem;"></div>
+            </div>
+
+            <!-- 5. 챗봇 기능 요청 및 건의 (신규) -->
+            <div id="adminViewRequests" class="admin-view-panel hidden">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>사용자(이메일)</th>
+                            <th style="width: 40%">기능 요청 요약</th>
+                            <th>상태</th>
+                            <th>작성일시</th>
+                            <th>답변하기</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminRequestsTbody"></tbody>
+                </table>
+                <div class="pagination-container" id="adminRequestsPagination"
                     style="margin-top: 1.5rem; display: flex; justify-content: center; gap: 0.5rem;"></div>
             </div>
         </div>
