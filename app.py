@@ -333,22 +333,34 @@ async def get_contact_info(req: ContactInfoRequest, authorization: str = Header(
             except Exception as e:
                 logger.warning(f"Contact 캐시 조회 실패: {e}")
         
-        # 2. DuckDuckGo 검색
-        from duckduckgo_search import DDGS
+        # 2. Serper API 검색
+        import requests
         import openai
         
+        serper_api_key = os.getenv("SERPER_API_KEY")
+        if not serper_api_key:
+            return {"status": "error", "message": "SERPER_API_KEY가 설정되지 않았습니다.", "data": None}
+            
         queries = [
             f"{brand} 고객센터 전화번호 이메일",
             f"{brand} 사업자등록번호 공식 홈페이지 주소"
         ]
         
         snippets = []
-        with DDGS() as ddgs:
-            for q in queries:
-                results = ddgs.text(q, max_results=3, region="kr-kr")
-                if results:
-                    for r in results:
-                        snippets.append(f"Title: {r.get('title', '')}\nSnippet: {r.get('body', '')}\nURL: {r.get('href', '')}")
+        for q in queries:
+            headers = {
+              'X-API-KEY': serper_api_key,
+              'Content-Type': 'application/json'
+            }
+            payload = json.dumps({"q": q, "gl": "kr", "hl": "ko"})
+            try:
+                res = requests.post("https://google.serper.dev/search", headers=headers, data=payload, timeout=10)
+                if res.status_code == 200:
+                    results = res.json().get('organic', [])
+                    for r in results[:3]:
+                        snippets.append(f"Title: {r.get('title', '')}\nSnippet: {r.get('snippet', '')}\nURL: {r.get('link', '')}")
+            except Exception as serper_err:
+                logger.error(f"Serper API 호출 오류: {serper_err}")
         
         if not snippets:
             return {"status": "success", "data": {"website": "", "phone": "", "email": "", "address": ""}, "message": "검색 결과가 없습니다."}
