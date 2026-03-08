@@ -100,6 +100,8 @@ class GenerateInsightRequest(BaseModel):
     platform: str
     query: str
 
+class ContactInfoRequest(BaseModel):
+    brand_name: str
 
 # ─── JWT에서 user_id 추출 헬퍼 ───────────────────────────
 def get_user_id_from_token(authorization: str) -> Optional[str]:
@@ -293,6 +295,118 @@ async def trigger_analysis(req: AnalyzeRequest, authorization: str = Header(defa
             "message": f"데이터 수집/분석 중 에러가 발생했습니다: {str(e)}",
             "data": []
         }
+
+# ─── Contact (연락처 정보) API ───────────────────────────────────────
+@app.post("/api/v1/contact")
+async def get_contact_info(req: ContactInfoRequest, authorization: str = Header(default="")):
+    """
+    DuckDuckGo 검색 결과 요소와 OpenAI를 통해 브랜드 연락처 및 공식 홈페이지를 찾습니다.
+    비용 절감을 위해 search_history(platform='contact')를 사용해 캐싱하여 재사용합니다.
+    """
+    user_id = get_user_id_from_token(authorization)
+    if not user_id:
+        return {"status": "error", "message": "로그인이 필요합니다.", "data": None}
+    
+    brand = req.brand_name.strip()
+    if not brand:
+        return {"status": "error", "message": "잘못된 브랜드명입니다.", "data": None}
+        
+    try:
+        # 1. 캐시 체킹
+        if supabase_admin:
+            try:
+                from datetime import datetime, timedelta, timezone
+                import json
+                time_threshold = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat() # 연락처는 변경이 적어 30일 정도 넉넉히 캐시
+                
+                cached = supabase_admin.table("search_history")\
+                    .select("ads_data")\
+                    .eq("platform", "contact")\
+                    .ilike("query", brand)\
+                    .gte("created_at", time_threshold)\
+                    .order("created_at", desc=True).limit(1).execute()
+                
+                if cached.data and len(cached.data) > 0:
+                    cached_info = cached.data[0]['ads_data']
+                    logger.info(f"Contact Info Cache Hit: '{brand}'")
+                    return {"status": "success", "data": cached_info}
+            except Exception as e:
+                logger.warning(f"Contact 캐시 조회 실패: {e}")
+        
+        # 2. DuckDuckGo 검색
+        from duckduckgo_search import DDGS
+        import openai
+        
+        queries = [
+            f"{brand} 고객센터 전화번호 이메일",
+            f"{brand} 사업자등록번호 공식 홈페이지 주소"
+        ]
+        
+        snippets = []
+        with DDGS() as ddgs:
+            for q in queries:
+                results = ddgs.text(q, max_results=3, region="kr-kr")
+                if results:
+                    for r in results:
+                        snippets.append(f"Title: {r.get('title', '')}\nSnippet: {r.get('body', '')}\nURL: {r.get('href', '')}")
+        
+        if not snippets:
+            return {"status": "success", "data": {"website": "", "phone": "", "email": "", "address": ""}, "message": "검색 결과가 없습니다."}
+            
+        snippets_text = "\n\n".join(snippets)
+        client = openai.OpenAI()
+        
+        prompt = f"""
+다음은 검색 엔진에서 '{brand}' 브랜드의 연락처 정보를 찾은 결과입니다.
+이 정보를 바탕으로 아래 항목들을 추출해주세요. 
+찾을 수 없는 항목은 빈 문자열 "" 로 남겨주세요.
+*반드시* JSON 형식으로만 대답하세요.
+
+검색 결과:
+{snippets_text}
+
+출력 포맷:
+{{
+  "website": "공식 홈페이지 주소 (https://...)",
+  "phone": "전화번호",
+  "email": "이메일 주소",
+  "address": "주소"
+}}
+"""
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            response_format={"type": "json_object"},
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant that extracts contact info from search results into JSON."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0,
+        )
+        
+        data = json.loads(response.choices[0].message.content)
+        
+        # 3. DB 캐시 저장
+        if supabase_admin:
+            try:
+                supabase_admin.table("search_history").insert({
+                    "user_id": user_id,
+                    "query": brand,
+                    "platform": "contact",
+                    "country": "KR",
+                    "ads_data": data
+                }).execute()
+                logger.info(f"Contact Info Cache Saved: '{brand}'")
+            except Exception as hist_err:
+                logger.warning(f"[Contact History] 캐시 저장 실패: {hist_err}")
+                
+        return {
+            "status": "success",
+            "data": data
+        }
+        
+    except Exception as e:
+        logger.error(f"Contact Info Fetch Error: {e}")
+        return {"status": "error", "message": str(e), "data": None}
 
 
 # ─── 히스토리 API ───────────────────────────────────────
