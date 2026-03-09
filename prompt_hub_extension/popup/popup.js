@@ -3,7 +3,34 @@
 const SUPABASE_URL = 'https://gnpeluvwykdiadwniled.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_w7r4IY60O392RTqPmUGRhg_rs_pJKuF';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const chromeStorageAdapter = {
+    getItem: (key) => {
+        return new Promise((resolve) => {
+            chrome.storage.local.get([key], (result) => {
+                resolve(result[key] || null);
+            });
+        });
+    },
+    setItem: (key, value) => {
+        return new Promise((resolve) => {
+            chrome.storage.local.set({ [key]: value }, () => resolve());
+        });
+    },
+    removeItem: (key) => {
+        return new Promise((resolve) => {
+            chrome.storage.local.remove([key], () => resolve());
+        });
+    }
+};
+
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+        storage: chromeStorageAdapter,
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: false
+    }
+});
 let currentUser = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -13,7 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const userGreeting = document.getElementById('userGreeting');
 
     // 1. Check if user is logged in
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await supabaseClient.auth.getSession();
 
     contentLoading.classList.add('hidden');
 
@@ -27,9 +54,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     contentMain.classList.remove('hidden');
     userGreeting.textContent = `안녕하세요, ${currentUser.user_metadata.full_name || '마케터'}님!`;
 
-    // Listeners
+    const autoResize = (el) => {
+        el.style.height = 'auto';
+        el.style.height = el.scrollHeight + 'px';
+    };
+
+    // Load saved manual inputs to survive popup closing
+    chrome.storage.local.get(['manualPrompt', 'manualResult'], (result) => {
+        if (result.manualPrompt) {
+            manualPrompt.value = result.manualPrompt;
+            setTimeout(() => autoResize(manualPrompt), 0);
+        }
+        if (result.manualResult) {
+            manualResult.value = result.manualResult;
+            setTimeout(() => autoResize(manualResult), 0);
+        }
+    });
+
+    const saveToLocal = (e) => {
+        const el = e.target;
+        autoResize(el);
+
+        chrome.storage.local.set({
+            manualPrompt: manualPrompt.value,
+            manualResult: manualResult.value
+        });
+    };
+    manualPrompt.addEventListener('input', saveToLocal);
+    manualResult.addEventListener('input', saveToLocal);
+
+    // Expose autoResize globally for handleCaptureAI to use
+    window.autoResize = autoResize;
+
     document.getElementById('btnOpenWeb').addEventListener('click', () => {
-        chrome.tabs.create({ url: 'http://localhost:5000' }); // TODO: Change to prod URL later
+        chrome.tabs.create({ url: 'http://localhost:8000' }); // TODO: Change to prod URL later
     });
 
     document.getElementById('btnCaptureCurrent').addEventListener('click', handleCaptureAI);
@@ -63,71 +121,90 @@ async function handleCaptureAI() {
             return;
         }
 
-        try {
-            const { data: userData } = await supabase.from('users').select('*').eq('id', currentUser.id).single();
+        // 캡처한 내용을 화면 폼에 채운 뒤 로컬저장 (미리보기/수정용)
+        const promptEl = document.getElementById('manualPrompt');
+        const resultEl = document.getElementById('manualResult');
 
-            // Save to Supabase
-            const { data, error } = await supabase.from('prompts').insert({
-                title: response.data.title || '새 캡처된 프롬프트',
-                prompt_text: response.data.prompt,
-                source: response.data.source,
-                author_id: currentUser.id,
-                category: '일반', // default
-                tags: [response.data.source.toLowerCase()],
-                example_result: response.data.result || null,
-                company_id: userData ? userData.company_id : null,
-                department: userData ? userData.department : null
-            });
+        promptEl.value = response.data.prompt || '';
+        resultEl.value = response.data.result || '';
 
-            if (error) throw error;
-
-            statusMsg.textContent = '✨ 성공적으로 캡처되어 허브에 저장되었습니다!';
-            statusMsg.style.color = '#10b981';
-
-        } catch (err) {
-            console.error(err);
-            statusMsg.textContent = '저장 실패: ' + err.message;
-            statusMsg.style.color = '#ef4444';
+        if (window.autoResize) {
+            window.autoResize(promptEl);
+            window.autoResize(resultEl);
         }
+        chrome.storage.local.set({
+            manualPrompt: response.data.prompt,
+            manualResult: response.data.result,
+            lastSource: response.data.source // 나중에 저장 시 출처 기록 위함
+        });
+
+        statusMsg.textContent = '✨ 캡처 성공! 내용을 확인 후 저장하세요.';
+        statusMsg.style.color = '#10b981';
     });
 }
 
 async function handleManualSave() {
-    const title = document.getElementById('manualTitle').value.trim();
     const prompt = document.getElementById('manualPrompt').value.trim();
     const result = document.getElementById('manualResult').value.trim();
     const statusMsg = document.getElementById('statusMessage');
 
-    if (!title || !prompt) {
-        statusMsg.textContent = '제목과 내용을 모두 입력해주세요.';
+    if (!prompt) {
+        statusMsg.textContent = '핵심 프롬프트를 입력해주세요.';
         statusMsg.style.color = '#ef4444';
         return;
     }
 
-    statusMsg.textContent = '저장 중...';
+    statusMsg.textContent = 'AI가 제목을 생성하며 저장 중입니다...';
     statusMsg.style.color = '#3b82f6';
 
     try {
-        const { data: userData } = await supabase.from('users').select('*').eq('id', currentUser.id).single();
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        let finalTitle = prompt.substring(0, 15) + '...'; // fallback
 
-        const { error } = await supabase.from('prompts').insert({
-            title: title,
+        // AI 제목 생성 API 호출
+        if (session) {
+            try {
+                const res = await fetch('http://localhost:8000/api/v1/generate-prompt-title', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`
+                    },
+                    body: JSON.stringify({ prompt_text: prompt, result_text: result })
+                });
+                if (res.ok) {
+                    const json = await res.json();
+                    if (json.status === 'success' && json.data.title) {
+                        finalTitle = json.data.title;
+                    }
+                }
+            } catch (e) {
+                console.warn('Title generation failed', e);
+            }
+        }
+
+        // 마지막으로 사용된 캡처 출처 가져오기
+        const locResult = await chromeStorageAdapter.getItem('lastSource');
+        const sourceName = locResult || '수동입력';
+
+        const { error } = await supabaseClient.from('hub_prompts').insert({
+            title: finalTitle,
             prompt_text: prompt,
-            source: '웹/수동입력',
-            author_id: currentUser.id,
+            source_name: sourceName,
+            user_id: currentUser.id,
             category: '일반',
-            example_result: result || null,
-            company_id: userData ? userData.company_id : null,
-            department: userData ? userData.department : null
+            result_text: result || null
         });
 
         if (error) throw error;
 
-        statusMsg.textContent = '✨ 수동 등록이 완료되었습니다!';
+        statusMsg.textContent = '✨ 저장 완료! 제목: ' + finalTitle;
         statusMsg.style.color = '#10b981';
-        document.getElementById('manualTitle').value = '';
         document.getElementById('manualPrompt').value = '';
         document.getElementById('manualResult').value = '';
+
+        // Clear local storage on success
+        chrome.storage.local.remove(['manualPrompt', 'manualResult', 'lastSource']);
 
     } catch (err) {
         statusMsg.textContent = '저장 실패: ' + err.message;

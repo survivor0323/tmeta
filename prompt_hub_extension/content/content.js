@@ -6,31 +6,89 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         try {
             if (url.includes('chatgpt.com')) {
                 data.source = 'ChatGPT';
-                // ChatGPT 구조: .whitespace-pre-wrap 요소를 찾아서 추론 (아주 기본적인 예제)
-                const msgs = document.querySelectorAll('div[data-message-author-role="user"]');
+                // ChatGPT 구조: .whitespace-pre-wrap 요소를 찾아서 추론
+                const msgs = document.querySelectorAll('div[data-message-author-role="user"] .whitespace-pre-wrap, article[data-testid^="conversation-turn-user"] .whitespace-pre-wrap, div[data-message-author-role="user"]');
                 if (msgs.length > 0) {
                     data.prompt = msgs[msgs.length - 1].innerText;
-                    const aiMsgs = document.querySelectorAll('div[data-message-author-role="assistant"]');
+                    const aiMsgs = document.querySelectorAll('div[data-message-author-role="assistant"] .markdown, article[data-testid^="conversation-turn-assistant"] .markdown, div[data-message-author-role="assistant"]');
                     if (aiMsgs.length > 0) {
-                        data.result = aiMsgs[aiMsgs.length - 1].innerText.substring(0, 500) + '...';
+                        data.result = aiMsgs[aiMsgs.length - 1].innerText.substring(0, 1500);
+                        if (aiMsgs[aiMsgs.length - 1].innerText.length > 1500) data.result += '...';
                     }
                 }
                 data.title = document.title || 'ChatGPT Session';
             }
             else if (url.includes('claude.ai')) {
                 data.source = 'Claude';
-                // Claude 구조 분해 로직
-                const msgs = document.querySelectorAll('.font-user-message');
+                // Claude 구조 분해 로직 - 최대한 다양한 셀렉터 결합 (DOM 변경 대응)
+                const claudeUserSelectors = [
+                    '.font-user-message',
+                    '[data-is-user="true"]',
+                    '[data-testid="user-message"]',
+                    '.user-message',
+                    '.message.user',
+                    // 최신 Claude UI에서 텍스트가 담긴 가장 안쪽 요소를 잡기 위한 범용 클래스 조합 (말풍선)
+                    'div.whitespace-pre-wrap.text-left:not(.font-claude-message)'
+                ].join(', ');
+
+                const msgs = document.querySelectorAll(claudeUserSelectors);
+
                 if (msgs.length > 0) {
                     data.prompt = msgs[msgs.length - 1].innerText;
+
+                    const claudeAiSelectors = [
+                        '.font-claude-message',
+                        '[data-is-user="false"]',
+                        '[data-testid="assistant-message"]',
+                        '.assistant-message',
+                        '.message.assistant',
+                        '.message.claude'
+                    ].join(', ');
+
+                    const aiMsgs = document.querySelectorAll(claudeAiSelectors);
+                    if (aiMsgs.length > 0) {
+                        data.result = aiMsgs[aiMsgs.length - 1].innerText.substring(0, 1500);
+                        if (aiMsgs[aiMsgs.length - 1].innerText.length > 1500) data.result += '...';
+                    }
                 }
                 data.title = document.title || 'Claude Session';
             }
             else if (url.includes('gemini.google.com')) {
                 data.source = 'Gemini';
-                const msgs = document.querySelectorAll('message-content[data-author-role="user"]');
+                const geminiUserSelectors = [
+                    'message-content[data-message-author-role="user"]',
+                    'message-content[data-author-role="user"]',
+                    '[data-message-author-role="user"]',
+                    '[data-author-role="user"]',
+                    '.user-query-bubble-with-background',
+                    '.user-query',
+                    'user-query',
+                    '.query-text'
+                ].join(', ');
+
+                const msgs = document.querySelectorAll(geminiUserSelectors);
                 if (msgs.length > 0) {
                     data.prompt = msgs[msgs.length - 1].innerText;
+
+                    // 제미나이 UI상 읽어주기 등 접근성 텍스트로 보이지 않게 삽입된 "말씀하신 내용" 접두어 제거
+                    data.prompt = data.prompt.replace(/^말씀하신\s*내용\s*/, '');
+
+                    const geminiAiSelectors = [
+                        'message-content[data-message-author-role="model"]',
+                        'message-content[data-author-role="model"]',
+                        '[data-message-author-role="model"]',
+                        '[data-author-role="model"]',
+                        '.model-response-text',
+                        '.model-response',
+                        'model-response',
+                        '.response-text'
+                    ].join(', ');
+
+                    const aiMsgs = document.querySelectorAll(geminiAiSelectors);
+                    if (aiMsgs.length > 0) {
+                        data.result = aiMsgs[aiMsgs.length - 1].innerText.substring(0, 1500);
+                        if (aiMsgs[aiMsgs.length - 1].innerText.length > 1500) data.result += '...';
+                    }
                 }
                 data.title = document.title || 'Gemini Session';
             }
