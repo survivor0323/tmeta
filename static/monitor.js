@@ -1389,6 +1389,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     let markdownText = json.data;
                     let renderedHtml = markdownText;
                     if (window.marked && typeof window.marked.parse === 'function') {
+                        const originalOptions = window.marked.defaults || {};
+                        window.marked.setOptions({ breaks: true, gfm: true });
                         renderedHtml = window.marked.parse(markdownText);
                     }
                     aiInsightContent.innerHTML = `
@@ -1499,6 +1501,7 @@ window.loadAndRenderAiReports = async function (brandName, platform) {
 
                 let renderedHtml = report.report_content;
                 if (window.marked && typeof window.marked.parse === 'function') {
+                    window.marked.setOptions({ breaks: true, gfm: true });
                     renderedHtml = window.marked.parse(report.report_content);
                 }
 
