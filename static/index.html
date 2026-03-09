@@ -1213,6 +1213,12 @@
                     const chatMsgs = document.getElementById('chatMessages');
                     if (chatMsgs) chatMsgs.scrollTop = chatMsgs.scrollHeight;
                 }, 10);
+
+                // fallback to sync read status 
+                const botReplies = document.querySelectorAll('#chatMessages > div[style*="background: white; padding: 0.8rem 1rem;"]');
+                if (botReplies.length > 0) {
+                    localStorage.setItem('motiverse_chatbot_read_count', botReplies.length.toString());
+                }
             }
         });
         document.getElementById('closeChatbot').addEventListener('click', () => {
@@ -1228,7 +1234,7 @@
 
                 if (data && data.length > 0) {
                     const chatMessages = document.getElementById('chatMessages');
-                    let newReplyCount = 0;
+                    let totalReplyCount = 0;
 
                     // 오래된 순으로 렌더링 (가장 최근이 밑으로 가도록 시간순 정렬)
                     const sorted = [...data].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
@@ -1242,7 +1248,7 @@
 
                         // 서버로부터의 답변 (있으면)
                         if (req.admin_reply) {
-                            newReplyCount++;
+                            totalReplyCount++;
                             const botDiv = document.createElement('div');
                             botDiv.style.cssText = "background: white; padding: 0.8rem 1rem; border-radius: 12px; border: 1px solid #e2e8f0; align-self: flex-start; max-width: 85%; word-break: keep-all; line-height: 1.6; color: #334155;";
 
@@ -1266,24 +1272,32 @@
 
                     chatMessages.scrollTop = chatMessages.scrollHeight;
 
+                    // 사용자가 예전에 마지막으로 읽은 답변 개수를 로드
+                    const readCount = parseInt(localStorage.getItem('motiverse_chatbot_read_count') || '0', 10);
+                    const unreadCount = totalReplyCount - readCount;
+
                     // 새 답변 알림 표시 (배지)
-                    if (newReplyCount > 0) {
+                    if (unreadCount > 0) {
                         const toggleBtn = document.getElementById('chatbotToggleBtn');
                         const badge = document.createElement('div');
                         badge.style.cssText = "position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; font-size: 0.75rem; font-weight: bold; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white;";
-                        badge.innerText = newReplyCount;
+                        badge.innerText = unreadCount;
                         // 중복 방지
                         if (!toggleBtn.querySelector('.badge')) {
                             badge.className = 'badge';
                             toggleBtn.appendChild(badge);
                             toggleBtn.style.position = 'relative';
 
-                            // 챗봇 열면 배지 제거
+                            // 챗봇 열면 배치 제거 및 로컬스토리지 카운트 업데이트
                             toggleBtn.addEventListener('click', function removeBadge() {
                                 if (badge.parentNode) badge.parentNode.removeChild(badge);
+                                localStorage.setItem('motiverse_chatbot_read_count', totalReplyCount.toString());
                                 toggleBtn.removeEventListener('click', removeBadge);
                             });
                         }
+                    } else if (chatMessages.parentElement && !chatMessages.parentElement.classList.contains('hidden')) {
+                        // 이미 챗봇 창이 열려 있는 상태에서 업데이트를 받았다면 그냥 즉시 최신 카운트를 갱신함
+                        localStorage.setItem('motiverse_chatbot_read_count', totalReplyCount.toString());
                     }
                 }
             } catch (err) {
