@@ -1209,6 +1209,10 @@
             win.classList.toggle('hidden');
             if (!win.classList.contains('hidden')) {
                 document.getElementById('chatInput').focus();
+                setTimeout(() => {
+                    const chatMsgs = document.getElementById('chatMessages');
+                    if (chatMsgs) chatMsgs.scrollTop = chatMsgs.scrollHeight;
+                }, 10);
             }
         });
         document.getElementById('closeChatbot').addEventListener('click', () => {

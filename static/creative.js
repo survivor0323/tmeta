@@ -538,7 +538,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                         // 실제 이미지가 있으면 표시, 없으면 그라디언트
                         const mediaHtml = mediaUrl && !isVideo
-                            ? `<img src="${mediaUrl}" style="width:100%;aspect-ratio:1;object-fit:cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" /><div style="aspect-ratio:1;background:linear-gradient(135deg,${getRandomGradient()});display:none;align-items:center;justify-content:center;font-size:0.75rem;color:white;font-weight:600;text-align:center;padding:0.5rem;">${brandName}<br><span style="font-size:0.65rem;opacity:0.8;">${platform}</span></div>`
+                            ? `<img src="/api/v1/image-proxy?url=${encodeURIComponent(mediaUrl)}" style="width:100%;aspect-ratio:1;object-fit:cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" referrerpolicy="no-referrer" /><div style="aspect-ratio:1;background:linear-gradient(135deg,${getRandomGradient()});display:none;align-items:center;justify-content:center;font-size:0.75rem;color:white;font-weight:600;text-align:center;padding:0.5rem;">${brandName}<br><span style="font-size:0.65rem;opacity:0.8;">${platform}</span></div>`
                             : `<div style="aspect-ratio:1;background:linear-gradient(135deg,${getRandomGradient()});display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:white;font-weight:600;text-align:center;padding:0.5rem;">${brandName}${isVideo ? '<br><span style="font-size:0.65rem;opacity:0.8;"><i class="fa-solid fa-video"></i> Video</span>' : `<br><span style="font-size:0.65rem;opacity:0.8;">${platform}</span>`}</div>`;
 
                         card.innerHTML = `

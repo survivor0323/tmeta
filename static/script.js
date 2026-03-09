@@ -317,7 +317,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const mediaTag = ad.media_type === "video"
             ? `<video class="ad-media" src="${ad.media_url}" autoplay loop muted playsinline referrerpolicy="no-referrer"></video>`
-            : `<img class="ad-media" src="${ad.media_url}" alt="Ad Image" referrerpolicy="no-referrer">`;
+            : `<img class="ad-media" src="/api/v1/image-proxy?url=${encodeURIComponent(ad.media_url)}" alt="Ad Image" referrerpolicy="no-referrer">`;
 
         card.innerHTML = `
             <div class="ad-media-wrapper">
@@ -633,7 +633,7 @@ function showAdPreviewModal(ad, query, platform) {
     document.getElementById('adPreviewModal')?.remove();
     const mediaHtml = ad.media_type === 'video'
         ? `<video class="preview-media" src="${ad.media_url}" autoplay loop muted controls playsinline referrerpolicy="no-referrer"></video>`
-        : `<img class="preview-media" src="${ad.image_url || ad.media_url || ''}" alt="" referrerpolicy="no-referrer">`;
+        : `<img class="preview-media" src="/api/v1/image-proxy?url=${encodeURIComponent(ad.image_url || ad.media_url || '')}" alt="" referrerpolicy="no-referrer">`;
     const modal = document.createElement('div');
     modal.id = 'adPreviewModal';
     modal.className = 'ad-preview-modal';
@@ -835,7 +835,7 @@ window.showAdDetailModal = function (ad) {
                 <!-- 프로필 영역 -->
                 <div style="display:flex; align-items:center; gap: 10px; padding: 1rem 1.2rem;">
                     <div style="width:40px; height:40px; border-radius:50%; background:#e2e8f0; display:flex; align-items:center; justify-content:center; font-weight:bold; color:#64748b; overflow: hidden; border: 1px solid #e2e8f0;">
-                        ${ad.brand ? (ad.brand_avatar_url ? `<img src="${ad.brand_avatar_url}" style="width:100%; height:100%; object-fit: cover;" referrerpolicy="no-referrer" />` : ad.brand.charAt(0).toUpperCase()) : 'B'}
+                        ${ad.brand ? (ad.brand_avatar_url ? `<img src="/api/v1/image-proxy?url=${encodeURIComponent(ad.brand_avatar_url)}" style="width:100%; height:100%; object-fit: cover;" referrerpolicy="no-referrer" />` : ad.brand.charAt(0).toUpperCase()) : 'B'}
                     </div>
                     <div style="line-height:1.2;">
                         <span style="font-size: 1rem; color:#0f172a; font-weight: bold;">${ad.brand || '광고주'}</span><br>
@@ -853,7 +853,7 @@ window.showAdDetailModal = function (ad) {
                 <div style="background:#f8fafc; text-align:center;">
                     ${ad.media_type === "video"
             ? `<video controls autoplay loop playsinline src="${ad.media_url}" style="max-width:100%; max-height: 500px; display:block; margin:0 auto;" referrerpolicy="no-referrer"></video>`
-            : `<img src="${ad.media_url}" alt="${ad.brand || 'Ad'}" style="width:100%; display:block; margin:0 auto;" referrerpolicy="no-referrer">`}
+            : `<img src="/api/v1/image-proxy?url=${encodeURIComponent(ad.media_url)}" alt="${ad.brand || 'Ad'}" style="width:100%; display:block; margin:0 auto;" referrerpolicy="no-referrer">`}
                 </div>
                 
                 <!-- 하단 CTA 영역 -->

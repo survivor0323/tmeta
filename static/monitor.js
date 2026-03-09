@@ -1290,7 +1290,7 @@ window.showCompetitorDetail = function (brandName, platform, adsData = null, isK
                     if (ad.media_type === 'video') {
                         thumb.innerHTML = `<video src="${ad.media_url}" style="width:100%; height:100%; object-fit:cover;" muted referrerpolicy="no-referrer"></video>`;
                     } else {
-                        thumb.innerHTML = `<img src="${ad.media_url}" style="width:100%; height:100%; object-fit:cover;" referrerpolicy="no-referrer" />`;
+                        thumb.innerHTML = `<img src="/api/v1/image-proxy?url=${encodeURIComponent(ad.media_url)}" style="width:100%; height:100%; object-fit:cover;" referrerpolicy="no-referrer" />`;
                     }
                 } else {
                     thumb.innerHTML = `<i class="fa-regular fa-image" style="color:#94a3b8"></i>`;
@@ -1387,6 +1387,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const json = await res.json();
                 if (res.ok && json.status === "success" && aiInsightContent) {
                     let markdownText = json.data;
+                    // 동적으로 이전 FB CDN 원본 URL을 내부 프록시로 교체 (이미지 엑스박스 방지, video 제외)
+                    markdownText = markdownText.replace(/(<img[^>]+src=['"])(https?:\/\/[^'"]+)(['"])/gi, (match, prefix, url, suffix) => {
+                        if (url.includes('/api/v1/image-proxy')) return match;
+                        return `${prefix}/api/v1/image-proxy?url=${encodeURIComponent(url)}${suffix}`;
+                    });
+
                     let renderedHtml = markdownText;
                     if (window.marked && typeof window.marked.parse === 'function') {
                         const originalOptions = window.marked.defaults || {};
@@ -1499,10 +1505,17 @@ window.loadAndRenderAiReports = async function (brandName, platform) {
                 btn.style.background = '#eff6ff';
                 btn.style.color = '#1d4ed8';
 
-                let renderedHtml = report.report_content;
+                let reportContent = report.report_content;
+                // 동적으로 이전 FB CDN 원본 URL을 내부 프록시로 교체 (이미지 엑스박스 방지, video 제외)
+                reportContent = reportContent.replace(/(<img[^>]+src=['"])(https?:\/\/[^'"]+)(['"])/gi, (match, prefix, url, suffix) => {
+                    if (url.includes('/api/v1/image-proxy')) return match;
+                    return `${prefix}/api/v1/image-proxy?url=${encodeURIComponent(url)}${suffix}`;
+                });
+
+                let renderedHtml = reportContent;
                 if (window.marked && typeof window.marked.parse === 'function') {
                     window.marked.setOptions({ breaks: true, gfm: true });
-                    renderedHtml = window.marked.parse(report.report_content);
+                    renderedHtml = window.marked.parse(reportContent);
                 }
 
                 aiInsightContent.innerHTML = `

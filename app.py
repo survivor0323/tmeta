@@ -1,6 +1,6 @@
 from fastapi import FastAPI, BackgroundTasks, Request, Header
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 import os
 import json
 import logging
@@ -1414,6 +1414,21 @@ async def delete_brand(brand_id: str, authorization: str = Header(default="")):
         return {"status": "success"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+
+@app.get("/api/v1/image-proxy")
+async def image_proxy(url: str):
+    """Bypasses CORS and 403 hotlinking restrictions for Meta/Google ad images."""
+    if not url:
+        return Response(status_code=400)
+    import httpx
+    try:
+        async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+            resp = await client.get(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36", "Referer": "https://www.facebook.com/"})
+            return Response(content=resp.content, media_type=resp.headers.get("Content-Type", "image/jpeg"))
+    except Exception as e:
+        logger.error(f"Image proxy error for {url}: {e}")
+        return Response(status_code=400)
 
 
 class GenerateImageRequest(BaseModel):
