@@ -1098,6 +1098,7 @@ def generate_ai_insight_report(ads_data: List[Dict], query: str, platform: str) 
    - 구체적인 카피라이팅 3종과 비주얼 가이드 제시.
 
 # Output Format (반드시 마크다운으로 작성하고 아래 구조를 따를 것)
+- 주의: 미디어썸네일에 포함된 [MEDIA_TAG_x] 부분은 변환하거나 이스케이프(<, >를 &lt;, &gt;로 변경)하지 말고 **절대 원본 그대로** 텍스트로 출력하세요. 백틱(`)으로 감싸지 마세요. HTML 태그가 동작해야 합니다.
 > **리포트 생성 일시**: {current_time}
 
 ## 1. 경쟁사 크리에이티브 패턴 분석 (Table 등 가독성 좋은 뷰 활용)
