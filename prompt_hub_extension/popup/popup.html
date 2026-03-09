@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Motiverse Prompt Hub</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            Motiverse Prompt Hub
+        </div>
+        <div id="contentLoading">
+            로딩 중...
+        </div>
+        <div id="contentAuth" class="hidden">
+            <p>먼저 모티버스 웹에서 로그인을 완료해주세요.</p>
+            <button id="btnOpenWeb">모티버스 웹 열기</button>
+        </div>
+        <div id="contentMain" class="hidden">
+            <p id="userGreeting"></p>
+
+            <div class="action-buttons">
+                <button id="btnCaptureCurrent" class="btn btn-primary">방금 쓴 대화 캡처하기 (AI 모델)</button>
+                <hr />
+                <div class="manual-form">
+                    <input type="text" id="manualTitle" placeholder="프롬프트 제목" />
+                    <textarea id="manualPrompt" placeholder="핵심 프롬프트를 입력하세요" rows="4"></textarea>
+                    <textarea id="manualResult" placeholder="결과 예시 텍스트 (옵션)" rows="2"></textarea>
+                    <button id="btnSaveManual" class="btn btn-secondary">수동으로 저장하기</button>
+                </div>
+            </div>
+            <div id="statusMessage"></div>
+        </div>
+    </div>
+    <!-- Supabase JS CDN inside extension -->
+    <script src="../lib/supabase-js.js"></script>
+    <script src="popup.js"></script>
+</body>
+
+</html>
