@@ -835,7 +835,7 @@ window.showAdDetailModal = function (ad) {
                 <!-- 프로필 영역 -->
                 <div style="display:flex; align-items:center; gap: 10px; padding: 1rem 1.2rem;">
                     <div style="width:40px; height:40px; border-radius:50%; background:#e2e8f0; display:flex; align-items:center; justify-content:center; font-weight:bold; color:#64748b; overflow: hidden; border: 1px solid #e2e8f0;">
-                        ${ad.brand ? (ad.brand_avatar_url ? `<img src="${ad.brand_avatar_url}" style="width:100%; height:100%; object-fit: cover;" />` : ad.brand.charAt(0).toUpperCase()) : 'B'}
+                        ${ad.brand ? (ad.brand_avatar_url ? `<img src="${ad.brand_avatar_url}" style="width:100%; height:100%; object-fit: cover;" referrerpolicy="no-referrer" />` : ad.brand.charAt(0).toUpperCase()) : 'B'}
                     </div>
                     <div style="line-height:1.2;">
                         <span style="font-size: 1rem; color:#0f172a; font-weight: bold;">${ad.brand || '광고주'}</span><br>
