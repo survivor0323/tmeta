@@ -1,5 +1,9 @@
 chrome.runtime.onInstalled.addListener(() => {
     console.log("Motiverse Prompt Hub Extension Installed");
+
+    // 익스텐션 아이콘 클릭 시 사이드 패널이 열리도록 설정
+    chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })
+        .catch((error) => console.error("Side panel error:", error));
 });
 
 // For cross-origin authentication

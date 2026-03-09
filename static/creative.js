@@ -70,15 +70,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     navReference?.addEventListener("click", (e) => {
         e.preventDefault();
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         navReference.parentElement.classList.add("active");
-        navCreative?.parentElement.classList.remove("active");
-        navLabs?.parentElement.classList.remove("active");
-        navMonitor?.parentElement.classList.remove("active");
 
         referenceView?.classList.remove("hidden");
         creativeView?.classList.add("hidden");
         labsView?.classList.add("hidden");
         monitorView?.classList.add("hidden");
+        document.getElementById('promptHubView')?.classList.add('hidden');
 
         // Show icons if user is logged in
         if (!document.getElementById('userInfo')?.classList.contains('hidden')) {
@@ -91,15 +90,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     navCreative?.addEventListener("click", (e) => {
         e.preventDefault();
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         navCreative.parentElement.classList.add("active");
-        navReference?.parentElement.classList.remove("active");
-        navLabs?.parentElement.classList.remove("active");
-        navMonitor?.parentElement.classList.remove("active");
 
         creativeView?.classList.remove("hidden");
         referenceView?.classList.add("hidden");
         labsView?.classList.add("hidden");
         monitorView?.classList.add("hidden");
+        document.getElementById('promptHubView')?.classList.add('hidden');
 
         // Hide icons
         document.getElementById('monitorBtn')?.classList.add('hidden');
@@ -113,15 +111,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     navLabs?.addEventListener("click", (e) => {
         e.preventDefault();
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         navLabs.parentElement.classList.add("active");
-        navReference?.parentElement.classList.remove("active");
-        navCreative?.parentElement.classList.remove("active");
-        navMonitor?.parentElement.classList.remove("active");
 
         labsView?.classList.remove("hidden");
         referenceView?.classList.add("hidden");
         creativeView?.classList.add("hidden");
         monitorView?.classList.add("hidden");
+        document.getElementById('promptHubView')?.classList.add('hidden');
 
         // Hide icons
         document.getElementById('monitorBtn')?.classList.add('hidden');
@@ -132,15 +129,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     navMonitor?.addEventListener("click", (e) => {
         e.preventDefault();
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         navMonitor.parentElement.classList.add("active");
-        navReference?.parentElement.classList.remove("active");
-        navCreative?.parentElement.classList.remove("active");
-        navLabs?.parentElement.classList.remove("active");
 
         monitorView?.classList.remove("hidden");
         referenceView?.classList.add("hidden");
         creativeView?.classList.add("hidden");
         labsView?.classList.add("hidden");
+        document.getElementById('promptHubView')?.classList.add('hidden');
 
         // Hide icons
         document.getElementById('monitorBtn')?.classList.add('hidden');

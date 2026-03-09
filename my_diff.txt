@@ -1,0 +1,1390 @@
+--- old
++++ new
+@@ -5,9 +5,9 @@
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+-    <title>Motiverse AI | 愿묎퀬 ?덊띁?곗뒪 寃??/title>
++    <title>Motiverse AI | 광고 레퍼런스 검색</title>
+     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+     <link rel="shortcut icon" href="/static/favicon.svg">
+-    <meta name="description" content="寃쎌웳??愿묎퀬 ?몃젋?쒖? ?덊띁?곗뒪 寃?됱쓣 ?쎄쾶. Motiverse AI媛 理쒖쟻???꾨떇 ?뚯옱瑜?李얠븘?쒕┰?덈떎.">
+-    <!-- ?꾨━誘몄뾼 ?고듃 (Outfit, Inter) -->
++    <meta name="description" content="경쟁사 광고 트렌드와 레퍼런스 검색을 쉽게. Motiverse AI가 최적의 위닝 소재를 찾아드립니다.">
++    <!-- 프리미엄 폰트 (Outfit, Inter) -->
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+@@ -24,9 +24,9 @@
+ 
+ <body>
+-    <!-- ?곷떒 諛곌꼍 洹몃씪?곗씠??-->
++    <!-- 상단 배경 그라데이션 -->
+     <div class="top-gradient"></div>
+ 
+     <div class="app-layout">
+-        <!-- 醫뚯륫 ?ъ씠???ㅻ퉬寃뚯씠??-->
++        <!-- 좌측 사이드 네비게이션 -->
+         <nav class="side-nav">
+             <div class="nav-brand">
+@@ -35,8 +35,14 @@
+ 
+             <ul class="nav-menu">
++                <li class="nav-item">
++                    <a href="#" class="nav-link" id="navPromptHub">
++                        <i class="fa-solid fa-bolt"></i>
++                        <span>프롬프트 (BETA)</span>
++                    </a>
++                </li>
+                 <li class="nav-item active">
+                     <a href="#" class="nav-link" id="navReference">
+                         <i class="fa-solid fa-magnifying-glass"></i>
+-                        <span>?덊띁?곗뒪</span>
++                        <span>레퍼런스</span>
+                     </a>
+                 </li>
+@@ -44,5 +50,5 @@
+                     <a href="#" class="nav-link" id="navMonitor">
+                         <i class="fa-solid fa-satellite-dish"></i>
+-                        <span>寃쎌웳??紐⑤땲?곕쭅</span>
++                        <span>경쟁사 모니터링</span>
+                     </a>
+                 </li>
+@@ -50,44 +56,45 @@
+                     <a href="#" class="nav-link" id="navCreative">
+                         <i class="fa-solid fa-wand-magic-sparkles"></i>
+-                        <span>?щ━?먯씠?곕툕</span>
++                        <span>크리에이티브</span>
+                     </a>
+             </ul>
+         </nav>
+ 
+-        <!-- 硫붿씤 肄섑뀗痢??곸뿭 -->
++        <!-- 메인 콘텐츠 영역 -->
+         <div class="main-content-wrapper">
+-            <!-- 1. Header Area (怨듯넻) -->
++            <!-- 1. Header Area (공통) -->
+             <div class="dashboard-container">
+                 <header class="navbar">
+                     <div class="navbar-right">
+-                        <!-- 紐⑤땲?곕쭅 ?꾩씠肄?(濡쒓렇?????쒖떆) -->
+-                        <button class="icon-btn hidden" id="monitorBtn" title="寃쎌웳??紐⑤땲?곕쭅">
++                        <!-- 모니터링 아이콘 (로그인 후 표시) -->
++                        <button class="icon-btn hidden" id="monitorBtn" title="경쟁사 모니터링">
+                             <i class="fa-solid fa-satellite-dish"></i>
+                             <span class="alert-dot hidden" id="alertDot"></span>
+                         </button>
+-                        <!-- 蹂대뱶 ?꾩씠肄?(濡쒓렇?????쒖떆) -->
+-                        <button class="icon-btn hidden" id="boardsBtn" title="蹂대뱶/而щ젆??>
++                        <!-- 보드 아이콘 (로그인 후 표시) -->
++                        <button class="icon-btn hidden" id="boardsBtn" title="보드/컬렉션">
+                             <i class="fa-solid fa-folder-open"></i>
+                         </button>
+-                        <!-- ?덉뒪?좊━ ?꾩씠肄?(濡쒓렇?????쒖떆) -->
+-                        <button class="icon-btn hidden" id="historyBtn" title="寃???덉뒪?좊━">
++                        <!-- 히스토리 아이콘 (로그인 후 표시) -->
++                        <button class="icon-btn hidden" id="historyBtn" title="검색 히스토리">
+                             <i class="fa-solid fa-clock-rotate-left"></i>
+                         </button>
+-                        <!-- 遺곷쭏???꾩씠肄?(濡쒓렇?????쒖떆) -->
+-                        <button class="icon-btn hidden" id="bookmarkBtn" title="遺곷쭏??>
++                        <!-- 북마크 아이콘 (로그인 후 표시) -->
++                        <button class="icon-btn hidden" id="bookmarkBtn" title="북마크">
+                             <i class="fa-solid fa-bookmark"></i>
+                         </button>
+-                        <!-- 愿由ъ옄??(Admin) 硫붾돱 (沅뚰븳 ???몄텧) -->
+-                        <button class="icon-btn hidden" id="adminBtn" title="愿由ъ옄 ??쒕낫??>
++                        <!-- 관리자용 (Admin) 메뉴 (권한 시 노출) -->
++                        <button class="icon-btn hidden" id="adminBtn" title="관리자 대시보드">
+                             <i class="fa-solid fa-user-shield"></i>
+                         </button>
+-                        <!-- 濡쒓렇??踰꾪듉 -->
++                        <!-- 로그인 버튼 -->
+                         <button class="btn-login" id="loginBtn">
+-                            <i class="fa-brands fa-google"></i> Google 濡쒓렇??                        </button>
+-                        <!-- 濡쒓렇?????ъ슜???뺣낫 -->
++                            <i class="fa-brands fa-google"></i> Google 로그인
++                        </button>
++                        <!-- 로그인 후 사용자 정보 -->
+                         <div class="user-info hidden" id="userInfo">
+                             <img src="" alt="avatar" id="userAvatar" class="user-avatar">
+                             <span id="userName"></span>
+-                            <button class="btn-logout" id="logoutBtn" title="濡쒓렇?꾩썐">
++                            <button class="btn-logout" id="logoutBtn" title="로그아웃">
+                                 <i class="fa-solid fa-right-from-bracket"></i>
+                             </button>
+@@ -97,39 +104,89 @@
+             </div>
+ 
+-            <!-- ?뵇 ?덊띁?곗뒪 寃??酉?-->
++            <!-- ✨ 프롬프트 허브 뷰 -->
++            <div class="dashboard-container hidden" id="promptHubView">
++                <main class="content-area">
++                    <section class="hero-section" style="margin-bottom: 2rem;">
++                        <div class="hero-label">Motiverse Prompt Hub</div>
++                        <h1 style="display:flex; align-items:center; justify-content:center; gap:0.5rem;"><span
++                                class="text-gradient">프롬프트 라이브러리</span></h1>
++                        <p>사내 임직원들이 추천하는 최고의 AI 프롬프트와 GPTs를 만나보세요.</p>
++                    </section>
++
++                    <!-- 검색 및 필터 -->
++                    <div
++                        style="display: flex; gap: 1rem; margin-bottom: 2rem; align-items: center; justify-content: space-between; flex-wrap: wrap;">
++                        <div style="display: flex; gap: 0.5rem; flex: 1; min-width: 300px;">
++                            <input type="text" id="promptSearchInput" placeholder="프롬프트 제목, 내용, 태그 검색..."
++                                style="flex:1; padding: 0.8rem 1.2rem; border-radius: 99px; border: 1px solid #e2e8f0; font-size: 0.95rem; outline: none; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
++                            <button id="promptSearchBtn" class="btn-search"
++                                style="padding: 0 1.5rem; border-radius: 99px;"><i
++                                    class="fa-solid fa-search"></i></button>
++                        </div>
++                        <div style="display: flex; gap: 0.5rem;">
++                            <select id="promptCategoryFilter"
++                                style="padding: 0.8rem 1rem; border-radius: 8px; border: 1px solid #e2e8f0; background: white; outline: none; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
++                                <option value="">모든 카테고리</option>
++                                <option value="마케팅">마케팅</option>
++                                <option value="기획">기획</option>
++                                <option value="개발">개발</option>
++                                <option value="디자인">디자인</option>
++                                <option value="일반">일반</option>
++                            </select>
++                            <button id="promptCreateBtn" class="btn"
++                                style="background: #3b82f6; color: white; border:none; padding: 0.8rem 1.2rem;"><i
++                                    class="fa-solid fa-plus"></i> <strong>등록하기</strong></button>
++                        </div>
++                    </div>
++
++                    <!-- 프롬프트 카드 그리드 -->
++                    <div id="promptsGrid"
++                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
++                        <!-- JS Rendered -->
++                    </div>
++
++                    <div id="promptLoading" class="loading-state hidden">
++                        <div class="spinner"></div>
++                        <p>프롬프트 불러오는 중...</p>
++                    </div>
++                </main>
++            </div>
++
++            <!-- 🔍 레퍼런스 검색 뷰 -->
+             <div class="dashboard-container" id="referenceView">
+                 <main class="content-area">
+                     <section class="hero-section">
+-                        <div class="hero-label">寃쎌웳??愿묎퀬 ?몃젋?쒖? ?덊띁?곗뒪 寃?됱쓣 ?쎄쾶</div>
+-                        <h1><span class="text-gradient">?덊띁?곗뒪 寃??/span></h1>
+-                        <p>釉뚮옖?쒕챸, ?곹뭹紐? ?먰븯??遺꾩쐞湲? ?ㅽ??쇱쓣 ?낅젰?섎㈃ AI媛 媛???곹빀???꾨떇 ?뚯옱瑜?李얠븘 遺꾩꽍???쒕┰?덈떎.</p>
++                        <div class="hero-label">경쟁사 광고 트렌드와 레퍼런스 검색을 쉽게</div>
++                        <h1><span class="text-gradient">레퍼런스 검색</span></h1>
++                        <p>브랜드명, 상품명, 원하는 분위기, 스타일을 입력하면 AI가 가장 적합한 위닝 소재를 찾아 분석해 드립니다.</p>
+ 
+                         <div class="search-wrapper">
+                             <div class="search-container">
+-                                <input type="text" id="competitorInput" placeholder="LG?좏뵆?ъ뒪, ?먮룞李④킅怨? ?앸챸蹂댄뿕, ?몄븞???섏옄..." />
++                                <input type="text" id="competitorInput" placeholder="LG유플러스, 자동차광고, 생명보험, 편안한 의자..." />
+                                 <button class="btn-search" id="analyzeBtn">
+-                                    寃??                                </button>
+-                            </div>
+-
+-                            <!-- 留덉??곗슜 寃????-->
++                                    검색
++                                </button>
++                            </div>
++
++                            <!-- 마케터용 검색 팁 -->
+                             <div class="search-tips-box hidden">
+-                                <div class="tip-title"><i class="fa-solid fa-lightbulb"></i> 留덉???寃??轅??/div>
++                                <div class="tip-title"><i class="fa-solid fa-lightbulb"></i> 마케터 검색 꿀팁</div>
+                                 <ul class="tip-list">
+-                                    <li><strong>?렞 Meta & IG:</strong> "20? ?ъ꽦 ?ㅽ듃由??⑥뀡"泥섎읆 ?먮굦??寃?됲빐??AI媛 李곕뼞 釉뚮옖?쒕? 李얠븘?쒕젮??
++                                    <li><strong>🎯 Meta & IG:</strong> "20대 여성 스트릿 패션"처럼 느낌을 검색해도 AI가 찰떡 브랜드를 찾아드려요!
+                                     </li>
+-                                    <li><strong>??TikTok & Google:</strong> 援ъ껜?곸씤 釉뚮옖?쒕챸?대굹 "?섎텇?щ┝" 媛숈? ?쒗뭹紐낆쓣 ?낅젰?섎㈃ 寃곌낵媛 ???뺥솗?댁슂.
++                                    <li><strong>⚡ TikTok & Google:</strong> 구체적인 브랜드명이나 "수분크림" 같은 제품명을 입력하면 결과가 더 정확해요.
+                                     </li>
+                                 </ul>
+                             </div>
+ 
+-                            <!-- 理쒓렐 寃?됱뼱 (濡쒓렇?????쒖떆) -->
++                            <!-- 최근 검색어 (로그인 시 표시) -->
+                             <div class="recent-search-bar hidden" id="recentSearchBar">
+-                                <!-- JS濡?梨꾩썙吏묐땲??-->
+-                            </div>
+-                        </div>
+-
+-                        <!-- ?뚮옯???꾪꽣 諛?AI 異붿쿇 寃?됱뼱 移?-->
++                                <!-- JS로 채워집니다 -->
++                            </div>
++                        </div>
++
++                        <!-- 플랫폼 필터 및 AI 추천 검색어 칩 -->
+                         <div class="filter-tabs" id="platformFilters">
+-                            <div class="tab-chip active" data-platform="meta"><i class="fa-brands fa-meta"></i> Meta 愿묎퀬
++                            <div class="tab-chip active" data-platform="meta"><i class="fa-brands fa-meta"></i> Meta 광고
+                             </div>
+                             <div class="tab-chip" data-platform="instagram"><i class="fa-brands fa-instagram"></i>
+@@ -146,42 +203,42 @@
+                             <select id="countryFilter" class="filter-select"
+                                 style="padding: 0.5rem 1rem; border-radius: 20px; border: 1px solid #e2e8f0; outline: none; font-family: 'Inter', sans-serif;">
+-                                <option value="KR" selected>??쒕?援?(KR)</option>
+-                                <option value="US">誘멸뎅 (US)</option>
+-                                <option value="JP">?쇰낯 (JP)</option>
+-                                <option value="CN">以묎뎅 (CN)</option>
+-                                <option value="">湲濡쒕쾶 (All)</option>
++                                <option value="KR" selected>대한민국 (KR)</option>
++                                <option value="US">미국 (US)</option>
++                                <option value="JP">일본 (JP)</option>
++                                <option value="CN">중국 (CN)</option>
++                                <option value="">글로벌 (All)</option>
+                             </select>
+                             <select id="tiktokSearchType" class="filter-select hidden"
+                                 style="padding: 0.5rem 1rem; border-radius: 20px; border: 1px solid #e2e8f0; outline: none; font-family: 'Inter', sans-serif;">
+-                                <option value="keyword" selected>Keyword 寃??/option>
+-                                <option value="hashtag">Hashtag 寃??/option>
++                                <option value="keyword" selected>Keyword 검색</option>
++                                <option value="hashtag">Hashtag 검색</option>
+                             </select>
+                         </div>
+ 
+                         <div class="ai-recommendations hidden" id="aiRecommendations">
+-                            <span class="ai-recommend-label"><i class="fa-solid fa-wand-magic-sparkles"></i> AI 異붿쿇
+-                                寃?됱뼱</span>
+-                            <!-- 移⑹씠 ?먮컮?ㅽ겕由쏀듃???섑빐 梨꾩썙吏묐땲??-->
++                            <span class="ai-recommend-label"><i class="fa-solid fa-wand-magic-sparkles"></i> AI 추천
++                                검색어</span>
++                            <!-- 칩이 자바스크립트에 의해 채워집니다 -->
+                         </div>
+                     </section>
+ 
+-                    <!-- 3. 寃곌낵 ?쒖떆 而⑦뀒?대꼫 (濡쒕뵫 諛?洹몃━?? -->
++                    <!-- 3. 결과 표시 컨테이너 (로딩 및 그리드) -->
+                     <section class="results-section hidden" id="resultsSection">
+                         <div class="loading-state hidden" id="loadingState">
+                             <div class="spinner"></div>
+-                            <p class="pulsing-text">AI ?먯씠?꾪듃媛 ?꾨꼍???덊띁?곗뒪瑜??먯깋?섍퀬 ?덉뒿?덈떎...</p>
+-                        </div>
+-
+-                        <!-- 釉뚮옖??異붿텧 寃곌낵 ?ㅻ쾭酉?(異붿쿇 紐⑤뱶) -->
++                            <p class="pulsing-text">AI 에이전트가 완벽한 레퍼런스를 탐색하고 있습니다...</p>
++                        </div>
++
++                        <!-- 브랜드 추출 결과 오버뷰 (추천 모드) -->
+                         <div id="extractedBrandCardContainer" class="hidden" style="margin-bottom: 2rem; width: 100%;">
+                         </div>
+ 
+-                        <!-- 4. 愿묎퀬 移대뱶 洹몃━???곸뿭 -->
++                        <!-- 4. 광고 카드 그리드 영역 -->
+                         <div class="ad-grid" id="adGrid">
+-                            <!-- ?ㅽ겕由쏀듃???섑빐 移대뱶?ㅼ씠 ?뚮뜑留??⑸땲??-->
++                            <!-- 스크립트에 의해 카드들이 렌더링 됩니다 -->
+                         </div>
+ 
+                         <div id="loadMoreBtnContainer" class="hidden" style="text-align: center;">
+-                            <button class="btn" id="loadMoreBtn">?덊띁?곗뒪 ??遺덈윭?ㅺ린</button>
++                            <button class="btn" id="loadMoreBtn">레퍼런스 더 불러오기</button>
+                         </div>
+                     </section>
+@@ -190,5 +247,5 @@
+ 
+ 
+-            <!-- ?뱻 寃쎌웳??紐⑤땲?곕쭅 酉?-->
++            <!-- 📡 경쟁사 모니터링 뷰 -->
+             <div id="monitorView" class="hidden"
+                 style="display: flex; flex: 1; min-height: 0; height: calc(100vh - 80px); width: 100%;">
+@@ -202,10 +259,10 @@
+                             <h3
+                                 style="margin: 0; font-size: 1.1rem; color: var(--text-main); font-weight: 700; margin-bottom: 0.3rem;">
+-                                寃쎌웳??紐⑤땲?곕쭅</h3>
+-                            <span style="font-size: 0.75rem; color: var(--text-muted);">0媛?寃쎌웳??紐⑤땲?곕쭅 以?/span>
++                                경쟁사 모니터링</h3>
++                            <span style="font-size: 0.75rem; color: var(--text-muted);">0개 경쟁사 모니터링 중</span>
+                         </div>
+                         <button id="addMonitorBtn"
+                             style="background: #3b82f6; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.3rem; transition: background 0.2s;">
+-                            <i class="fa-solid fa-plus"></i> 異붽?
++                            <i class="fa-solid fa-plus"></i> 추가
+                         </button>
+                     </div>
+@@ -221,5 +278,5 @@
+                                 onmouseout="this.style.background='white'">
+                                 <i class="fa-regular fa-folder"
+-                                    style="color: #64748b; width: 16px; text-align: center;"></i> ?대뜑 異붽?
++                                    style="color: #64748b; width: 16px; text-align: center;"></i> 폴더 추가
+                             </li>
+                             <li id="addMetaMenu"
+@@ -229,5 +286,5 @@
+                                 <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                     <i class="fa-brands fa-meta"
+-                                        style="color: #0668E1; width: 16px; text-align: center;"></i> Meta 愿묎퀬 異붽?
++                                        style="color: #0668E1; width: 16px; text-align: center;"></i> Meta 광고 추가
+                                 </div>
+                             </li>
+@@ -238,5 +295,5 @@
+                                 <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                     <i class="fa-brands fa-instagram"
+-                                        style="color: #e1306c; width: 16px; text-align: center;"></i> Instagram 由ъ뒪??異붽?
++                                        style="color: #e1306c; width: 16px; text-align: center;"></i> Instagram 리스트 추가
+                                 </div>
+                             </li>
+@@ -247,5 +304,5 @@
+                                 <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                     <i class="fa-brands fa-google"
+-                                        style="color: #ea4335; width: 16px; text-align: center;"></i> Google Ads 異붽?
++                                        style="color: #ea4335; width: 16px; text-align: center;"></i> Google Ads 추가
+                                 </div>
+                             </li>
+@@ -256,5 +313,5 @@
+                                 <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                     <i class="fa-brands fa-tiktok"
+-                                        style="color: #000000; width: 16px; text-align: center;"></i> TikTok 異붽?
++                                        style="color: #000000; width: 16px; text-align: center;"></i> TikTok 추가
+                                 </div>
+                             </li>
+@@ -272,7 +329,7 @@
+                         <h4
+                             style="font-size: 0.95rem; color: var(--text-main); margin-bottom: 0.8rem; font-weight: 600;">
+-                            紐⑤땲?곕쭅 以묒씤 寃쎌웳?ш? ?놁뒿?덈떎.</h4>
+-                        <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.5;">寃쎌웳??釉뚮옖?쒕? 異붽??섎㈃
+-                            <br />紐⑦떚踰꾩뒪媛 留ㅼ씪 ?먮룞?쇰줈<br />肄섑뀗痢좊? ?섏쭛?섏뿬 ??ν빀?덈떎.
++                            모니터링 중인 경쟁사가 없습니다.</h4>
++                        <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.5;">경쟁사 브랜드를 추가하면
++                            <br />모티버스가 매일 자동으로<br />콘텐츠를 수집하여 저장합니다.
+                         </p>
+                     </div>
+@@ -284,7 +341,7 @@
+                     <div id="monitorWelcomeSection">
+                         <section class="hero-section" style="margin-top: -1.5rem; padding-bottom: 2rem;">
+-                            <div class="hero-label">?ㅻⅨ 留덉??곕뱾? ??寃쎌웳?щ? 異붽??덉뼱??/div>
++                            <div class="hero-label">다른 마케터들은 이 경쟁사를 추가했어요</div>
+                             <h1>
+-                                <span class="text-gradient">遺꾩빞蹂?異붿쿇 寃쎌웳??/span>
++                                <span class="text-gradient">분야별 추천 경쟁사</span>
+                             </h1>
+                         </section>
+@@ -300,6 +357,6 @@
+                                 <select id="recommendPlatformSelect"
+                                     style="padding: 0.5rem 1rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; outline: none; background: white; color: var(--text-main); min-width: 150px; cursor: pointer;">
+-                                    <option value="all">紐⑤뱺 ?뚮옯??/option>
+-                                    <option value="meta">Meta 愿묎퀬</option>
++                                    <option value="all">모든 플랫폼</option>
++                                    <option value="meta">Meta 광고</option>
+                                     <option value="instagram">Instagram</option>
+                                     <option value="tiktok">TikTok</option>
+@@ -311,6 +368,6 @@
+                                 <!-- JS injected recommended brands -->
+                                 <div style="text-align:center; padding: 2rem; color:#94a3b8; font-size:0.9rem;">
+-                                    <i class="fa-solid fa-spinner fa-spin" style="margin-right:0.5rem;"></i>AI媛 ?몃젋?쒕?
+-                                    遺꾩꽍?섏뿬 遺꾩빞蹂?寃쎌웳?щ? 遺덈윭?ㅺ퀬 ?덉뒿?덈떎...
++                                    <i class="fa-solid fa-spinner fa-spin" style="margin-right:0.5rem;"></i>AI가 트렌드를
++                                    분석하여 분야별 경쟁사를 불러오고 있습니다...
+                                 </div>
+                             </div>
+@@ -336,13 +393,13 @@
+                                 style="display: flex; align-items: center; gap: 1.5rem; font-size: 0.85rem; color: var(--text-main);">
+                                 <div style="display: flex; align-items: center; gap: 0.4rem;"><span
+-                                        style="color: #10b981;">??/span> ?섏쭛??愿묎퀬 56媛?/div>
++                                        style="color: #10b981;">●</span> 수집된 광고 56개</div>
+                                 <div style="display: flex; align-items: center; gap: 0.4rem;"><i
+-                                        class="fa-regular fa-image"></i> ?대?吏 17媛?/div>
++                                        class="fa-regular fa-image"></i> 이미지 17개</div>
+                                 <div style="display: flex; align-items: center; gap: 0.4rem;"><i
+-                                        class="fa-solid fa-layer-group"></i> 罹먮윭? 1媛?/div>
++                                        class="fa-solid fa-layer-group"></i> 캐러셀 1개</div>
+                                 <div style="display: flex; align-items: center; gap: 0.4rem;"><i
+-                                        class="fa-brands fa-youtube" style="color:#ef4444;"></i> ?곸긽 14媛?/div>
++                                        class="fa-brands fa-youtube" style="color:#ef4444;"></i> 영상 14개</div>
+                                 <div style="display: flex; align-items: center; gap: 0.4rem;"><i
+-                                        class="fa-solid fa-share-nodes"></i> DCO / DPA 24媛?/div>
++                                        class="fa-solid fa-share-nodes"></i> DCO / DPA 24개</div>
+                             </div>
+ 
+@@ -351,5 +408,6 @@
+                                 style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 0.8rem 1rem; margin-top: 1rem; font-size: 0.8rem; color: #1e3a8a; display: flex; align-items: center; gap: 0.5rem;">
+                                 <i class="fa-solid fa-circle-info"></i>
+-                                ?섏쭛??誘몃뵒?대뒗 泥섎━ 怨쇱젙???곕씪 ?쒖감?곸쑝濡??붾㈃???쒖떆?섎ŉ, 諛섏쁺源뚯? ?쒓컙???뚯슂?????덉뒿?덈떎. 紐⑤땲?곕쭅 ?깅줉 ?쒖젏遺??愿묎퀬媛 ?섏쭛?⑸땲?? (2026??                                3??7??)
++                                수집된 미디어는 처리 과정에 따라 순차적으로 화면에 표시되며, 반영까지 시간이 소요될 수 있습니다. 모니터링 등록 시점부터 광고가 수집됩니다. (2026년
++                                3월 7일~)
+                             </div>
+                         </div>
+@@ -361,22 +419,22 @@
+                                 style="padding-bottom: 0.8rem; border-bottom: 2px solid #3b82f6; color: #3b82f6; font-weight: 700; cursor: pointer; margin-bottom: -2px;"
+                                 onclick="window.switchMonitorTab('ads')">
+-                                ?섏쭛??愿묎퀬</div>
++                                수집된 광고</div>
+                             <div id="monitorTabHistory" class="monitor-tab"
+                                 style="padding-bottom: 0.8rem; color: var(--text-muted); font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px;"
+                                 onclick="window.switchMonitorTab('history')">
+-                                寃뚯옱 ?덉뒪?좊━</div>
++                                게재 히스토리</div>
+                             <div id="monitorTabTimeline" class="monitor-tab"
+                                 style="padding-bottom: 0.8rem; color: var(--text-muted); font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px;"
+                                 onclick="window.switchMonitorTab('timeline')">
+-                                寃뚯옱 ??꾨씪??/div>
++                                게재 타임라인</div>
+                             <div id="monitorTabDashboard" class="monitor-tab"
+                                 style="padding-bottom: 0.8rem; color: var(--text-muted); font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px;"
+                                 onclick="window.switchMonitorTab('dashboard')">
+-                                AI ?몄궗?댄듃</div>
+-                        </div>
+-
+-                        <!-- ???댁슜 ?곸뿭 -->
++                                AI 인사이트</div>
++                        </div>
++
++                        <!-- 탭 내용 영역 -->
+                         <div id="monitorTabContentContainer">
+-                            <!-- [1] ?섏쭛??愿묎퀬 ??-->
++                            <!-- [1] 수집된 광고 탭 -->
+                             <div id="monitorAdsView">
+                                 <!-- Filter Row -->
+@@ -387,5 +445,5 @@
+                                             style="padding: 0.4rem 1rem; border: 1px solid #e2e8f0; background: white; border-radius: 20px; font-size: 0.85rem; color: var(--text-main); font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; transition: background 0.2s;">
+                                             <i class="fa-solid fa-bookmark" style="color:#3b82f6;"></i> <span
+-                                                class="btn-text">遺곷쭏??/span>
++                                                class="btn-text">북마크</span>
+                                         </button>
+                                     </div>
+@@ -405,20 +463,20 @@
+                             </div>
+ 
+-                            <!-- [2] 寃뚯옱 ?덉뒪?좊━ ??-->
++                            <!-- [2] 게재 히스토리 탭 -->
+                             <div id="monitorHistoryView" class="hidden">
+-                                <!-- ?ш린???덉뒪?좊━媛 ?뚮뜑留곷맗?덈떎 -->
+-                            </div>
+-
+-                            <!-- [3] 寃뚯옱 ??꾨씪????-->
++                                <!-- 여기에 히스토리가 렌더링됩니다 -->
++                            </div>
++
++                            <!-- [3] 게재 타임라인 탭 -->
+                             <div id="monitorTimelineView" class="hidden"
+                                 style="width: 100%; overflow-x: auto; padding-bottom: 2rem;">
+-                                <!-- ?ш린????꾨씪?몄씠 ?뚮뜑留곷맗?덈떎 -->
+-                            </div>
+-
+-                            <!-- [4] AI ?몄궗?댄듃 ??-->
++                                <!-- 여기에 타임라인이 렌더링됩니다 -->
++                            </div>
++
++                            <!-- [4] AI 인사이트 탭 -->
+                             <div id="monitorDashboardView" class="hidden" style="width: 100%; padding-bottom: 2rem;">
+                                 <div
+                                     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+-                                    <h3 style="margin: 0; font-size: 1.2rem; color: var(--text-main);">AI ?щ━?먯씠?곕툕 ?몄궗?댄듃
++                                    <h3 style="margin: 0; font-size: 1.2rem; color: var(--text-main);">AI 크리에이티브 인사이트
+                                     </h3>
+                                     <button id="generateAiInsightBtn"
+@@ -426,5 +484,5 @@
+                                         onmouseover="this.style.background='#7c3aed'"
+                                         onmouseout="this.style.background='#8b5cf6'">
+-                                        <i class="fa-solid fa-wand-magic-sparkles"></i> AI 由ы룷???앹꽦?섍린
++                                        <i class="fa-solid fa-wand-magic-sparkles"></i> AI 리포트 생성하기
+                                     </button>
+                                 </div>
+@@ -434,6 +492,6 @@
+                                         <i class="fa-solid fa-robot fa-3x"
+                                             style="margin-bottom: 1rem; color: #cbd5e1;"></i>
+-                                        <p style="font-weight: 600;">?곷떒 'AI 由ы룷???앹꽦?섍린' 踰꾪듉???뚮윭蹂댁꽭??</p>
+-                                        <p style="font-size: 0.85rem;">?꾩옱 ?섏쭛???뚯옱?ㅼ쓣 遺꾩꽍?섏뿬 ?깃낵 ?⑦꽩怨??뱀궗 ?곸슜 ?꾨왂???쒖븞?⑸땲??</p>
++                                        <p style="font-weight: 600;">상단 'AI 리포트 생성하기' 버튼을 눌러보세요.</p>
++                                        <p style="font-size: 0.85rem;">현재 수집된 소재들을 분석하여 성과 패턴과 당사 적용 전략을 제안합니다.</p>
+                                     </div>
+                                 </div>
+@@ -441,5 +499,5 @@
+                                 <div id="aiPreviousReportsContainer" style="margin-top: 2rem; display: none;">
+                                     <h4 style="font-size: 1rem; color: var(--text-main); margin-bottom: 0.8rem;"><i
+-                                            class="fa-solid fa-clock-rotate-left"></i> ?댁쟾 由ы룷??蹂닿???/h4>
++                                            class="fa-solid fa-clock-rotate-left"></i> 이전 리포트 보관함</h4>
+                                     <div id="aiPreviousReportsList"
+                                         style="display: flex; gap: 0.8rem; overflow-x: auto; padding-bottom: 1rem; border-top: 1px solid #e2e8f0; padding-top: 1rem;">
+@@ -462,9 +520,9 @@
+                     onmouseover="this.style.color='#64748b'" onmouseout="this.style.color='#94a3b8'"><i
+                         class="fa-solid fa-xmark"></i></button>
+-                <h3 style="margin: 0 0 0.5rem 0; font-size: 1.2rem; color: var(--text-main);">?덈줈???대뜑 異붽?</h3>
+-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">?대뜑蹂꾨줈 遺꾩빞蹂? ?대씪?댁뼵?몃퀎
+-                    寃쎌웳?щ뱾????踰덉뿉 愿由ы븯?몄슂.</p>
+-
+-                <input type="text" id="newFolderNameInput" placeholder="?덈줈???대뜑"
++                <h3 style="margin: 0 0 0.5rem 0; font-size: 1.2rem; color: var(--text-main);">새로운 폴더 추가</h3>
++                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">폴더별로 분야별, 클라이언트별
++                    경쟁사들을 한 번에 관리하세요.</p>
++
++                <input type="text" id="newFolderNameInput" placeholder="새로운 폴더"
+                     style="width: 100%; box-sizing: border-box; padding: 0.8rem 1rem; border: 1px solid #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); border-radius: 8px; font-size: 0.95rem; outline: none; margin-bottom: 0.3rem;" />
+                 <div style="text-align: right; font-size: 0.75rem; color: #94a3b8; margin-bottom: 1.5rem;">0/50
+@@ -475,7 +533,7 @@
+                         style="flex: 1; padding: 0.8rem; border: 1px solid #e2e8f0; background: white; border-radius: 8px; font-weight: 600; color: var(--text-main); cursor: pointer; transition: background 0.2s;"
+                         onmouseover="this.style.background='#f8fafc'"
+-                        onmouseout="this.style.background='white'">痍⑥냼</button>
++                        onmouseout="this.style.background='white'">취소</button>
+                     <button id="confirmFolderBtn"
+-                        style="flex: 1; padding: 0.8rem; border: none; background: #3b82f6; border-radius: 8px; font-weight: 600; color: white; cursor: pointer;">?뺤씤</button>
++                        style="flex: 1; padding: 0.8rem; border: none; background: #3b82f6; border-radius: 8px; font-weight: 600; color: white; cursor: pointer;">확인</button>
+                 </div>
+             </div>
+@@ -492,19 +550,21 @@
+                 <h3 id="competitorModalTitle"
+                     style="margin: 0 0 0.5rem 0; font-size: 1.2rem; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+-                    寃쎌웳??異붽??섍린 - <span
++                    경쟁사 추가하기 - <span
+                         style="background:none; border:none; padding:0; display:inline-flex; align-items:center; gap:0.4rem;"><i
+-                            class="fa-brands fa-meta" style="color: #0668E1;"></i> Meta 愿묎퀬</span>
++                            class="fa-brands fa-meta" style="color: #0668E1;"></i> Meta 광고</span>
+                 </h3>
+                 <p id="competitorModalDesc"
+                     style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5;">
+-                    Instagram, Facebook ??Meta ?뚮옯?쇱뿉 寃뚯옱??愿묎퀬 肄섑뀗痢좊? 留ㅼ씪 ?먮룞?쇰줈 ?섏쭛쨌??ν빀?덈떎. ??λ맂 愿묎퀬???댄썑 寃뚯옱媛 醫낅즺?섎뜑?쇰룄 紐⑦떚踰꾩뒪?먯꽌 ?뺤씤????                    ?덉뒿?덈떎.</p>
++                    Instagram, Facebook 등 Meta 플랫폼에 게재된 광고 콘텐츠를 매일 자동으로 수집·저장합니다. 저장된 광고는 이후 게재가 종료되더라도 모티버스에서 확인할 수
++                    있습니다.</p>
+ 
+                 <label
+-                    style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">釉뚮옖??                    寃??<i class="fa-regular fa-circle-question" style="color: #94a3b8;"></i></label>
++                    style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">브랜드
++                    검색 <i class="fa-regular fa-circle-question" style="color: #94a3b8;"></i></label>
+                 <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; position: relative;">
+                     <div style="position: relative; flex: 1;">
+                         <i class="fa-solid fa-magnifying-glass"
+                             style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
+-                        <input type="text" id="competitorSearchInput" placeholder="寃쎌웳??釉뚮옖?쒕챸 ?낅젰 (?? ?щ━釉뚯쁺, 臾댁떊??"
++                        <input type="text" id="competitorSearchInput" placeholder="경쟁사 브랜드명 입력 (예: 올리브영, 무신사)"
+                             style="width: 100%; box-sizing: border-box; padding: 0.8rem 1rem 0.8rem 2.5rem; border: 1px solid #3b82f6; border-radius: 8px; font-size: 0.95rem; outline: none; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);" />
+                         <!-- Search Results Dropdown -->
+@@ -517,10 +577,10 @@
+                         style="padding: 0 1.5rem; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s;"
+                         onmouseover="this.style.background='#2563eb'"
+-                        onmouseout="this.style.background='#3b82f6'">寃??/button>
++                        onmouseout="this.style.background='#3b82f6'">검색</button>
+                 </div>
+ 
+                 <div
+                     style="text-align: center; color: #94a3b8; font-size: 0.8rem; margin: 1.5rem 0; position: relative;">
+-                    <span style="background: white; padding: 0 15px; position: relative; z-index: 1;">?먮뒗</span>
++                    <span style="background: white; padding: 0 15px; position: relative; z-index: 1;">또는</span>
+                     <div
+                         style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #e2e8f0; z-index: 0;">
+@@ -529,20 +589,21 @@
+ 
+                 <label
+-                    style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">留곹겕濡?                    異붽? <i class="fa-regular fa-circle-question" style="color: #94a3b8;"></i></label>
++                    style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">링크로
++                    추가 <i class="fa-regular fa-circle-question" style="color: #94a3b8;"></i></label>
+                 <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
+                     <div style="position: relative; flex: 1;">
+                         <i class="fa-solid fa-link"
+                             style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
+-                        <input type="text" placeholder="?? https://www.facebook.com/ads/library/?...&view..."
++                        <input type="text" placeholder="예: https://www.facebook.com/ads/library/?...&view..."
+                             style="width: 100%; box-sizing: border-box; padding: 0.8rem 1rem 0.8rem 2.5rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.95rem; outline: none; background: #f8fafc;"
+                             disabled />
+                     </div>
+                     <button
+-                        style="padding: 0 1.5rem; background: #f1f5f9; color: #94a3b8; border: none; border-radius: 8px; font-weight: 600; cursor: not-allowed;">?뺤씤</button>
++                        style="padding: 0 1.5rem; background: #f1f5f9; color: #94a3b8; border: none; border-radius: 8px; font-weight: 600; cursor: not-allowed;">확인</button>
+                 </div>
+ 
+                 <label
+                     style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">
+-                    愿묎퀬 寃뚯옱 援?? <i class="fa-regular fa-circle-question" style="color: #94a3b8;"></i>
++                    광고 게재 국가 <i class="fa-regular fa-circle-question" style="color: #94a3b8;"></i>
+                     <span
+                         style="font-size: 0.65rem; background: #d946ef; color: white; padding: 2px 6px; border-radius: 10px; font-weight: 700; margin-left: 0.3rem;">PREMIUM</span>
+@@ -550,10 +611,10 @@
+                 <select
+                     style="width: 100%; box-sizing: border-box; padding: 0.8rem 1rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.95rem; outline: none; margin-bottom: 1.5rem; background: white; appearance: none; color: var(--text-main); cursor: pointer;">
+-                    <option>??쒕?援?(KR)</option>
++                    <option>대한민국 (KR)</option>
+                 </select>
+ 
+                 <label
+-                    style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">硫붾え</label>
+-                <textarea placeholder="寃쎌웳??釉뚮옖?쒖뿉 ???硫붾え瑜??묒꽦?섏꽭??
++                    style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">메모</label>
++                <textarea placeholder="경쟁사 브랜드에 대한 메모를 작성하세요"
+                     style="width: 100%; box-sizing: border-box; padding: 0.8rem 1rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.95rem; outline: none; min-height: 80px; resize: none; margin-bottom: 1.5rem; font-family: 'Inter', sans-serif;"></textarea>
+ 
+@@ -562,22 +623,22 @@
+                         style="flex: 1; padding: 0.8rem; border: 1px solid #e2e8f0; background: white; border-radius: 8px; font-weight: 600; color: var(--text-main); cursor: pointer; transition: background 0.2s;"
+                         onmouseover="this.style.background='#f8fafc'"
+-                        onmouseout="this.style.background='white'">痍⑥냼</button>
++                        onmouseout="this.style.background='white'">취소</button>
+                     <button id="submitCompetitorModalBtn"
+                         style="flex: 1; padding: 0.8rem; border: none; background: #e2e8f0; border-radius: 8px; font-weight: 600; color: #94a3b8; cursor: pointer;"
+-                        disabled>異붽?</button>
++                        disabled>추가</button>
+                 </div>
+             </div>
+         </div>
+ 
+-        <!-- ?렓 ?щ━?먯씠?곕툕 ?ㅽ뒠?붿삤 酉?-->
++        <!-- 🎨 크리에이티브 스튜디오 뷰 -->
+         <div id="creativeView" class="hidden"
+             style="display: flex; min-height: calc(100vh - 80px); width: 100%; background: var(--bg-base); flex-direction: column;">
+             <main style="flex: 1; padding: 0 3rem 2rem; overflow-y: auto;">
+                 <section class="hero-section" style="padding-top: 0; padding-bottom: 0;">
+-                    <div class="hero-label">??釉뚮옖??猷⑹븻?꾩뿉 瑗?留욌뒗 ?먯뀑</div>
+-                    <h1><span class="text-gradient">?щ━?먯씠?곕툕 ?ㅽ뒠?붿삤</span></h1>
++                    <div class="hero-label">내 브랜드 룩앤필에 꼭 맞는 에셋</div>
++                    <h1><span class="text-gradient">크리에이티브 스튜디오</span></h1>
+                 </section>
+ 
+-                <!-- ?ㅽ뀦 ?몃뵒耳?댄꽣 -->
++                <!-- 스텝 인디케이터 -->
+                 <div id="wizardSteps"
+                     style="max-width: 700px; margin: 0.5rem auto 1.5rem; display: flex; align-items: center; justify-content: center; gap: 0;">
+@@ -618,13 +679,15 @@
+                                 <select id="savedBrandSelect"
+                                     style="padding: 0.8rem 1rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none; cursor: pointer; max-width: 250px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+-                                    <option value="">??λ맂 釉뚮옖??遺덈윭?ㅺ린</option>
++                                    <option value="">저장된 브랜드 불러오기</option>
+                                 </select>
+                                 <button class="btn" id="btnSaveBrand"
+                                     style="background: #10b981; color: white; padding: 0.8rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 0.95rem; white-space: nowrap; border: none; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);">
+-                                    <i class="fa-solid fa-floppy-disk" style="margin-right: 0.3rem;"></i> 釉뚮옖?????                                </button>
+-                            </div>
+-                        </div>
+-                        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem;">釉뚮옖???뺣낫瑜?                            ?낅젰?섎㈃
+-                            AI媛 理쒖쟻??愿묎퀬 ?꾨왂???앹꽦?⑸땲??</p>
++                                    <i class="fa-solid fa-floppy-disk" style="margin-right: 0.3rem;"></i> 브랜드 저장
++                                </button>
++                            </div>
++                        </div>
++                        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem;">브랜드 정보를
++                            입력하면
++                            AI가 최적의 광고 전략을 생성합니다.</p>
+ 
+                         <div
+@@ -632,5 +695,6 @@
+                             <div style="min-width: 0;">
+                                 <label
+-                                    style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">釉뚮옖??                                    ?ъ씠??濡쒕뱶 (AI ?먮룞 ?ㅼ틪)</label>
++                                    style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">브랜드
++                                    사이트 로드 (AI 자동 스캔)</label>
+                                 <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
+                                     <input type="text" id="brandWebsiteUrl" placeholder="https://example.com"
+@@ -641,10 +705,11 @@
+                                 </div>
+                                 <label
+-                                    style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">釉뚮옖??                                    紐?/label>
++                                    style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">브랜드
++                                    명</label>
+                                 <input type="text" id="brandName" placeholder="Brand Name"
+                                     style="width: 100%; padding: 0.8rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none; margin-bottom: 1.5rem; box-sizing: border-box;" />
+                                 <label
+-                                    style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">濡쒓퀬
+-                                    ?낅줈??/label>
++                                    style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">로고
++                                    업로드</label>
+                                 <div style="display: flex; gap: 1rem; align-items: center;">
+                                     <div id="brandLogoPreview"
+@@ -658,5 +723,6 @@
+                             <div style="min-width: 0;">
+                                 <label
+-                                    style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">釉뚮옖??                                    硫붿씤 而щ윭</label>
++                                    style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">브랜드
++                                    메인 컬러</label>
+                                 <div style="display: flex; gap: 0.8rem; margin-bottom: 1.5rem;">
+                                     <input type="color" id="brandColor1" value="#0f172a"
+@@ -666,5 +732,6 @@
+                                 </div>
+                                 <label
+-                                    style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">???                                    ?고듃 (TTF/OTF ?낅줈??</label>
++                                    style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">대표
++                                    폰트 (TTF/OTF 업로드)</label>
+                                 <div
+                                     style="display: flex; gap: 0.5rem; align-items: center; background: white; border: 1px solid #cbd5e1; padding: 0.6rem; border-radius: 8px; overflow: hidden;">
+@@ -678,9 +745,9 @@
+                         </div>
+ 
+-                        <!-- ?ㅼ쓬 踰꾪듉 -->
++                        <!-- 다음 버튼 -->
+                         <div style="display: flex; justify-content: flex-end; margin-top: 2rem;">
+                             <button class="btn wizard-next-btn" onclick="goWizardStep(2)"
+                                 style="background: var(--accent-blue); color: white; padding: 0.8rem 2.5rem; border-radius: 8px; font-weight: 600; font-size: 1rem; border: none; cursor: pointer; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); transition: all 0.2s;">
+-                                ?ㅼ쓬 <i class="fa-solid fa-arrow-right" style="margin-left: 0.5rem;"></i>
++                                다음 <i class="fa-solid fa-arrow-right" style="margin-left: 0.5rem;"></i>
+                             </button>
+                         </div>
+@@ -694,9 +761,9 @@
+                             style="font-family: var(--font-heading); font-size: 1.5rem; color: var(--text-main); margin-bottom: 0.5rem;">
+                             AI Strategy & Copy</h2>
+-                        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem;">?덊띁?곗뒪瑜??좏깮?섍퀬
+-                            AI媛
+-                            釉뚮옖?쒖뿉 留욌뒗 愿묎퀬 移댄뵾? ?꾨왂???먮룞 ?앹꽦?⑸땲??</p>
+-
+-                        <!-- ?덊띁?곗뒪 媛?몄삤湲?-->
++                        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem;">레퍼런스를 선택하고
++                            AI가
++                            브랜드에 맞는 광고 카피와 전략을 자동 생성합니다.</p>
++
++                        <!-- 레퍼런스 가져오기 -->
+                         <div style="margin-bottom: 2rem;">
+                             <div
+@@ -704,9 +771,10 @@
+                                 <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 0;">
+                                     <i class="fa-solid fa-images"
+-                                        style="margin-right: 0.5rem; color: var(--accent-blue);"></i> ?덊띁?곗뒪 ?좏깮
++                                        style="margin-right: 0.5rem; color: var(--accent-blue);"></i> 레퍼런스 선택
+                                 </h4>
+                                 <button class="btn" id="btnLoadReferences"
+                                     style="background: white; color: var(--text-main); border: 1px solid var(--border-color); padding: 0.8rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: all 0.2s;">
+-                                    <i class="fa-solid fa-rotate" style="margin-right: 0.3rem;"></i> 紐⑤땲?곕쭅 ?곗씠?곗뿉??                                    遺덈윭?ㅺ린
++                                    <i class="fa-solid fa-rotate" style="margin-right: 0.3rem;"></i> 모니터링 데이터에서
++                                    불러오기
+                                 </button>
+                             </div>
+@@ -715,12 +783,14 @@
+                                 <div
+                                     style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 1rem;">
+-                                    紐⑤땲?곕쭅 ?곗씠?곗뿉???덊띁?곗뒪 愿묎퀬瑜?遺덈윭? ?좏깮?섏꽭??</div>
+-                            </div>
+-                            <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-muted);">?좏깮??                                ?덊띁?곗뒪:
++                                    모니터링 데이터에서 레퍼런스 광고를 불러와 선택하세요.</div>
++                            </div>
++                            <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-muted);">선택된
++                                레퍼런스:
+                                 <span id="selectedRefCount"
+-                                    style="font-weight: 700; color: var(--accent-blue);">0</span>媛?                            </div>
+-                        </div>
+-
+-                        <!-- AI ?꾨왂 ?앹꽦 諛곕꼫 -->
++                                    style="font-weight: 700; color: var(--accent-blue);">0</span>개
++                            </div>
++                        </div>
++
++                        <!-- AI 전략 생성 배너 -->
+                         <div
+                             style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 1.5rem; border-radius: 12px; display: flex; justify-content: space-between; align-items: center;">
+@@ -734,7 +804,7 @@
+                                         style="font-weight: 700; color: var(--text-main); font-size: 1.1rem; font-family: var(--font-heading);">
+                                         Generate strategy & texts with AI</div>
+-                                    <div style="font-size: 0.9rem; color: var(--text-muted);">?좏깮???덊띁?곗뒪? ??釉뚮옖?쒕?
+-                                        遺꾩꽍?섏뿬
+-                                        怨좏슚??移댄뵾? ?덉씠?꾩썐 ?꾨왂??異붿쿇?⑸땲??</div>
++                                    <div style="font-size: 0.9rem; color: var(--text-muted);">선택한 레퍼런스와 내 브랜드를
++                                        분석하여
++                                        고효율 카피와 레이아웃 전략을 추천합니다.</div>
+                                 </div>
+                             </div>
+@@ -742,21 +812,21 @@
+                                 style="background: var(--text-main); color: white; padding: 0.8rem 2rem; border-radius: 8px; font-weight: 600; font-size: 0.95rem; white-space: nowrap; border: none; cursor: pointer; box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2); transition: all 0.2s;">
+                                 <i class="fa-solid fa-wand-magic-sparkles" style="margin-right: 0.3rem;"></i> AI
+-                                ?꾨왂
+-                                ?앹꽦
++                                전략
++                                생성
+                             </button>
+                         </div>
+ 
+-                        <!-- AI ?꾨왂 ?앹꽦 寃곌낵 ?곸뿭 -->
++                        <!-- AI 전략 생성 결과 영역 -->
+                         <div id="strategyResult" class="hidden" style="margin-top: 1.5rem;"></div>
+ 
+-                        <!-- ?댁쟾/?ㅼ쓬 踰꾪듉 -->
++                        <!-- 이전/다음 버튼 -->
+                         <div style="display: flex; justify-content: space-between; margin-top: 2rem;">
+                             <button class="btn" onclick="goWizardStep(1)"
+                                 style="background: white; color: var(--text-main); border: 1px solid var(--border-color); padding: 0.8rem 2.5rem; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s;">
+-                                <i class="fa-solid fa-arrow-left" style="margin-right: 0.5rem;"></i> ?댁쟾
++                                <i class="fa-solid fa-arrow-left" style="margin-right: 0.5rem;"></i> 이전
+                             </button>
+                             <button class="btn wizard-next-btn" onclick="goWizardStep(3)"
+                                 style="background: var(--accent-blue); color: white; padding: 0.8rem 2.5rem; border-radius: 8px; font-weight: 600; font-size: 1rem; border: none; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); cursor: pointer; transition: all 0.2s;">
+-                                ?ㅼ쓬 <i class="fa-solid fa-arrow-right" style="margin-left: 0.5rem;"></i>
++                                다음 <i class="fa-solid fa-arrow-right" style="margin-left: 0.5rem;"></i>
+                             </button>
+                         </div>
+@@ -768,33 +838,36 @@
+                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start;">
+ 
+-                        <!-- 醫뚯륫: ?ㅼ젙 -->
++                        <!-- 좌측: 설정 -->
+                         <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+-                            <!-- ?대?吏 ?앹꽦 ???-->
++                            <!-- 이미지 생성 타입 -->
+                             <div class="panel-box" style="padding: 1.5rem;">
+                                 <label
+-                                    style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 1.2rem; display: block;">?대?吏
+-                                    ?앹꽦 ???/label>
++                                    style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 1.2rem; display: block;">이미지
++                                    생성 타입</label>
+                                 <div style="display: flex; flex-wrap: wrap; gap: 0.6rem;" id="imgTypeBtns">
+                                     <button class="img-type-btn" data-type="realistic"
+-                                        style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">?ㅼ궗??                                        ?λ㈃</button>
++                                        style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">실사형
++                                        장면</button>
+                                     <button class="img-type-btn" data-type="product"
+-                                        style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">?쒗뭹
+-                                        紐⑦삎</button>
++                                        style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">제품
++                                        모형</button>
+                                     <button class="img-type-btn" data-type="banner"
+-                                        style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">諛곕꼫??                                        愿묎퀬</button>
++                                        style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">배너형
++                                        광고</button>
+                                     <button class="img-type-btn" data-type="hero"
+-                                        style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">釉뚮옖??                                        ?덉뼱濡?/button>
++                                        style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">브랜드
++                                        히어로</button>
+                                     <button class="img-type-btn active" data-type="lifestyle"
+-                                        style="padding: 0.7rem 1.2rem; background: #3b82f6; color: white; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3); transition: all 0.2s;">?쇱씠?꾩뒪???/button>
++                                        style="padding: 0.7rem 1.2rem; background: #3b82f6; color: white; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3); transition: all 0.2s;">라이프스타일</button>
+                                     <button class="img-type-btn" data-type="event"
+-                                        style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">?대깽???꾨줈紐⑥뀡</button>
+-                                </div>
+-                            </div>
+-
+-                            <!-- ?꾨＼?꾪듃 -->
++                                        style="padding: 0.7rem 1.2rem; background: #f4f6f9; color: #475569; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">이벤트/프로모션</button>
++                                </div>
++                            </div>
++
++                            <!-- 프롬프트 -->
+                             <div class="panel-box" style="padding: 1.5rem;">
+                                 <label
+-                                    style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; display: block;">?꾨＼?꾪듃</label>
+-                                <textarea id="creativePrompt" placeholder="?? ?곹뭹??瑜? ?뉗궡??鍮꾩튂???뺤떎 ?좊컲 ?꾩뿉 ?먯뿰?ㅻ읇寃?諛곗튂?댁쨾."
++                                    style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; display: block;">프롬프트</label>
++                                <textarea id="creativePrompt" placeholder="예: 상품을(를) 햇살이 비치는 욕실 선반 위에 자연스럽게 배치해줘."
+                                     style="width: 100%; padding: 1.2rem; border: none; background: #f4f6f9; border-radius: 6px; font-size: 0.95rem; color: #334155; resize: vertical; min-height: 80px; outline: none; font-family: inherit; font-weight: 500; box-sizing: border-box;"></textarea>
+                                 <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+@@ -802,6 +875,6 @@
+                                         style="background: white; border: 1px solid #e2e8f0; color: var(--text-sub); font-size: 0.8rem; padding: 0.4rem 0.8rem; border-radius: 6px;">
+                                         <i class="fa-solid fa-wand-magic-sparkles"
+-                                            style="margin-right: 0.3rem; color: var(--accent-blue);"></i> AI ?먮룞
+-                                        ?꾨＼?꾪듃
++                                            style="margin-right: 0.3rem; color: var(--accent-blue);"></i> AI 자동
++                                        프롬프트
+                                     </button>
+                                 </div>
+@@ -811,15 +884,16 @@
+                                         style="color: #ca8a04; margin-top: 0.2rem; font-size: 1.1rem;"></i>
+                                     <div style="font-size: 0.85rem; color: #475569; line-height: 1.6;">
+-                                        <span style="font-weight: 600; color: #1e40af;">??</span> ?λ㈃???ㅻ챸?섍퀬 ?ㅼ썙?쒕쭔
+-                                        ?섏뿴?섏?
+-                                        留덉꽭??
+-                                    </div>
+-                                </div>
+-                            </div>
+-
+-                            <!-- ???쒗뭹 -->
++                                        <span style="font-weight: 600; color: #1e40af;">팁:</span> 장면을 설명하고 키워드만
++                                        나열하지
++                                        마세요.
++                                    </div>
++                                </div>
++                            </div>
++
++                            <!-- 내 제품 -->
+                             <div class="panel-box" style="padding: 1.5rem;">
+                                 <label
+-                                    style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; display: block;">??                                    ?쒗뭹</label>
++                                    style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; display: block;">내
++                                    제품</label>
+                                 <input type="file" id="productImageInput" accept="image/*" style="display: none;" />
+                                 <div id="productUploadArea"
+@@ -830,6 +904,6 @@
+                                     <span style="color: #64748b; font-size: 0.95rem; font-weight: 600;"><i
+                                             class="fa-solid fa-plus"
+-                                            style="margin-right:0.5rem; font-size: 0.8rem;"></i> ?쒗뭹
+-                                        ?대?吏 ?낅줈??/span>
++                                            style="margin-right:0.5rem; font-size: 0.8rem;"></i> 제품
++                                        이미지 업로드</span>
+                                 </div>
+                                 <div id="productPreviewArea" style="margin-top: 0.8rem;" class="hidden">
+@@ -839,13 +913,13 @@
+                                 <div id="productEmptyMsg"
+                                     style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.8rem;">
+-                                    ?낅줈?쒕맂
+-                                    ?쒗뭹???놁뒿?덈떎.</div>
+-                            </div>
+-
+-                            <!-- ?щ━?먯씠?곕툕 ?ъ씠利?-->
++                                    업로드된
++                                    제품이 없습니다.</div>
++                            </div>
++
++                            <!-- 크리에이티브 사이즈 -->
+                             <div class="panel-box" style="padding: 1.5rem;">
+                                 <label
+-                                    style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; display: block;">?щ━?먯씠?곕툕
+-                                    ?ъ씠利?/label>
++                                    style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; display: block;">크리에이티브
++                                    사이즈</label>
+                                 <h4 style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">
+                                     Advertising Platforms</h4>
+@@ -883,20 +957,20 @@
+                                 <select id="canvasSizeSelect"
+                                     style="width: 100%; padding: 0.8rem 1rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none; cursor: pointer;">
+-                                    <option value="1200x628">?쇰뱶 諛??ㅼ씠?곕툕 (1200x628)</option>
+-                                    <option value="600x600">?ㅽ섏뼱 ?몃꽕??(600x600)</option>
+-                                    <option value="342x228">PC ?ㅻ쭏?몄콈??(342x228)</option>
+-                                    <option value="1200x1800">?몃줈???쇰뱶 (1200x1800)</option>
++                                    <option value="1200x628">피드 및 네이티브 (1200x628)</option>
++                                    <option value="600x600">스퀘어 썸네일 (600x600)</option>
++                                    <option value="342x228">PC 스마트채널 (342x228)</option>
++                                    <option value="1200x1800">세로형 피드 (1200x1800)</option>
+                                 </select>
+                                 <div id="creativeRuleWarning"
+                                     style="background: #fff1f2; color: #e11d48; padding: 0.8rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; border: 1px solid #ffe4e6; margin-top: 0.8rem;">
+                                     <i class="fa-solid fa-circle-exclamation" style="margin-right:0.4rem;"></i>
+-                                    <span>?띿뒪??硫댁쟻 20% ?대궡 (?⑥깋 諛곌꼍 遺덇?)</span>
+-                                </div>
+-                            </div>
+-                        </div>
+-
+-                        <!-- ?곗륫: On Image Texts + Live Preview -->
++                                    <span>텍스트 면적 20% 이내 (단색 배경 불가)</span>
++                                </div>
++                            </div>
++                        </div>
++
++                        <!-- 우측: On Image Texts + Live Preview -->
+                         <div style="display: flex; flex-direction: column; gap: 1.5rem; position: sticky; top: 1rem;">
+-                            <!-- On Image Texts (?몄쭛) -->
++                            <!-- On Image Texts (편집) -->
+                             <div class="panel-box" style="padding: 1.5rem;">
+                                 <label
+@@ -907,36 +981,36 @@
+                                     <div>
+                                         <label
+-                                            style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.5rem; display: block;">硫붿씤
+-                                            移댄뵾 (Main Headline)</label>
++                                            style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.5rem; display: block;">메인
++                                            카피 (Main Headline)</label>
+                                         <div
+                                             style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
+-                                            <input type="text" id="copyMain" value="" placeholder="AI ?꾨왂?먯꽌 ?먮룞 ?낅젰?⑸땲??
++                                            <input type="text" id="copyMain" value="" placeholder="AI 전략에서 자동 입력됩니다"
+                                                 style="border: none; outline: none; width: 100%; font-weight: 600; color: var(--text-main); font-size: 0.95rem;" />
+                                             <i class="fa-solid fa-dice text-gradient"
+-                                                style="cursor: pointer; padding-left: 0.5rem;" title="?쒕뜡 蹂??></i>
++                                                style="cursor: pointer; padding-left: 0.5rem;" title="랜덤 변형"></i>
+                                         </div>
+                                     </div>
+                                     <div>
+                                         <label
+-                                            style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.5rem; display: block;">?쒕툕
+-                                            移댄뵾 (Punchline / Sub)</label>
++                                            style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.5rem; display: block;">서브
++                                            카피 (Punchline / Sub)</label>
+                                         <div
+                                             style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
+-                                            <input type="text" id="copySub" value="" placeholder="AI ?꾨왂?먯꽌 ?먮룞 ?낅젰?⑸땲??
++                                            <input type="text" id="copySub" value="" placeholder="AI 전략에서 자동 입력됩니다"
+                                                 style="border: none; outline: none; width: 100%; font-weight: 500; color: var(--text-main); font-size: 0.95rem;" />
+                                             <i class="fa-solid fa-dice text-gradient"
+-                                                style="cursor: pointer; padding-left: 0.5rem;" title="?쒕뜡 蹂??></i>
++                                                style="cursor: pointer; padding-left: 0.5rem;" title="랜덤 변형"></i>
+                                         </div>
+                                     </div>
+                                     <div>
+                                         <label
+-                                            style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.5rem; display: block;">肄쒗닾?≪뀡
++                                            style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.5rem; display: block;">콜투액션
+                                             (Call to Action)</label>
+                                         <div
+                                             style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
+-                                            <input type="text" id="copyCta" value="" placeholder="AI ?꾨왂?먯꽌 ?먮룞 ?낅젰?⑸땲??
++                                            <input type="text" id="copyCta" value="" placeholder="AI 전략에서 자동 입력됩니다"
+                                                 style="border: none; outline: none; width: 100%; font-weight: 600; color: var(--text-main); font-size: 0.95rem;" />
+                                             <i class="fa-solid fa-dice text-gradient"
+-                                                style="cursor: pointer; padding-left: 0.5rem;" title="?쒕뜡 蹂??></i>
++                                                style="cursor: pointer; padding-left: 0.5rem;" title="랜덤 변형"></i>
+                                         </div>
+                                     </div>
+@@ -972,30 +1046,33 @@
+                                     </div>
+ 
+-                                    <!-- ?앹꽦???대?吏 ?몃꽕???덉뒪?좊━ -->
++                                    <!-- 생성된 이미지 썸네일 히스토리 -->
+                                     <div id="creativeThumbnailContainer"
+                                         style="display: none; gap: 0.8rem; margin: 1rem 1rem 0.5rem 1rem; overflow-x: auto; padding-bottom: 0.5rem; min-height: 70px;">
+-                                        <!-- ?먮컮?ㅽ겕由쏀듃???섑빐 梨꾩썙吏?-->
+-                                    </div>
+-                                </div>
+-
+-                                <!-- ?щ━?먯씠?곕툕 ?꾨＼?꾪듃 ?낅젰李?(?섏젙/吏?쒖슜) -->
++                                        <!-- 자바스크립트에 의해 채워짐 -->
++                                    </div>
++                                </div>
++
++                                <!-- 크리에이티브 프롬프트 입력창 (수정/지시용) -->
+                                 <div
+                                     style="margin-top: 1.5rem; margin-bottom: 2rem; background: #fdf8f6; border: 1px solid #fed7aa; border-radius: 12px; padding: 1.2rem; display: flex; flex-direction: column; gap: 0.6rem;">
+                                     <label
+                                         style="font-size: 0.95rem; font-weight: 700; color: #ea580c; display: flex; align-items: center; gap: 0.5rem;"><i
+-                                            class="fa-solid fa-wand-magic-sparkles text-gradient"></i> AI ?꾨＼?꾪듃
+-                                        吏?쒖갹
+-                                        (?앹꽦臾?                                        諛????섏젙)</label>
+-                                    <span style="font-size: 0.8rem; color: #f97316;">* AI媛 ?앹꽦?댁? 湲곗〈 ?꾨＼?꾪듃瑜??몄쭛?섍굅??                                        ?덈줈??                                        吏?쒖궗???? ?쇱궗泥대? ?뺤쨷?숈뿉 諛곗튂, 諛곌꼍 ??諛앷쾶)???ｌ뼱二쇱떆硫?罹붾쾭?ㅺ? ?ㅼ떆 ?앹꽦?⑸땲??</span>
++                                            class="fa-solid fa-wand-magic-sparkles text-gradient"></i> AI 프롬프트
++                                        지시창
++                                        (생성물
++                                        및 톤 수정)</label>
++                                    <span style="font-size: 0.8rem; color: #f97316;">* AI가 생성해준 기존 프롬프트를 편집하거나
++                                        새로운
++                                        지시사항(예: 피사체를 정중앙에 배치, 배경 더 밝게)을 넣어주시면 캔버스가 다시 생성됩니다.</span>
+                                     <textarea id="creativePrompt"
+-                                        placeholder="AI ?꾨왂 ?④퀎?먯꽌 ?꾨＼?꾪듃媛 ?먮룞?쇰줈 梨꾩썙吏묐땲?? 蹂寃쎌궗??쓣 ?먰븯?쒕㈃ 吏?쒖뼱瑜??낅젰?섍퀬 Generate 踰꾪듉???ㅼ떆 ?뚮윭二쇱꽭??"
++                                        placeholder="AI 전략 단계에서 프롬프트가 자동으로 채워집니다. 변경사항을 원하시면 지시어를 입력하고 Generate 버튼을 다시 눌러주세요."
+                                         style="width: 100%; padding: 0.8rem; border: 1px solid #fdba74; border-radius: 8px; font-size: 0.9rem; outline: none; resize: vertical; min-height: 80px; font-family: 'Pretendard', sans-serif; box-sizing: border-box; background: white;"></textarea>
+                                 </div>
+ 
+-                                <!-- ?섎떒 踰꾪듉 -->
++                                <!-- 하단 버튼 -->
+                                 <div style="display: flex; justify-content: space-between; gap: 1rem;">
+                                     <button class="btn" onclick="goWizardStep(2)"
+                                         style="background: white; color: var(--text-main); border: 1px solid var(--border-color); padding: 0.8rem 2.5rem; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s;">
+-                                        <i class="fa-solid fa-arrow-left" style="margin-right: 0.5rem;"></i> ?댁쟾
++                                        <i class="fa-solid fa-arrow-left" style="margin-right: 0.5rem;"></i> 이전
+                                     </button>
+                                     <div style="display: flex; gap: 1rem;">
+@@ -1018,29 +1095,32 @@
+ 
+ 
+-        <!-- AI Analysis Modal \(?앹뾽\) -->
++        <!-- AI Analysis Modal \(팝업\) -->
+         <div id="aiModal" class="modal hidden">
+             <div class="modal-content">
+                 <span class="close-btn" id="closeModalBtn">&times;</span>
+-                <h2 class="modal-title"><i class="fa-solid fa-wand-magic-sparkles text-gradient"></i> AI ?ъ링 湲고쉷
+-                    ?ъ씤??                </h2>
++                <h2 class="modal-title"><i class="fa-solid fa-wand-magic-sparkles text-gradient"></i> AI 심층 기획
++                    포인트
++                </h2>
+ 
+                 <div id="modalLoading" class="loading-state hidden">
+                     <div class="spinner"></div>
+-                    <p class="pulsing-text">OpenAI Vision???붿냼蹂?湲고쉷 ?섎룄瑜??꾨젅???⑥쐞濡???뼱蹂닿퀬 ?덉뒿?덈떎...</p>
++                    <p class="pulsing-text">OpenAI Vision이 요소별 기획 의도를 프레임 단위로 뜯어보고 있습니다...</p>
+                 </div>
+ 
+                 <div id="modalResult" class="hidden">
+                     <div class="ai-analysis-block">
+-                        <span class="analysis-label"><i class="fa-solid fa-video"></i> 1. Hook (珥덇린 吏묒쨷 ?좊룄
+-                            0~3珥?</span>
++                        <span class="analysis-label"><i class="fa-solid fa-video"></i> 1. Hook (초기 집중 유도
++                            0~3초)</span>
+                         <p class="analysis-text" id="modalHook"></p>
+                     </div>
+                     <div class="ai-analysis-block">
+-                        <span class="analysis-label"><i class="fa-solid fa-bars-staggered"></i> 2. Body (?듭떖 ?뚭뎄??                            諛?                            ?꾧컻)</span>
++                        <span class="analysis-label"><i class="fa-solid fa-bars-staggered"></i> 2. Body (핵심 소구점
++                            및
++                            전개)</span>
+                         <p class="analysis-text" id="modalBody"></p>
+                     </div>
+                     <div class="ai-analysis-block">
+-                        <span class="analysis-label"><i class="fa-solid fa-bullseye"></i> 3. CTA (?됰룞 ?좊룄
+-                            ?붿옄??移댄뵾)</span>
++                        <span class="analysis-label"><i class="fa-solid fa-bullseye"></i> 3. CTA (행동 유도
++                            디자인/카피)</span>
+                         <p class="analysis-text" id="modalCta"></p>
+                     </div>
+@@ -1049,14 +1129,14 @@
+         </div>
+ 
+-        <!-- ?먥븧??P1: 寃쎌웳??紐⑤땲?곕쭅 紐⑤떖 ?먥븧??-->
++        <!-- ═══ P1: 경쟁사 모니터링 모달 ═══ -->
+         <div id="monitorModal" class="modal hidden">
+             <div class="modal-content" style="max-width:700px;">
+                 <span class="close-btn"
+                     onclick="document.getElementById('monitorModal').classList.add('hidden')">&times;</span>
+-                <h2 class="modal-title"><i class="fa-solid fa-satellite-dish text-gradient"></i> 寃쎌웳???먮룞 紐⑤땲?곕쭅
++                <h2 class="modal-title"><i class="fa-solid fa-satellite-dish text-gradient"></i> 경쟁사 자동 모니터링
+                 </h2>
+ 
+                 <div style="display:flex;gap:0.5rem;margin-bottom:1.5rem;">
+-                    <input type="text" id="monitorBrandInput" placeholder="釉뚮옖?쒕챸 ?낅젰 (?? 踰⑦궓, ?쇱꽦?꾩옄)"
++                    <input type="text" id="monitorBrandInput" placeholder="브랜드명 입력 (예: 벨킨, 삼성전자)"
+                         style="flex:1;padding:0.7rem 1rem;border:1.5px solid #e2e8f0;border-radius:10px;outline:none;font-size:0.95rem;" />
+                     <select id="monitorPlatformSelect"
+@@ -1068,5 +1148,5 @@
+                     </select>
+                     <button id="addMonitorBtn" class="btn-search" style="padding:0.7rem 1.2rem;"><i
+-                            class="fa-solid fa-plus"></i> ?깅줉</button>
++                            class="fa-solid fa-plus"></i> 등록</button>
+                 </div>
+ 
+@@ -1074,8 +1154,9 @@
+ 
+                 <button id="checkNowBtn" class="btn-search" style="width:100%;justify-content:center;gap:0.5rem;"><i
+-                        class="fa-solid fa-sync"></i> 吏湲?                    泥댄겕?섍린</button>
+-
+-                <h3 style="margin-top:1.5rem;font-size:1rem;color:#334155;"><i class="fa-solid fa-bell"></i> 理쒓렐
+-                    ?뚮┝
++                        class="fa-solid fa-sync"></i> 지금
++                    체크하기</button>
++
++                <h3 style="margin-top:1.5rem;font-size:1rem;color:#334155;"><i class="fa-solid fa-bell"></i> 최근
++                    알림
+                 </h3>
+                 <div id="alertList" style="max-height:200px;overflow-y:auto;margin-top:0.5rem;"></div>
+@@ -1083,13 +1164,13 @@
+         </div>
+ 
+-        <!-- ?먥븧??P3: 蹂대뱶/而щ젆??紐⑤떖 ?먥븧??-->
++        <!-- ═══ P3: 보드/컬렉션 모달 ═══ -->
+         <div id="boardModal" class="modal hidden">
+             <div class="modal-content" style="max-width:600px;">
+                 <span class="close-btn"
+                     onclick="document.getElementById('boardModal').classList.add('hidden')">&times;</span>
+-                <h2 class="modal-title"><i class="fa-solid fa-folder-open text-gradient"></i> 蹂대뱶 / 而щ젆??/h2>
++                <h2 class="modal-title"><i class="fa-solid fa-folder-open text-gradient"></i> 보드 / 컬렉션</h2>
+ 
+                 <div style="display:flex;gap:0.5rem;margin-bottom:1.5rem;">
+-                    <input type="text" id="boardNameInput" placeholder="??蹂대뱶 ?대쫫"
++                    <input type="text" id="boardNameInput" placeholder="새 보드 이름"
+                         style="flex:1;padding:0.7rem 1rem;border:1.5px solid #e2e8f0;border-radius:10px;outline:none;" />
+                     <input type="color" id="boardColorInput" value="#3b82f6"
+@@ -1104,13 +1185,13 @@
+     </div>
+ 
+-    <!-- ?먥븧??P4: ?쒕뵫?섏씠吏 遺꾩꽍 紐⑤떖 ?먥븧??-->
++    <!-- ═══ P4: 랜딩페이지 분석 모달 ═══ -->
+     <div id="landingModal" class="modal hidden">
+         <div class="modal-content" style="max-width:650px;">
+             <span class="close-btn"
+                 onclick="document.getElementById('landingModal').classList.add('hidden')">&times;</span>
+-            <h2 class="modal-title"><i class="fa-solid fa-globe text-gradient"></i> ?쒕뵫?섏씠吏 遺꾩꽍</h2>
++            <h2 class="modal-title"><i class="fa-solid fa-globe text-gradient"></i> 랜딩페이지 분석</h2>
+             <div id="landingLoading" class="loading-state hidden">
+                 <div class="spinner"></div>
+-                <p class="pulsing-text">?쒕뵫?섏씠吏瑜?遺꾩꽍?섍퀬 ?덉뒿?덈떎...</p>
++                <p class="pulsing-text">랜딩페이지를 분석하고 있습니다...</p>
+             </div>
+             <div id="landingResult"></div>
+@@ -1118,5 +1199,5 @@
+     </div>
+ 
+-    <!-- ?먥븧??愿묎퀬 ?곸꽭 酉?紐⑤떖 (?먮낯 誘몃뵒??& ?곸꽭 ?뺣낫) ?먥븧??-->
++    <!-- ═══ 광고 상세 뷰 모달 (원본 미디어 & 상세 정보) ═══ -->
+     <div id="adDetailModal" class="modal hidden">
+         <div class="modal-content" style="max-width:600px; padding:0; overflow:hidden; border-radius:16px;">
+@@ -1124,5 +1205,5 @@
+                 style="padding: 1rem 1.5rem; border-bottom: 1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; background:#f8fafc;">
+                 <h2 class="modal-title" style="margin:0; font-size:1.1rem;"><i
+-                        class="fa-solid fa-circle-info text-gradient"></i> 愿묎퀬 ?몃??뺣낫</h2>
++                        class="fa-solid fa-circle-info text-gradient"></i> 광고 세부정보</h2>
+                 <span class="close-btn" style="position:static; padding:0;"
+                     onclick="document.getElementById('adDetailModal').classList.add('hidden'); const v = document.getElementById('adDetailModalBody').querySelector('video'); if(v) v.pause();">&times;</span>
+@@ -1136,5 +1217,5 @@
+     </div>
+ 
+-    <!-- ?먮컮?ㅽ겕由쏀듃 -->
++    <!-- 자바스크립트 -->
+     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+@@ -1144,6 +1225,19 @@
+     <script src="/static/creative.js?v=13"></script>
+     <script src="/static/monitor.js?v=8"></script>
+-
+-    <!-- ?뮠 梨쀫큸 ?뚮줈??踰꾪듉 諛??꾩젽 -->
++    <script src="/static/prompts.js?v=1"></script>
++
++    <!-- ✨ 프롬프트 작성/상세보기 모달 (동적 생성도 가능하지만 하드코딩된 모달 틀) -->
++    <div id="promptModal" class="hidden"
++        style="position: fixed; inset: 0; background: rgba(15,23,42,0.8); backdrop-filter: blur(4px); z-index: 100000; display: flex; align-items: center; justify-content: center; overflow-y: auto; padding: 2rem;">
++        <div id="promptModalContent"
++            style="background: white; width: 100%; max-width: 800px; padding: 2.5rem; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); position: relative;">
++            <button id="closePromptModal"
++                style="position: absolute; top: 1.5rem; right: 1.5rem; background: none; border: none; font-size: 1.5rem; color: #94a3b8; cursor: pointer;"><i
++                    class="fa-solid fa-xmark"></i></button>
++            <div id="promptModalBody"></div>
++        </div>
++    </div>
++
++    <!-- 💬 챗봇 플로팅 버튼 및 위젯 -->
+     <div id="chatbotContainer"
+         style="position: fixed; bottom: 2rem; right: 2rem; z-index: 9999; display: flex; flex-direction: column; align-items: flex-end;">
+@@ -1152,5 +1246,5 @@
+             <div
+                 style="background: #3b82f6; color: white; padding: 1rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+-                <span><i class="fa-solid fa-robot"></i> Motiverse AI 梨쀫큸</span>
++                <span><i class="fa-solid fa-robot"></i> Motiverse AI 챗봇</span>
+                 <i class="fa-solid fa-xmark" id="closeChatbot" style="cursor:pointer; font-size: 1.2rem;"></i>
+             </div>
+@@ -1159,10 +1253,10 @@
+                 <div
+                     style="background: white; padding: 0.8rem 1rem; border-radius: 12px; border: 1px solid #e2e8f0; align-self: flex-start; max-width: 85%; color: #334155;">
+-                    ?덈뀞?섏꽭?? Motiverse???ъ슜踰뺤씠 沅곴툑?섏떆嫄곕굹 ?꾩슂??湲곕뒫(媛쒕컻 ?붿껌)???덉쑝?쒕㈃ ?명븯寃?留먯??댁＜?몄슂 ?삃
++                    안녕하세요! Motiverse의 사용법이 궁금하시거나 필요한 기능(개발 요청)이 있으시면 편하게 말씀해주세요 😊
+                 </div>
+             </div>
+             <div
+                 style="padding: 0.8rem; background: white; border-top: 1px solid #e2e8f0; display: flex; gap: 0.5rem; align-items: center;">
+-                <input type="text" id="chatInput" placeholder="吏덈Ц?대굹 湲곕뒫 ?붿껌???낅젰?섏꽭??.."
++                <input type="text" id="chatInput" placeholder="질문이나 기능 요청을 입력하세요..."
+                     style="flex: 1; padding: 0.7rem 1rem; border: 1px solid #e2e8f0; border-radius: 20px; outline: none; font-size: 0.9rem;"
+                     onkeypress="if(event.key === 'Enter') window.sendChatMessage()" />
+@@ -1188,4 +1282,10 @@
+                     if (chatMsgs) chatMsgs.scrollTop = chatMsgs.scrollHeight;
+                 }, 10);
++
++                // fallback to sync read status 
++                const botReplies = document.querySelectorAll('#chatMessages > div[style*="background: white; padding: 0.8rem 1rem;"]');
++                if (botReplies.length > 0) {
++                    localStorage.setItem('motiverse_chatbot_read_count', botReplies.length.toString());
++                }
+             }
+         });
+@@ -1194,5 +1294,5 @@
+         });
+ 
+-        // ?ъ슜?먯쓽 臾몄쓽?????愿由ъ옄 ?듬? 濡쒕뵫
++        // 사용자의 문의에 대한 관리자 답변 로딩
+         window.loadChatbotReplies = async function () {
+             if (!window._motiverseSession || !window.supabaseClient) return;
+@@ -1203,11 +1303,11 @@
+                 if (data && data.length > 0) {
+                     const chatMessages = document.getElementById('chatMessages');
+-                    let newReplyCount = 0;
+-
+-                    // ?ㅻ옒???쒖쑝濡??뚮뜑留?(媛??理쒓렐??諛묒쑝濡?媛?꾨줉 ?쒓컙???뺣젹)
++                    let totalReplyCount = 0;
++
++                    // 오래된 순으로 렌더링 (가장 최근이 밑으로 가도록 시간순 정렬)
+                     const sorted = [...data].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+ 
+                     sorted.forEach(req => {
+-                        // ?닿? 蹂대궦 吏덈Ц 湲곕줉
++                        // 내가 보낸 질문 기록
+                         const userDiv = document.createElement('div');
+                         userDiv.style.cssText = "background: #3b82f6; color: white; padding: 0.8rem 1rem; border-radius: 12px; align-self: flex-end; max-width: 85%; word-break: break-word;";
+@@ -1215,7 +1315,7 @@
+                         chatMessages.appendChild(userDiv);
+ 
+-                        // ?쒕쾭濡쒕??곗쓽 ?듬? (?덉쑝硫?
++                        // 서버로부터의 답변 (있으면)
+                         if (req.admin_reply) {
+-                            newReplyCount++;
++                            totalReplyCount++;
+                             const botDiv = document.createElement('div');
+                             botDiv.style.cssText = "background: white; padding: 0.8rem 1rem; border-radius: 12px; border: 1px solid #e2e8f0; align-self: flex-start; max-width: 85%; word-break: keep-all; line-height: 1.6; color: #334155;";
+@@ -1223,5 +1323,5 @@
+                             let htmlText = req.admin_reply;
+                             if (window.marked) htmlText = window.marked.parse(htmlText);
+-                            botDiv.innerHTML = `<div style="font-size: 0.75rem; color: #10b981; font-weight: 700; margin-bottom: 0.3rem;"><i class="fa-solid fa-bell"></i> ?듬????꾩갑?덉뒿?덈떎!</div>` + htmlText;
++                            botDiv.innerHTML = `<div style="font-size: 0.75rem; color: #10b981; font-weight: 700; margin-bottom: 0.3rem;"><i class="fa-solid fa-bell"></i> 답변이 도착했습니다!</div>` + htmlText;
+ 
+                             botDiv.querySelectorAll('ul, ol').forEach(list => { list.style.paddingLeft = '1.5rem'; list.style.marginTop = '0.5rem'; });
+@@ -1231,8 +1331,8 @@
+                             chatMessages.appendChild(botDiv);
+                         } else {
+-                            // ?湲?以묒씤 寃쎌슦
++                            // 대기 중인 경우
+                             const paddingDiv = document.createElement('div');
+                             paddingDiv.style.cssText = "background: transparent; color: #94a3b8; font-size: 0.8rem; align-self: flex-start; padding: 0 0.5rem;";
+-                            paddingDiv.innerText = "?붿껌?ы빆 ?뺤씤 以묒엯?덈떎...";
++                            paddingDiv.innerText = "요청사항 확인 중입니다...";
+                             chatMessages.appendChild(paddingDiv);
+                         }
+@@ -1241,11 +1341,15 @@
+                     chatMessages.scrollTop = chatMessages.scrollHeight;
+ 
+-                    // ???듬? ?뚮┝ ?쒖떆 (諛곗?)
+-                    if (newReplyCount > 0) {
++                    // 사용자가 예전에 마지막으로 읽은 답변 개수를 로드
++                    const readCount = parseInt(localStorage.getItem('motiverse_chatbot_read_count') || '0', 10);
++                    const unreadCount = totalReplyCount - readCount;
++
++                    // 새 답변 알림 표시 (배지)
++                    if (unreadCount > 0) {
+                         const toggleBtn = document.getElementById('chatbotToggleBtn');
+                         const badge = document.createElement('div');
+                         badge.style.cssText = "position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; font-size: 0.75rem; font-weight: bold; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white;";
+-                        badge.innerText = newReplyCount;
+-                        // 以묐났 諛⑹?
++                        badge.innerText = unreadCount;
++                        // 중복 방지
+                         if (!toggleBtn.querySelector('.badge')) {
+                             badge.className = 'badge';
+@@ -1253,10 +1357,14 @@
+                             toggleBtn.style.position = 'relative';
+ 
+-                            // 梨쀫큸 ?대㈃ 諛곗? ?쒓굅
++                            // 챗봇 열면 배치 제거 및 로컬스토리지 카운트 업데이트
+                             toggleBtn.addEventListener('click', function removeBadge() {
+                                 if (badge.parentNode) badge.parentNode.removeChild(badge);
++                                localStorage.setItem('motiverse_chatbot_read_count', totalReplyCount.toString());
+                                 toggleBtn.removeEventListener('click', removeBadge);
+                             });
+                         }
++                    } else if (chatMessages.parentElement && !chatMessages.parentElement.classList.contains('hidden')) {
++                        // 이미 챗봇 창이 열려 있는 상태에서 업데이트를 받았다면 그냥 즉시 최신 카운트를 갱신함
++                        localStorage.setItem('motiverse_chatbot_read_count', totalReplyCount.toString());
+                     }
+                 }
+@@ -1266,5 +1374,5 @@
+         };
+ 
+-        // DOMContentLoaded ???먮뒗 濡쒓렇???몄뀡 ?뺤씤 ??loadChatbotReplies ?몄텧
++        // DOMContentLoaded 후 또는 로그인 세션 확인 후 loadChatbotReplies 호출
+         document.addEventListener('DOMContentLoaded', () => {
+             setTimeout(() => {
+@@ -1272,5 +1380,6 @@
+                     window.loadChatbotReplies();
+                 }
+-            }, 2000); // ?쒕젅?대? 以섏꽌 auth.js 媛 ?몄뀡???명똿???쒓컙??以?        });
++            }, 2000); // 딜레이를 줘서 auth.js 가 세션을 세팅할 시간을 줌
++        });
+ 
+         window.sendChatMessage = async function () {
+@@ -1328,5 +1437,5 @@
+                 const errDiv = document.createElement('div');
+                 errDiv.style.cssText = "background: #fee2e2; color: #ef4444; padding: 0.8rem 1rem; border-radius: 12px; align-self: flex-start; max-width: 85%;";
+-                errDiv.innerText = "?ㅻ쪟媛 諛쒖깮?덉뒿?덈떎: " + e.message;
++                errDiv.innerText = "오류가 발생했습니다: " + e.message;
+                 chatMessages.appendChild(errDiv);
+             }
+@@ -1334,5 +1443,51 @@
+         }
+     </script>
++    <!-- 🏢 프로필 온보딩 모달 (강제 설정) -->
++    <div id="profileOnboardingModal" class="hidden"
++        style="position: fixed; inset: 0; background: rgba(15,23,42,0.8); backdrop-filter: blur(4px); z-index: 999999; display: flex; align-items: center; justify-content: center;">
++        <div
++            style="background: white; width: 400px; padding: 2.5rem; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);">
++            <div style="text-align: center; margin-bottom: 2rem;">
++                <div
++                    style="width: 48px; height: 48px; background: #eff6ff; color: #3b82f6; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 1rem;">
++                    <i class="fa-solid fa-id-card"></i>
++                </div>
++                <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.5rem 0;">환영합니다!
++                </h2>
++                <p style="font-size: 0.9rem; color: var(--text-muted); margin: 0;">원활한 서비스 이용을 위해 소속 정보를 입력해 주세요.</p>
++            </div>
++
++            <div style="display: flex; flex-direction: column; gap: 1rem;">
++                <div>
++                    <label
++                        style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.4rem;">소속
++                        회사 <span style="color:#ef4444;">*</span></label>
++                    <select id="onboardCompany"
++                        style="width: 100%; padding: 0.8rem 1rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; font-size: 0.9rem; color: var(--text-main); background: white; box-sizing: border-box;">
++                        <option value="" disabled selected>회사 선택</option>
++                    </select>
++                </div>
++                <div>
++                    <label
++                        style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.4rem;">부서명
++                        <span style="color:#ef4444;">*</span></label>
++                    <input type="text" id="onboardDept" placeholder="예: 서비스기획팀"
++                        style="width: 100%; padding: 0.8rem 1rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; font-size: 0.9rem; color: var(--text-main); box-sizing: border-box;">
++                </div>
++                <div>
++                    <label
++                        style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.4rem;">이름
++                        <span style="color:#ef4444;">*</span></label>
++                    <input type="text" id="onboardName" placeholder="실명을 입력해주세요"
++                        style="width: 100%; padding: 0.8rem 1rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; font-size: 0.9rem; color: var(--text-main); box-sizing: border-box;">
++                </div>
++            </div>
++            <button id="saveOnboardBtn"
++                style="width: 100%; margin-top: 2rem; background: #3b82f6; color: white; padding: 0.8rem; border-radius: 8px; border: none; font-weight: 600; font-size: 1rem; cursor: pointer; transition: background 0.2s;">
++                저장 및 시작하기
++            </button>
++        </div>
++    </div>
+ </body>
+ 
+-</html>
++</html>

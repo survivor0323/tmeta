@@ -85,6 +85,7 @@
             <div class="tab-chip" data-target="adminViewUserDetail">개별 유저 상세 (히스토리/북마크)</div>
             <div class="tab-chip" data-target="adminViewQueries">전체 검색어 로그</div>
             <div class="tab-chip" data-target="adminViewRequests">기능 요청 및 문의</div>
+            <div class="tab-chip" data-target="adminViewCompanies">🏢 회사 관리</div>
         </div>
 
         <div id="adminLoading" class="loading-state">
@@ -249,6 +250,30 @@
                 </table>
                 <div class="pagination-container" id="adminRequestsPagination"
                     style="margin-top: 1.5rem; display: flex; justify-content: center; gap: 0.5rem;"></div>
+            </div>
+
+            <!-- 6. 회사 관리 -->
+            <div id="adminViewCompanies" class="admin-view-panel hidden">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2>등록된 회사 목록</h2>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="newCompanyName" placeholder="새 회사명 입력"
+                            style="padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.9rem;">
+                        <button class="btn" id="addCompanyBtn" style="padding: 0.5rem 1rem;">
+                            <i class="fa-solid fa-plus"></i> 회사 등록
+                        </button>
+                    </div>
+                </div>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>회사명</th>
+                            <th>등록일</th>
+                            <th>관리</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminCompaniesTbody"></tbody>
+                </table>
             </div>
         </div>
     </div>

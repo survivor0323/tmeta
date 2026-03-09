@@ -99,6 +99,74 @@ async function checkAdminAndUpsertProfile(user) {
         console.warn("[Admin Check] 예외 발생:", e.message);
         adminBtn.classList.add("hidden");
     }
+
+    // 이어서 온보딩 프로필 체크 실행
+    await checkProfileOnboarding();
+}
+
+// ─── 온보딩 체크 (이름, 회사, 부서) ────────────────────
+async function checkProfileOnboarding() {
+    const modal = document.getElementById("profileOnboardingModal");
+    if (!modal) return;
+    try {
+        const { data, error } = await supabaseClient.rpc("get_my_profile");
+        if (error || !data) {
+            console.warn("[Onboarding Check] RPC 실패 (마이그레이션 전일 수 있습니다):", error?.message);
+            return;
+        }
+
+        // 필수 정보가 하나라도 없으면 온보딩 팝업 표시
+        if (!data.full_name || !data.company_id || !data.department) {
+            const { data: companies, error: compErr } = await supabaseClient.rpc("get_companies");
+            if (!compErr && companies) {
+                const select = document.getElementById("onboardCompany");
+                select.innerHTML = '<option value="" disabled selected>회사 선택</option>';
+                companies.forEach(c => {
+                    const opt = document.createElement("option");
+                    opt.value = c.id;
+                    opt.textContent = c.name;
+                    select.appendChild(opt);
+                });
+            }
+
+            // 기존 데이터가 있다면 채워줌 (부분 수정 방지)
+            if (data.full_name) document.getElementById("onboardName").value = data.full_name;
+            if (data.department) document.getElementById("onboardDept").value = data.department;
+
+            modal.classList.remove("hidden");
+
+            const btn = document.getElementById("saveOnboardBtn");
+            btn.onclick = async () => {
+                const companyId = document.getElementById("onboardCompany").value;
+                const dept = document.getElementById("onboardDept").value.trim();
+                const name = document.getElementById("onboardName").value.trim();
+
+                if (!companyId || !dept || !name) {
+                    alert("모든 정보(소속 회사, 부서명, 이름)를 입력해 주세요.");
+                    return;
+                }
+
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 저장 중...';
+                btn.disabled = true;
+
+                const { error: saveErr } = await supabaseClient.rpc("update_my_profile", {
+                    p_full_name: name,
+                    p_company_id: companyId,
+                    p_department: dept
+                });
+
+                if (saveErr) {
+                    alert("저장에 실패했습니다. 다시 시도해 주세요.");
+                    btn.innerHTML = '저장 및 시작하기';
+                    btn.disabled = false;
+                } else {
+                    modal.classList.add("hidden");
+                }
+            };
+        }
+    } catch (e) {
+        console.warn("[Onboarding Check] 예외 발생:", e.message);
+    }
 }
 
 // ─── 구글 로그인 ─────────────────────────────────────

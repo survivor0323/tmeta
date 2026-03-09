@@ -596,6 +596,44 @@ async def admin_refine_reply(req: RefineReplyRequest, authorization: str = Heade
         logger.error(f"AI 답변 교정 중 오류: {e}")
         return {"status": "error", "message": "AI 교정에 실패했습니다."}
 
+class PromptTitleRequest(BaseModel):
+    prompt_text: str
+    result_text: str = ""
+
+@app.post("/api/v1/generate-prompt-title")
+async def generate_prompt_title(req: PromptTitleRequest, authorization: str = Header(default="")):
+    """프롬프트와 결과를 바탕으로 AI가 적절한 제목을 생성합니다."""
+    # CORS/Auth check
+    user_id = get_user_id_from_token(authorization)
+    if not user_id:
+        return {"status": "error", "message": "인증 정보가 없습니다."}
+
+    try:
+        from openai import OpenAI
+        import os
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        
+        system_prompt = "주어진 프롬프트와 결과 텍스트를 분석하여, 이 프롬프트가 어떤 목적이나 의도로 작성된 것인지 잘 나타내는 핵심적인 '제목'을 15자 이내로 1개만 반환하세요. 앞뒤 부연 설명, 마크다운 따옴표 등은 모두 제외하고 순수한 제목 텍스트만 출력해야 합니다. 예: 블로그 포스팅 작성을 위한 프롬프트"
+        user_content = f"[프롬프트]\n{req.prompt_text}\n\n[결과 텍스트]\n{req.result_text}"
+        
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_content}
+            ],
+            temperature=0.5,
+        )
+        title = response.choices[0].message.content.strip()
+        # 불필요한 따옴표 제거
+        if title.startswith('"') and title.endswith('"'):
+             title = title[1:-1]
+        
+        return {"status": "success", "data": {"title": title}}
+    except Exception as e:
+        logger.error(f"프롬프트 제목 생성 중 오류: {e}")
+        return {"status": "error", "message": "제목 생성에 실패했습니다."}
+
 @app.post("/api/v1/recommend-keywords")
 async def get_recommended_keywords(req: RecommendRequest):
     try:

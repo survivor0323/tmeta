@@ -4,12 +4,15 @@
     "version": "1.0.0",
     "description": "사내 직원용 AI 프롬프트 및 결과물 캡처, 중앙 DB 관리",
     "action": {
-        "default_popup": "popup/popup.html",
+        "default_title": "Motiverse Prompt Hub",
         "default_icon": {
             "16": "icons/icon16.png",
             "48": "icons/icon48.png",
             "128": "icons/icon128.png"
         }
+    },
+    "side_panel": {
+        "default_path": "popup/popup.html"
     },
     "icons": {
         "16": "icons/icon16.png",
@@ -34,9 +37,20 @@
             "css": [
                 "content/content.css"
             ]
+        },
+        {
+            "matches": [
+                "http://localhost:8000/*",
+                "http://127.0.0.1:8000/*",
+                "https://*.vercel.app/*"
+            ],
+            "js": [
+                "content/auth_sync.js"
+            ]
         }
     ],
     "permissions": [
+        "sidePanel",
         "storage",
         "activeTab",
         "scripting",

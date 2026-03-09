@@ -79,6 +79,7 @@ async function loadAdminData() {
         populateUserDetailSelect(data.users);
         renderAllQueries(data.history);
         renderRequests(data.feature_requests || []);
+        await loadCompaniesData();
 
         content.classList.remove('hidden');
     } catch (e) {
@@ -442,3 +443,161 @@ function renderRequests(requests) {
         });
     });
 }
+
+// ─── 6. 회사 관리 (Company Management) ────────────────────────
+async function loadCompaniesData() {
+    try {
+        const { data, error } = await window.supabaseClient.rpc('get_companies');
+        if (error) {
+            console.error("Failed to load companies:", error);
+            return;
+        }
+        renderCompanies(data || []);
+    } catch (e) {
+        console.error("Error loading companies:", e);
+    }
+}
+
+function renderCompanies(companies) {
+    const tbody = document.getElementById('adminCompaniesTbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    if (companies.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 2rem;">등록된 회사가 없습니다.</td></tr>';
+        return;
+    }
+
+    companies.forEach(company => {
+        const tr = document.createElement('tr');
+
+        const tdName = document.createElement('td');
+        const editInput = document.createElement('input');
+        editInput.type = 'text';
+        editInput.value = company.name;
+        editInput.style.padding = '0.4rem 0.8rem';
+        editInput.style.borderRadius = '6px';
+        editInput.style.border = '1px solid #cbd5e1';
+        editInput.style.display = 'none';
+
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = company.name;
+
+        tdName.appendChild(nameSpan);
+        tdName.appendChild(editInput);
+
+        const tdDate = document.createElement('td');
+        tdDate.textContent = typeof company.created_at !== 'undefined' && company.created_at ? new Date(company.created_at).toLocaleDateString() : '-';
+
+        const tdAction = document.createElement('td');
+        tdAction.style.display = 'flex';
+        tdAction.style.gap = '0.5rem';
+
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn';
+        editBtn.style.background = '#e2e8f0';
+        editBtn.style.color = '#475569';
+        editBtn.innerHTML = '<i class="fa-solid fa-pen"></i> 수정';
+
+        const saveBtn = document.createElement('button');
+        saveBtn.className = 'btn';
+        saveBtn.style.background = '#10b981';
+        saveBtn.style.color = 'white';
+        saveBtn.innerHTML = '<i class="fa-solid fa-check"></i> 저장';
+        saveBtn.style.display = 'none';
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'btn';
+        delBtn.style.background = '#fee2e2';
+        delBtn.style.color = '#ef4444';
+        delBtn.innerHTML = '<i class="fa-solid fa-trash"></i> 삭제';
+
+        // Edit functionality
+        editBtn.onclick = () => {
+            nameSpan.style.display = 'none';
+            editInput.style.display = 'inline-block';
+            editBtn.style.display = 'none';
+            saveBtn.style.display = 'inline-block';
+        };
+
+        saveBtn.onclick = async () => {
+            const newName = editInput.value.trim();
+            if (!newName) {
+                alert("회사명을 입력하세요.");
+                return;
+            }
+            if (!confirm(`회사명을 '${newName}'(으)로 수정하시겠습니까?`)) return;
+
+            saveBtn.disabled = true;
+            const { error } = await window.supabaseClient.rpc('manage_companies', {
+                action: 'update',
+                p_id: company.id,
+                p_name: newName
+            });
+            if (error) {
+                alert("수정 실패: " + error.message);
+                saveBtn.disabled = false;
+            } else {
+                await loadCompaniesData();
+            }
+        };
+
+        // Delete functionality
+        delBtn.onclick = async () => {
+            if (!confirm(`'${company.name}' 회사를 정말 삭제하시겠습니까?\n(경고: 이 회사에 소속된 유저의 프로필 정보가 영향받을 수 있습니다)`)) return;
+
+            delBtn.disabled = true;
+            const { error } = await window.supabaseClient.rpc('manage_companies', {
+                action: 'delete',
+                p_id: company.id,
+                p_name: ''
+            });
+            if (error) {
+                alert("삭제 실패: " + error.message);
+                delBtn.disabled = false;
+            } else {
+                await loadCompaniesData();
+            }
+        };
+
+        tdAction.appendChild(editBtn);
+        tdAction.appendChild(saveBtn);
+        tdAction.appendChild(delBtn);
+
+        tr.appendChild(tdName);
+        tr.appendChild(tdDate);
+        tr.appendChild(tdAction);
+
+        tbody.appendChild(tr);
+    });
+}
+
+// Add New Company
+document.addEventListener('DOMContentLoaded', () => {
+    const addCompanyBtn = document.getElementById('addCompanyBtn');
+    if (addCompanyBtn) {
+        addCompanyBtn.addEventListener('click', async () => {
+            const nameInput = document.getElementById('newCompanyName');
+            const p_name = nameInput.value.trim();
+            if (!p_name) {
+                alert("등록할 회사명을 입력해 주세요.");
+                return;
+            }
+
+            addCompanyBtn.disabled = true;
+            const { error } = await window.supabaseClient.rpc('manage_companies', {
+                action: 'insert',
+                p_id: '00000000-0000-0000-0000-000000000000',
+                p_name: p_name
+            });
+
+            if (error) {
+                alert("등록 실패: " + error.message);
+            } else {
+                nameInput.value = '';
+                await loadCompaniesData();
+            }
+            addCompanyBtn.disabled = false;
+        });
+    }
+});
