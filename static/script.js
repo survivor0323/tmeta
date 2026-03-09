@@ -316,8 +316,8 @@ document.addEventListener("DOMContentLoaded", () => {
         card.className = "ad-card";
 
         const mediaTag = ad.media_type === "video"
-            ? `<video class="ad-media" src="${ad.media_url}" autoplay loop muted playsinline></video>`
-            : `<img class="ad-media" src="${ad.media_url}" alt="Ad Image">`;
+            ? `<video class="ad-media" src="${ad.media_url}" autoplay loop muted playsinline referrerpolicy="no-referrer"></video>`
+            : `<img class="ad-media" src="${ad.media_url}" alt="Ad Image" referrerpolicy="no-referrer">`;
 
         card.innerHTML = `
             <div class="ad-media-wrapper">
@@ -632,8 +632,8 @@ function showAdPreviewModal(ad, query, platform) {
     // 기존 모달 제거
     document.getElementById('adPreviewModal')?.remove();
     const mediaHtml = ad.media_type === 'video'
-        ? `<video class="preview-media" src="${ad.media_url}" autoplay loop muted controls playsinline></video>`
-        : `<img class="preview-media" src="${ad.image_url || ad.media_url || ''}" alt="">`;
+        ? `<video class="preview-media" src="${ad.media_url}" autoplay loop muted controls playsinline referrerpolicy="no-referrer"></video>`
+        : `<img class="preview-media" src="${ad.image_url || ad.media_url || ''}" alt="" referrerpolicy="no-referrer">`;
     const modal = document.createElement('div');
     modal.id = 'adPreviewModal';
     modal.className = 'ad-preview-modal';
@@ -852,8 +852,8 @@ window.showAdDetailModal = function (ad) {
                 <!-- 이미지/영상 원본 -->
                 <div style="background:#f8fafc; text-align:center;">
                     ${ad.media_type === "video"
-            ? `<video controls autoplay loop playsinline src="${ad.media_url}" style="max-width:100%; max-height: 500px; display:block; margin:0 auto;"></video>`
-            : `<img src="${ad.media_url}" alt="${ad.brand || 'Ad'}" style="width:100%; display:block; margin:0 auto;">`}
+            ? `<video controls autoplay loop playsinline src="${ad.media_url}" style="max-width:100%; max-height: 500px; display:block; margin:0 auto;" referrerpolicy="no-referrer"></video>`
+            : `<img src="${ad.media_url}" alt="${ad.brand || 'Ad'}" style="width:100%; display:block; margin:0 auto;" referrerpolicy="no-referrer">`}
                 </div>
                 
                 <!-- 하단 CTA 영역 -->

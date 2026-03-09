@@ -1061,9 +1061,9 @@ def generate_ai_insight_report(ads_data: List[Dict], query: str, platform: str) 
             ad_index += 1
             placeholder = f"[MEDIA_TAG_{ad_index}]"
             if media_type == 'video':
-                thumb_md = f"<video src='{media_url}' style='width: 150px; border-radius: 8px;' autoplay loop muted playsinline controls></video>"
+                thumb_md = f"<video src='{media_url}' style='width: 150px; border-radius: 8px;' autoplay loop muted playsinline controls referrerpolicy='no-referrer'></video>"
             else:
-                thumb_md = f"<img src='{media_url}' style='width: 150px; border-radius: 8px;' alt='ad_thumbnail' />"
+                thumb_md = f"<img src='{media_url}' style='width: 150px; border-radius: 8px;' alt='ad_thumbnail' referrerpolicy='no-referrer' />"
             media_map[placeholder] = thumb_md
             
         return f"- [{title}] 미디어: {ad.get('media_type')}, 시작일: {ad.get('start_date')}, 게재일수: {ad.get('active_days', 0)}, 좋아요: {ad.get('likes', 0)}\n  미디어썸네일: {placeholder}\n  본문: {body_text}..."

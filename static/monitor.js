@@ -1288,9 +1288,9 @@ window.showCompetitorDetail = function (brandName, platform, adsData = null, isK
                 thumb.style.cssText = "width: 40px; height: 40px; border-radius: 4px; background: #e2e8f0; flex-shrink: 0; overflow: hidden; display: flex; align-items: center; justify-content: center;";
                 if (ad.media_url) {
                     if (ad.media_type === 'video') {
-                        thumb.innerHTML = `<video src="${ad.media_url}" style="width:100%; height:100%; object-fit:cover;" muted></video>`;
+                        thumb.innerHTML = `<video src="${ad.media_url}" style="width:100%; height:100%; object-fit:cover;" muted referrerpolicy="no-referrer"></video>`;
                     } else {
-                        thumb.innerHTML = `<img src="${ad.media_url}" style="width:100%; height:100%; object-fit:cover;" />`;
+                        thumb.innerHTML = `<img src="${ad.media_url}" style="width:100%; height:100%; object-fit:cover;" referrerpolicy="no-referrer" />`;
                     }
                 } else {
                     thumb.innerHTML = `<i class="fa-regular fa-image" style="color:#94a3b8"></i>`;
