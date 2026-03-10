@@ -26,8 +26,35 @@
                 <button id="btnCaptureCurrent" class="btn btn-primary">방금 쓴 대화 캡처하기 (AI 모델)</button>
                 <hr />
                 <div class="manual-form">
+                    <input type="text" id="manualTitle" placeholder="프롬프트 제목 (비워두면 AI가 자동 생성)"
+                        style="width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid #cbd5e1; margin-bottom: 0.5rem; display: none;" />
                     <textarea id="manualPrompt" placeholder="핵심 프롬프트를 입력하세요" rows="8"></textarea>
                     <textarea id="manualResult" placeholder="결과 예시 텍스트 (옵션)" rows="8"></textarea>
+
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; align-items: center;">
+                        <select id="manualCategory" class="category-select"
+                            style="flex: 1; padding: 0.6rem; border-radius: 4px; border: 1px solid #cbd5e1;">
+                            <option value="일반" selected>카테고리: 일반</option>
+                            <option value="시장 조사 및 전략 (Insight & Strategy)">시장 조사·전략</option>
+                            <option value="카피라이팅 및 텍스트 (Copywriting)">카피라이팅·텍스트</option>
+                            <option value="소셜 미디어 및 콘텐츠 (Social & Viral)">소셜·콘텐츠</option>
+                            <option value="시각적 크리에이티브 (Visual Concept)">시각적 크리에이티브</option>
+                            <option value="영상 기획 및 스토리보드 (Video & Storyboard)">영상·스토리보드</option>
+                            <option value="캠페인 및 프로모션 (Campaign & Promo)">캠페인·프로모션</option>
+                            <option value="검색 최적화 및 광고 관리 (SEO & Paid Ads)">SEO·광고 관리</option>
+                            <option value="클라이언트 관리 및 보고 (Client & Report)">클라이언트·보고</option>
+                            <option value="브랜드 아이덴티티 및 정립 (Branding)">브랜드·정립</option>
+                            <option value="운영 및 행정 (Operations & Admin)">운영·행정</option>
+                            <option value="개발 및 프로그래밍 (Development)">개발·프로그래밍</option>
+                            <option value="기타 (Others)">기타</option>
+                        </select>
+                        <button id="btnAiAnalyze" class="btn"
+                            style="background: #e2e8f0; color: #475569; width: auto; font-size: 0.8rem; padding: 0.6rem 0.8rem;"
+                            type="button" title="내용을 바탕으로 카테고리를 자동 추천합니다">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> AI 분류
+                        </button>
+                    </div>
+
                     <button id="btnSaveManual" class="btn btn-secondary">저장하기</button>
                 </div>
             </div>

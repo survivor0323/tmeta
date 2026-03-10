@@ -92,6 +92,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('btnCaptureCurrent').addEventListener('click', handleCaptureAI);
     document.getElementById('btnSaveManual').addEventListener('click', handleManualSave);
+    document.getElementById('btnAiAnalyze').addEventListener('click', handleAiAnalyze);
 });
 
 async function handleCaptureAI() {
@@ -138,9 +139,70 @@ async function handleCaptureAI() {
             lastSource: response.data.source // 나중에 저장 시 출처 기록 위함
         });
 
-        statusMsg.textContent = '✨ 캡처 성공! 내용을 확인 후 저장하세요.';
-        statusMsg.style.color = '#10b981';
+        statusMsg.textContent = '✨ 내용 캡처 성공! AI 카테고리 분류 분석 중...';
+        statusMsg.style.color = '#3b82f6';
+
+        await handleAiAnalyze();
+
+        // setTimeout is used to overwrite the "AI analyze complete" message after a short delay
+        setTimeout(() => {
+            statusMsg.textContent = '✨ 캡처 성공! 내용을 확인/수정 후 저장하세요.';
+            statusMsg.style.color = '#10b981';
+        }, 3000);
     });
+}
+
+async function handleAiAnalyze() {
+    const prompt = document.getElementById('manualPrompt').value.trim();
+    const result = document.getElementById('manualResult').value.trim();
+    const statusMsg = document.getElementById('statusMessage');
+
+    if (!prompt) {
+        statusMsg.textContent = '핵심 프롬프트를 먼저 입력해주세요.';
+        statusMsg.style.color = '#ef4444';
+        return;
+    }
+
+    statusMsg.textContent = 'AI가 내용을 분석 중입니다...';
+    statusMsg.style.color = '#3b82f6';
+
+    try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
+            const res = await fetch('http://localhost:8000/api/v1/generate-prompt-title', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ prompt_text: prompt, result_text: result })
+            });
+            if (res.ok) {
+                const json = await res.json();
+                if (json.status === 'success') {
+                    if (json.data.category) {
+                        const catSelect = document.getElementById('manualCategory');
+                        for (let i = 0; i < catSelect.options.length; i++) {
+                            if (json.data.category.includes(catSelect.options[i].value) || catSelect.options[i].value.includes(json.data.category)) {
+                                catSelect.selectedIndex = i;
+                                break;
+                            }
+                        }
+                    }
+                    if (json.data.title) {
+                        window.lastGeneratedTitle = json.data.title;
+                    }
+                    statusMsg.textContent = '✨ AI 자동 분류 완료!';
+                    statusMsg.style.color = '#10b981';
+                }
+            } else {
+                throw new Error('API 오류');
+            }
+        }
+    } catch (e) {
+        statusMsg.textContent = '분석에 실패했습니다.';
+        statusMsg.style.color = '#ef4444';
+    }
 }
 
 async function handleManualSave() {
@@ -161,8 +223,11 @@ async function handleManualSave() {
         const { data: { session } } = await supabaseClient.auth.getSession();
         let finalTitle = prompt.substring(0, 15) + '...'; // fallback
 
-        // AI 제목 생성 API 호출
-        if (session) {
+        // 사용자가 이미 AI 버튼을 눌렀거나 캡처 후 자동 생성된 제목이 있는지 확인 
+        if (window.lastGeneratedTitle) {
+            finalTitle = window.lastGeneratedTitle;
+        } else if (session) {
+            // AI 제목 생성 API 호출
             try {
                 const res = await fetch('http://localhost:8000/api/v1/generate-prompt-title', {
                     method: 'POST',
@@ -176,12 +241,17 @@ async function handleManualSave() {
                     const json = await res.json();
                     if (json.status === 'success' && json.data.title) {
                         finalTitle = json.data.title;
+                        if (json.data.category && document.getElementById('manualCategory').value === '일반') {
+                            document.getElementById('manualCategory').value = json.data.category; // 방어 로직 (카테고리 업데이트 안되어있을 수도 있으니)
+                        }
                     }
                 }
             } catch (e) {
                 console.warn('Title generation failed', e);
             }
         }
+
+        const selectedCategory = document.getElementById('manualCategory').value || '일반';
 
         // 마지막으로 사용된 캡처 출처 가져오기
         const locResult = await chromeStorageAdapter.getItem('lastSource');
@@ -192,7 +262,7 @@ async function handleManualSave() {
             prompt_text: prompt,
             source_name: sourceName,
             user_id: currentUser.id,
-            category: '일반',
+            category: selectedCategory,
             result_text: result || null
         });
 
@@ -202,6 +272,8 @@ async function handleManualSave() {
         statusMsg.style.color = '#10b981';
         document.getElementById('manualPrompt').value = '';
         document.getElementById('manualResult').value = '';
+        document.getElementById('manualCategory').value = '일반';
+        window.lastGeneratedTitle = null;
 
         // Clear local storage on success
         chrome.storage.local.remove(['manualPrompt', 'manualResult', 'lastSource']);

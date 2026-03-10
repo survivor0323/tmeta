@@ -166,7 +166,9 @@ function renderPrompts(prompts) {
             '최적화': { bg: '#ecfdf5', text: '#059669', icon: 'fa-solid fa-chart-line' },
             '클라이언트': { bg: '#f1f5f9', text: '#475569', icon: 'fa-solid fa-handshake' },
             '브랜드': { bg: '#f0fdf4', text: '#16a34a', icon: 'fa-solid fa-fingerprint' },
-            '운영': { bg: '#fffbeb', text: '#b45309', icon: 'fa-solid fa-briefcase' }
+            '운영': { bg: '#fffbeb', text: '#b45309', icon: 'fa-solid fa-briefcase' },
+            '개발': { bg: '#e0e7ff', text: '#4338ca', icon: 'fa-solid fa-code' },
+            '기타': { bg: '#f8fafc', text: '#64748b', icon: 'fa-solid fa-tag' }
         };
         // Find matching style or fallback to default green
         const matchedKey = Object.keys(catStyles).find(k => p.category && p.category.includes(k));
@@ -192,10 +194,10 @@ function renderPrompts(prompts) {
         };
 
         // Extract tags or fallback
-        const tagList = p.tags && Array.isArray(p.tags) && p.tags.length > 0 ? p.tags : (p.source_name ? [p.source_name] : ['일반']);
-        const tagsHtml = tagList.slice(0, 2).map(tag =>
+        const tagList = p.tags && Array.isArray(p.tags) && p.tags.length > 0 ? p.tags : (p.source_name ? [p.source_name] : []);
+        const tagsHtml = tagList.length > 0 ? tagList.slice(0, 2).map(tag =>
             `<span style="font-size: 0.75rem; font-weight: 600; color: #3b82f6; cursor: pointer; padding: 0;">${tag}</span>`
-        ).join('<span style="color:#cbd5e1; margin:0 4px;">·</span>');
+        ).join('<span style="color:#cbd5e1; margin:0 4px;">·</span>') : '';
 
         // Short description logic
         const descText = p.result_text ? p.result_text : (p.source_name ? p.source_name + ' 기반으로 작성된 맞춤형 프롬프트입니다.' : 'AI 비즈니스 및 실무 작업을 돕는 프롬프트입니다.');
@@ -277,11 +279,19 @@ function openPromptCreateModal() {
                         <div>
                             <label style="display:block; font-weight:600; margin-bottom:0.4rem;">카테고리</label>
                             <select id="p_category" style="width:100%; padding: 0.8rem; border-radius:8px; border:1px solid #cbd5e1; outline:none;">
-                                <option value="일반">일반</option>
-                                <option value="마케팅">마케팅</option>
-                                <option value="기획">기획</option>
-                                <option value="개발">개발</option>
-                                <option value="디자인">디자인</option>
+                                <option value="일반" selected>일반</option>
+                                <option value="시장 조사 및 전략 (Insight & Strategy)">시장 조사·전략</option>
+                                <option value="카피라이팅 및 텍스트 (Copywriting)">카피라이팅·텍스트</option>
+                                <option value="소셜 미디어 및 콘텐츠 (Social & Viral)">소셜·콘텐츠</option>
+                                <option value="시각적 크리에이티브 (Visual Concept)">시각적 크리에이티브</option>
+                                <option value="영상 기획 및 스토리보드 (Video & Storyboard)">영상·스토리보드</option>
+                                <option value="캠페인 및 프로모션 (Campaign & Promo)">캠페인·프로모션</option>
+                                <option value="검색 최적화 및 광고 관리 (SEO & Paid Ads)">SEO·광고 관리</option>
+                                <option value="클라이언트 관리 및 보고 (Client & Report)">클라이언트·보고</option>
+                                <option value="브랜드 아이덴티티 및 정립 (Branding)">브랜드·정립</option>
+                                <option value="운영 및 행정 (Operations & Admin)">운영·행정</option>
+                                <option value="개발 및 프로그래밍 (Development)">개발·프로그래밍</option>
+                                <option value="기타 (Others)">기타</option>
                             </select>
                         </div>
                     </div>
@@ -375,47 +385,46 @@ function openPromptDetailModal(p) {
 
     // Category Styling Map based on UI reference
     const catStyles = {
-        'SEO': { bg: '#ecfdf5', text: '#10b981', icon: 'fa-solid fa-magnifying-glass' },
-        '콘텐츠 생성': { bg: '#f5f3ff', text: '#8b5cf6', icon: 'fa-solid fa-wand-magic-sparkles' },
-        '글쓰기': { bg: '#fff7ed', text: '#f97316', icon: 'fa-solid fa-pen-nib' },
-        '마케팅': { bg: '#eff6ff', text: '#3b82f6', icon: 'fa-solid fa-bullhorn' },
-        '기획': { bg: '#fef2f2', text: '#ef4444', icon: 'fa-regular fa-lightbulb' },
-        '기타': { bg: '#f1f5f9', text: '#64748b', icon: 'fa-solid fa-tag' }
+        '시장 조사': { bg: '#eff6ff', text: '#2563eb', icon: 'fa-solid fa-magnifying-glass-chart' },
+        '카피라이팅': { bg: '#fff7ed', text: '#ea580c', icon: 'fa-solid fa-pen-nib' },
+        '소셜': { bg: '#fdf4ff', text: '#c026d3', icon: 'fa-solid fa-hashtag' },
+        '크리에이티브': { bg: '#f5f3ff', text: '#7c3aed', icon: 'fa-solid fa-palette' },
+        '영상': { bg: '#fefce8', text: '#ca8a04', icon: 'fa-solid fa-video' },
+        '캠페인': { bg: '#fef2f2', text: '#dc2626', icon: 'fa-solid fa-bullhorn' },
+        '최적화': { bg: '#ecfdf5', text: '#059669', icon: 'fa-solid fa-chart-line' },
+        '클라이언트': { bg: '#f1f5f9', text: '#475569', icon: 'fa-solid fa-handshake' },
+        '브랜드': { bg: '#f0fdf4', text: '#16a34a', icon: 'fa-solid fa-fingerprint' },
+        '운영': { bg: '#fffbeb', text: '#b45309', icon: 'fa-solid fa-briefcase' },
+        '개발': { bg: '#e0e7ff', text: '#4338ca', icon: 'fa-solid fa-code' },
+        '기타': { bg: '#f8fafc', text: '#64748b', icon: 'fa-solid fa-tag' }
     };
     const matchedKey = Object.keys(catStyles).find(k => p.category && p.category.includes(k));
     const styleInfo = matchedKey ? catStyles[matchedKey] : { bg: '#ecfdf5', text: '#10b981', icon: 'fa-solid fa-tag' };
 
     const escapeHtml = (text) => (text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    const descText = p.source_name ? p.source_name + ' 기반 맞춤형 프롬프트입니다.' : 'AI 비즈니스 및 실무 작업을 돕는 프롬프트입니다.';
     const safePromptForCopy = escapeHtml(p.prompt_text).replace(/'/g, "\\'").replace(/\n/g, '\\n');
 
+    // Tags list without '일반' default
+    const detailTagList = p.tags && Array.isArray(p.tags) && p.tags.length > 0 ? p.tags : (p.source_name ? [p.source_name] : []);
+
     body.innerHTML = `
-        <!-- Header Section -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem;">
+        <!-- Header Section: Category and Tags -->
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 1.5rem;">
             <div style="background: ${styleInfo.bg}; color: ${styleInfo.text}; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; border: 1px solid ${styleInfo.text}33;">
                 <i class="${styleInfo.icon}"></i> ${p.category || '기타'}
             </div>
-            <!-- Close button for modal is handled externally, assuming the wrapper has an 'x'. We can add an 'X' button here as well, but 'closePromptModal' handles it globally inside index.html. -->
+            ${detailTagList.length > 0 ? detailTagList.map(t => `<span style="background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;"><i class="fa-solid fa-hashtag" style="font-size: 0.75rem; color:#93c5fd; margin-right:2px;"></i>${escapeHtml(t)}</span>`).join('') : ''}
         </div>
 
-        <!-- Title and Subtitle -->
-        <h2 style="font-size: 1.7rem; font-weight: 800; color: #1e293b; margin: 0 0 0.5rem 0; font-family: 'Pretendard', sans-serif; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; line-height: 1.3;">${escapeHtml(p.title)}</h2>
-        <div style="font-size: 0.95rem; font-weight: 600; color: #2563eb; margin-bottom: 1rem;">
-            ${p.source_name ? `<span style="cursor:pointer; text-decoration: underline; text-underline-offset: 4px;">${p.source_name}</span>` : ''}
-            ${p.source_model ? `<span style="margin-left: 0.5rem; color: #64748b; font-weight: 500;">(${p.source_model})</span>` : ''}
-        </div>
-        <div style="font-size: 0.95rem; color: #64748b; line-height: 1.6; margin-bottom: 2rem;">
-            ${escapeHtml(descText)}
-        </div>
-
-        <!-- Tags / Capabilities -->
+        <!-- Title and Source -->
         <div style="margin-bottom: 2rem;">
-            <div style="font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.5rem;">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> TAGS
-            </div>
-            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                ${(p.tags && p.tags.length > 0 ? p.tags : ['일반']).map(t => `<span style="background: #eff6ff; color: #2563eb; padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600;">${t}</span>`).join('')}
-            </div>
+            <h2 style="font-size: 1.7rem; font-weight: 800; color: #1e293b; margin: 0 0 0.5rem 0; font-family: 'Pretendard', sans-serif; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; line-height: 1.3;">${escapeHtml(p.title)}</h2>
+            ${p.source_name || p.source_model ? `
+                <div style="font-size: 0.95rem; font-weight: 600; color: #2563eb;">
+                    ${p.source_name ? `<span style="cursor:pointer; text-decoration: underline; text-underline-offset: 4px;">${escapeHtml(p.source_name)}</span>` : ''}
+                    ${p.source_model ? `<span style="margin-left: 0.5rem; color: #64748b; font-weight: 500;">(${escapeHtml(p.source_model)})</span>` : ''}
+                </div>
+            ` : ''}
         </div>
 
         <!-- Example Conversions (If result_text or example usage) 

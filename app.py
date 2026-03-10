@@ -613,7 +613,17 @@ async def generate_prompt_title(req: PromptTitleRequest, authorization: str = He
         import os
         client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         
-        system_prompt = "주어진 프롬프트와 결과 텍스트를 분석하여, 이 프롬프트가 어떤 목적이나 의도로 작성된 것인지 잘 나타내는 핵심적인 '제목'을 15자 이내로 1개만 반환하세요. 앞뒤 부연 설명, 마크다운 따옴표 등은 모두 제외하고 순수한 제목 텍스트만 출력해야 합니다. 예: 블로그 포스팅 작성을 위한 프롬프트"
+        system_prompt = """주어진 프롬프트와 결과 텍스트를 분석하여, 이 프롬프트의 '제목'과 '카테고리'를 분류하세요.
+다음 카테고리 중 하나를 정확히 선택하세요:
+["시장 조사 및 전략 (Insight & Strategy)", "카피라이팅 및 텍스트 (Copywriting)", "소셜 미디어 및 콘텐츠 (Social & Viral)", "시각적 크리에이티브 (Visual Concept)", "영상 기획 및 스토리보드 (Video & Storyboard)", "캠페인 및 프로모션 (Campaign & Promo)", "검색 최적화 및 광고 관리 (SEO & Paid Ads)", "클라이언트 관리 및 보고 (Client & Report)", "브랜드 아이덴티티 및 정립 (Branding)", "운영 및 행정 (Operations & Admin)", "개발 및 프로그래밍 (Development)", "기타 (Others)", "일반"]
+
+반드시 아래 JSON 포맷으로만 응답하세요. 다른 내용은 절대 추가하지 마세요:
+```json
+{
+  "title": "프롬프트 제목 (15자 이내)",
+  "category": "분류된 카테고리 문자열"
+}
+```"""
         user_content = f"[프롬프트]\n{req.prompt_text}\n\n[결과 텍스트]\n{req.result_text}"
         
         response = client.chat.completions.create(
@@ -622,17 +632,32 @@ async def generate_prompt_title(req: PromptTitleRequest, authorization: str = He
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_content}
             ],
-            temperature=0.5,
+            temperature=0.3,
+            response_format={ "type": "json_object" }
         )
-        title = response.choices[0].message.content.strip()
-        # 불필요한 따옴표 제거
+        import json
+        result_content = response.choices[0].message.content.strip()
+        try:
+            parsed = json.loads(result_content)
+            title = parsed.get("title", "").strip()
+            category = parsed.get("category", "")
+        except:
+            title = result_content[:15] + "..."
+            category = ""
+        
+        # 제공된 카테고리에 속하지 않거나 파싱 실패시 일반 문구 설정
+        valid_categories = ["시장 조사 및 전략 (Insight & Strategy)", "카피라이팅 및 텍스트 (Copywriting)", "소셜 미디어 및 콘텐츠 (Social & Viral)", "시각적 크리에이티브 (Visual Concept)", "영상 기획 및 스토리보드 (Video & Storyboard)", "캠페인 및 프로모션 (Campaign & Promo)", "검색 최적화 및 광고 관리 (SEO & Paid Ads)", "클라이언트 관리 및 보고 (Client & Report)", "브랜드 아이덴티티 및 정립 (Branding)", "운영 및 행정 (Operations & Admin)", "개발 및 프로그래밍 (Development)", "기타 (Others)", "일반"]
+        if category not in valid_categories:
+            category = "일반"
+            
+        # 불필요한 따옴표 제거 (혹시 모를 예외 처리)
         if title.startswith('"') and title.endswith('"'):
              title = title[1:-1]
         
-        return {"status": "success", "data": {"title": title}}
+        return {"status": "success", "data": {"title": title, "category": category}}
     except Exception as e:
-        logger.error(f"프롬프트 제목 생성 중 오류: {e}")
-        return {"status": "error", "message": "제목 생성에 실패했습니다."}
+        logger.error(f"프롬프트 제목/카테고리 생성 중 오류: {e}")
+        return {"status": "error", "message": "제목/카테고리 생성에 실패했습니다."}
 
 @app.post("/api/v1/recommend-keywords")
 async def get_recommended_keywords(req: RecommendRequest):
