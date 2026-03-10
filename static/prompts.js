@@ -486,8 +486,8 @@ function openPromptDetailModal(p) {
             ` : ''}
         </div>
 
-        <!--Example Conversions(If result_text or example usage) 
-             For now, we place a static placeholder if none, or display result_text snippets-- >
+        <!-- Example Conversions (If result_text or example usage) 
+             For now, we place a static placeholder if none, or display result_text snippets -->
         <div style="margin-bottom: 2.5rem;">
             <div style="font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.5rem;">
                 <i class="fa-regular fa-comment-dots"></i> PREVIEW / EXAMPLE
@@ -498,7 +498,7 @@ function openPromptDetailModal(p) {
             </div>
         </div>
 
-        <!--Core Prompt Section(System Instructions)-- >
+        <!-- Core Prompt Section (System Instructions) -->
         <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin-bottom: 1.5rem; background: white;">
             <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1.2rem; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">
                 <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.5rem;">
@@ -511,7 +511,7 @@ function openPromptDetailModal(p) {
             <div style="padding: 1.5rem; color: #334155; font-family: 'Pretendard', sans-serif; font-size: 0.95rem; line-height: 1.8; white-space: pre-wrap; max-height: 300px; overflow-y: auto;">${escapeHtml(p.prompt_text)}</div>
         </div>
 
-        <!--Footer Meta Data-- >
+        <!-- Footer Meta Data -->
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div style="font-size: 0.8rem; color: #94a3b8;">
                     Updated: ${new Date(p.created_at).toLocaleDateString()}
