@@ -62,6 +62,11 @@ async def read_dashboard():
     with open("static/index.html", "r", encoding="utf-8") as f:
         return f.read()
 
+@app.get("/admin/errors", response_class=HTMLResponse)
+async def read_admin_errors():
+    with open("static/admin_errors.html", "r", encoding="utf-8") as f:
+        return f.read()
+
 # [API 요청 스키마 분리]
 class AnalyzeRequest(BaseModel):
     query: str
@@ -595,6 +600,48 @@ async def admin_refine_reply(req: RefineReplyRequest, authorization: str = Heade
     except Exception as e:
         logger.error(f"AI 답변 교정 중 오류: {e}")
         return {"status": "error", "message": "AI 교정에 실패했습니다."}
+
+class ExtensionErrorRequest(BaseModel):
+    platform: str
+    url: str
+    error_message: str = ""
+    stack_trace: str = ""
+
+@app.post("/api/v1/log-extension-error")
+async def log_extension_error(req: ExtensionErrorRequest, authorization: str = Header(default="")):
+    """크롬 익스텐션에서 화면 파싱에 실패했을 때 무음으로 서버에 로그를 남깁니다."""
+    user_id = get_user_id_from_token(authorization) # Optional, can be None
+    
+    try:
+        db_client = supabase_admin if supabase_admin else supabase
+        if db_client:
+            db_client.table("extension_error_logs").insert({
+                "user_id": user_id,
+                "platform": req.platform,
+                "url": req.url,
+                "error_message": req.error_message,
+                "stack_trace": req.stack_trace
+            }).execute()
+        return {"status": "success"}
+    except Exception as e:
+        logger.error(f"Failed to log extension error: {e}")
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/v1/admin/errors")
+async def get_admin_errors(authorization: str = Header(default="")):
+    """관리자용: 익스텐션 등에서 발생한 화면 파싱 오류 내역을 조회합니다."""
+    # 간단한 권한 검증: 현재는 인증된 모든 사용자 볼수 있게 (필요시 admin체크)
+    user_id = get_user_id_from_token(authorization)
+    if not user_id:
+        return {"status": "error", "message": "인증 정보가 없습니다."}
+    
+    try:
+        db_client = supabase_admin if supabase_admin else supabase
+        response = db_client.table("extension_error_logs").select("*").order("created_at", desc=True).limit(100).execute()
+        return {"status": "success", "data": response.data}
+    except Exception as e:
+        logger.error(f"Failed to get extension errors: {e}")
+        return {"status": "error", "message": str(e)}
 
 class PromptTitleRequest(BaseModel):
     prompt_text: str

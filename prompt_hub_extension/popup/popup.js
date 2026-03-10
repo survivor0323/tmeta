@@ -123,6 +123,29 @@ async function handleCaptureAI() {
         if (!response.success) {
             statusMsg.textContent = response.message || '추출 실패';
             statusMsg.style.color = '#ef4444';
+
+            // Log silent error to backend
+            const savedApiUrl = await chromeStorageAdapter.getItem('MOTIVERSE_API_URL');
+            const apiUrl = savedApiUrl || 'http://localhost:8000';
+            const savedSessionObj = await chromeStorageAdapter.getItem('sb-motiverse-auth-token');
+            const sess = savedSessionObj ? JSON.parse(savedSessionObj) : null;
+
+            const logData = {
+                platform: response.data?.source || 'Unknown',
+                url: response.url || tab.url,
+                error_message: response.message || 'Unknown parsing failure',
+                stack_trace: response.stack || ''
+            };
+
+            fetch(`${apiUrl}/api/v1/log-extension-error`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${sess?.access_token || ''}`
+                },
+                body: JSON.stringify(logData)
+            }).catch(e => console.warn('Silent error log failed', e));
+
             return;
         }
 

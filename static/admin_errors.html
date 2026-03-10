@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motiverse AI - 오류 로그 관리 (Dashboard)</title>
+    <!-- 폰트어썸 (아이콘) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .log-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            margin-top: 20px;
+        }
+
+        .log-table th,
+        .log-table td {
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .log-table th {
+            background-color: #f8fafc;
+            font-weight: 600;
+        }
+
+        .log-table tr:hover {
+            background-color: #f1f5f9;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .bg-red {
+            background: #ef4444;
+        }
+
+        .bg-blue {
+            background: #3b82f6;
+        }
+
+        .bg-gray {
+            background: #94a3b8;
+        }
+
+        .header-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-slate-800" style="font-family: 'Inter', sans-serif;">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 2rem;">
+
+        <div class="header-title">
+            <i class="fa-solid fa-bug text-red-500"></i> 익스텐션 UI 파싱 오류 모니터링 게시판
+        </div>
+
+        <div
+            style="background: white; border-radius: 12px; border: 1px solid #e2e8f0; padding: 2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="font-size: 1.2rem; font-weight: 600;">실시간 에러 리포팅 (최근 100건)</h3>
+                <button onclick="loadErrorLogs()"
+                    style="background:#f1f5f9; color:#475569; padding:0.5rem 1rem; border-radius:8px; border:1px solid #cbd5e1; cursor:pointer;"
+                    class="btn">
+                    <i class="fa-solid fa-rotate-right"></i> 새로고침
+                </button>
+            </div>
+
+            <table class="log-table">
+                <thead>
+                    <tr>
+                        <th style="width: 15%">발생 일시</th>
+                        <th style="width: 10%">플랫폼</th>
+                        <th style="width: 30%">URL</th>
+                        <th style="width: 35%">오류 내용</th>
+                        <th style="width: 10%">상태</th>
+                    </tr>
+                </thead>
+                <tbody id="errorLogTableBody">
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 20px;">불러오는 중...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- DB/Auth 초기화 및 로직 -->
+    <script type="module">
+        import { setupAuth } from '/static/auth.js';
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            const authResult = await setupAuth();
+            if (!authResult.session) {
+                alert("로그인이 필요합니다.");
+                window.location.href = '/';
+                return;
+            }
+            window.loadErrorLogs();
+        });
+
+        window.loadErrorLogs = async () => {
+            const tbody = document.getElementById('errorLogTableBody');
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">불러오는 중...</td></tr>';
+
+            try {
+                const res = await fetch('/api/v1/admin/errors', {
+                    headers: { 'Authorization': 'Bearer ' + window._motiverseSession.access_token }
+                });
+                const responseData = await res.json();
+
+                if (responseData.status === 'error') {
+                    throw new Error(responseData.message);
+                }
+
+                const errors = responseData.data;
+                if (!errors || errors.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color: #64748b;">다행히 오류가 없습니다!</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = errors.map(err => {
+                    const date = new Date(err.created_at).toLocaleString('ko-KR');
+                    let badgeClass = 'bg-gray';
+                    if (err.platform.toLowerCase().includes('chatgpt')) badgeClass = 'bg-blue';
+                    else if (err.platform.toLowerCase().includes('claude')) badgeClass = 'bg-red';
+
+                    return `
+                        <tr>
+                            <td>${date}</td>
+                            <td><span class="badge ${badgeClass}">${err.platform}</span></td>
+                            <td><a href="${err.url}" target="_blank" style="color:#2563eb; text-decoration:none; word-break: break-all;">${err.url}</a></td>
+                            <td style="color: #ef4444; font-family: monospace; font-size: 0.8rem;">${err.error_message || '텍스트 파싱 실패 (Null 리턴)'}</td>
+                            <td>
+                                ${err.resolved ? '<span style="color:#10b981; font-weight:600;"><i class="fa-solid fa-check"></i> 해결됨</span>' : '<span style="color:#ef4444; font-weight:600;"><i class="fa-solid fa-triangle-exclamation"></i> 조사 필요</span>'}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">오류 로드 실패: ${err.message}</td></tr>`;
+            }
+        };
+    </script>
+</body>
+
+</html>

@@ -223,11 +223,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 if (data.prompt) {
                     sendResponse({ success: true, data: data });
                 } else {
-                    sendResponse({ success: false, message: '프롬프트 텍스트를 페이지에서 찾지 못했습니다.' });
+                    sendResponse({ success: false, message: '프롬프트 텍스트를 페이지에서 찾지 못했습니다.', data: data, url: url });
                 }
 
             } catch (err) {
-                sendResponse({ success: false, message: err.message });
+                sendResponse({ success: false, message: err.message, stack: err.stack, data: data, url: url });
             }
         })();
 
