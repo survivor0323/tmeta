@@ -205,13 +205,14 @@ function renderPrompts(prompts) {
         // Escape helper
         const escapeHtml = (text) => (text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         const safePromptForCopy = escapeHtml(p.prompt_text).replace(/'/g, "\\'").replace(/\n/g, '\\n');
+        const displayCategory = (p.category || '기타').split('(')[0].trim();
 
         card.innerHTML = `
             <!-- Top Row: Category and Action Icons -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <!-- Category Tag -->
                 <div style="background: ${styleInfo.bg}; color: ${styleInfo.text}; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; border: 1px solid ${styleInfo.text}33;">
-                    <i class="${styleInfo.icon}"></i> ${p.category || '기타'}
+                    <i class="${styleInfo.icon}"></i> ${displayCategory}
                 </div>
                 <!-- Action Icons -->
                 <div style="display: flex; gap: 8px;">
@@ -406,12 +407,13 @@ function openPromptDetailModal(p) {
 
     // Tags list without '일반' default
     const detailTagList = p.tags && Array.isArray(p.tags) && p.tags.length > 0 ? p.tags : (p.source_name ? [p.source_name] : []);
+    const displayCategory = (p.category || '기타').split('(')[0].trim();
 
     body.innerHTML = `
         <!-- Header Section: Category and Tags -->
         <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 1.5rem;">
             <div style="background: ${styleInfo.bg}; color: ${styleInfo.text}; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; border: 1px solid ${styleInfo.text}33;">
-                <i class="${styleInfo.icon}"></i> ${p.category || '기타'}
+                <i class="${styleInfo.icon}"></i> ${displayCategory}
             </div>
             ${detailTagList.length > 0 ? detailTagList.map(t => `<span style="background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;"><i class="fa-solid fa-hashtag" style="font-size: 0.75rem; color:#93c5fd; margin-right:2px;"></i>${escapeHtml(t)}</span>`).join('') : ''}
         </div>
