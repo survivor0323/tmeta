@@ -75,16 +75,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             try {
                 if (url.includes('chatgpt.com')) {
                     data.source = 'ChatGPT';
-                    // ChatGPT 구조: .whitespace-pre-wrap 요소를 찾아서 추론
-                    const msgs = document.querySelectorAll('div[data-message-author-role="user"] .whitespace-pre-wrap, article[data-testid^="conversation-turn-user"] .whitespace-pre-wrap, div[data-message-author-role="user"]');
-                    if (msgs.length > 0) {
-                        data.prompt = msgs[msgs.length - 1].innerText;
-                        const aiMsgs = document.querySelectorAll('div[data-message-author-role="assistant"] .markdown, article[data-testid^="conversation-turn-assistant"] .markdown, div[data-message-author-role="assistant"]');
+                    // ChatGPT UI structure: messages have data-message-author-role
+                    const userMsgs = document.querySelectorAll('div[data-message-author-role="user"]');
+                    if (userMsgs.length > 0) {
+                        const lastUserMsg = userMsgs[userMsgs.length - 1];
+                        data.prompt = lastUserMsg.innerText.trim();
+
+                        const aiMsgs = document.querySelectorAll('div[data-message-author-role="assistant"]');
                         if (aiMsgs.length > 0) {
                             const lastAiMsg = aiMsgs[aiMsgs.length - 1];
-                            data.result = lastAiMsg.innerText.substring(0, 1500);
-                            if (lastAiMsg.innerText.length > 1500) data.result += '...';
-                            data.assets = await extractAssets(lastAiMsg, 'ChatGPT');
+                            const markdownEl = lastAiMsg.querySelector('.markdown');
+                            const textContent = markdownEl ? markdownEl.innerText : lastAiMsg.innerText;
+
+                            data.result = textContent.substring(0, 1500);
+                            if (textContent.length > 1500) data.result += '...';
+
+                            // The images might be outside the markdown element but inside the assistant message or its parent article
+                            const parentContainer = lastAiMsg.closest('article') || lastAiMsg.parentElement || lastAiMsg;
+                            data.assets = await extractAssets(parentContainer, 'ChatGPT');
                         }
                     }
                     data.title = document.title || 'ChatGPT Session';
