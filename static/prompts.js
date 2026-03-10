@@ -311,19 +311,20 @@ function openPromptCreateModal() {
                         <div>
                             <label style="display:block; font-weight:600; margin-bottom:0.4rem;">카테고리</label>
                             <select id="p_category" style="width:100%; padding: 0.8rem; border-radius:8px; border:1px solid #cbd5e1; outline:none;">
-                                <option value="일반" selected>일반</option>
-                                <option value="시장 조사 및 전략 (Insight & Strategy)">시장 조사·전략</option>
-                                <option value="카피라이팅 및 텍스트 (Copywriting)">카피라이팅·텍스트</option>
-                                <option value="소셜 미디어 및 콘텐츠 (Social & Viral)">소셜·콘텐츠</option>
-                                <option value="시각적 크리에이티브 (Visual Concept)">시각적 크리에이티브</option>
-                                <option value="영상 기획 및 스토리보드 (Video & Storyboard)">영상·스토리보드</option>
-                                <option value="캠페인 및 프로모션 (Campaign & Promo)">캠페인·프로모션</option>
-                                <option value="검색 최적화 및 광고 관리 (SEO & Paid Ads)">SEO·광고 관리</option>
-                                <option value="클라이언트 관리 및 보고 (Client & Report)">클라이언트·보고</option>
-                                <option value="브랜드 아이덴티티 및 정립 (Branding)">브랜드·정립</option>
-                                <option value="운영 및 행정 (Operations & Admin)">운영·행정</option>
-                                <option value="개발 및 프로그래밍 (Development)">개발·프로그래밍</option>
-                                <option value="기타 (Others)">기타</option>
+                                <option value="" disabled selected>카테고리를 선택하세요</option>
+                                <option value="일반">일반</option>
+                                <option value="시장 조사 및 전략">시장 조사·전략</option>
+                                <option value="카피라이팅 및 텍스트">카피라이팅·텍스트</option>
+                                <option value="소셜 미디어 및 콘텐츠">소셜·콘텐츠</option>
+                                <option value="시각적 크리에이티브">시각적 크리에이티브</option>
+                                <option value="영상 기획 및 스토리보드">영상·스토리보드</option>
+                                <option value="캠페인 및 프로모션">캠페인·프로모션</option>
+                                <option value="검색 최적화 및 광고 관리">SEO·광고 관리</option>
+                                <option value="클라이언트 관리 및 보고">클라이언트·보고</option>
+                                <option value="브랜드 아이덴티티 및 정립">브랜드·정립</option>
+                                <option value="운영 및 행정">운영·행정</option>
+                                <option value="개발 및 프로그래밍">개발</option>
+                                <option value="기타">기타</option>
                             </select>
                         </div>
                     </div>
@@ -443,18 +444,18 @@ function openPromptDetailModal(p) {
     const isOwner = window._motiverseSession && window._motiverseSession.user && window._motiverseSession.user.id === p.user_id;
     const fullCategories = [
         { val: "일반", label: "일반" },
-        { val: "시장 조사 및 전략 (Insight & Strategy)", label: "시장 조사·전략" },
-        { val: "카피라이팅 및 텍스트 (Copywriting)", label: "카피라이팅·텍스트" },
-        { val: "소셜 미디어 및 콘텐츠 (Social & Viral)", label: "소셜·콘텐츠" },
-        { val: "시각적 크리에이티브 (Visual Concept)", label: "시각적 크리에이티브" },
-        { val: "영상 기획 및 스토리보드 (Video & Storyboard)", label: "영상·스토리보드" },
-        { val: "캠페인 및 프로모션 (Campaign & Promo)", label: "캠페인·프로모션" },
-        { val: "검색 최적화 및 광고 관리 (SEO & Paid Ads)", label: "SEO·광고 관리" },
-        { val: "클라이언트 관리 및 보고 (Client & Report)", label: "클라이언트·보고" },
-        { val: "브랜드 아이덴티티 및 정립 (Branding)", label: "브랜드·정립" },
-        { val: "운영 및 행정 (Operations & Admin)", label: "운영·행정" },
-        { val: "개발 및 프로그래밍 (Development)", label: "개발·프로그래밍" },
-        { val: "기타 (Others)", label: "기타" }
+        { val: "시장 조사 및 전략", label: "시장 조사·전략" },
+        { val: "카피라이팅 및 텍스트", label: "카피라이팅·텍스트" },
+        { val: "소셜 미디어 및 콘텐츠", label: "소셜·콘텐츠" },
+        { val: "시각적 크리에이티브", label: "시각적 크리에이티브" },
+        { val: "영상 기획 및 스토리보드", label: "영상·스토리보드" },
+        { val: "캠페인 및 프로모션", label: "캠페인·프로모션" },
+        { val: "검색 최적화 및 광고 관리", label: "SEO·광고 관리" },
+        { val: "클라이언트 관리 및 보고", label: "클라이언트·보고" },
+        { val: "브랜드 아이덴티티 및 정립", label: "브랜드·정립" },
+        { val: "운영 및 행정", label: "운영·행정" },
+        { val: "개발 및 프로그래밍", label: "개발·프로그래밍" },
+        { val: "기타", label: "기타" }
     ];
 
     let categoryHtml = '';
