@@ -75,26 +75,56 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             try {
                 if (url.includes('chatgpt.com')) {
                     data.source = 'ChatGPT';
-                    // ChatGPT UI structure can vary between article tags and div roles
+                    // Find the last user message
                     const userMsgs = document.querySelectorAll('article[data-testid^="conversation-turn-user"], div[data-message-author-role="user"]');
                     if (userMsgs.length > 0) {
                         const lastUserMsg = userMsgs[userMsgs.length - 1];
                         const userTextEl = lastUserMsg.querySelector('.whitespace-pre-wrap') || lastUserMsg;
                         data.prompt = userTextEl.innerText.trim();
 
-                        const aiMsgs = document.querySelectorAll('article[data-testid^="conversation-turn-assistant"], div[data-message-author-role="assistant"]');
-                        if (aiMsgs.length > 0) {
-                            const lastAiMsg = aiMsgs[aiMsgs.length - 1];
-                            const markdownEl = lastAiMsg.querySelector('.markdown');
-                            const textContent = markdownEl ? markdownEl.innerText : lastAiMsg.innerText;
+                        // To get the AI response (which could be an assistant message, or a tool/DALL-E message),
+                        // we find the parent container of the user message, and look at all its succeeding siblings.
+                        // In modern ChatGPT, conversation turns are sibling `article` elements.
+                        const userTurnContainer = lastUserMsg.closest('article') || lastUserMsg.parentElement;
+                        let nextSibling = userTurnContainer.nextElementSibling;
 
-                            data.result = textContent.substring(0, 1500);
-                            if (textContent.length > 1500) data.result += '...';
+                        let combinedAiText = '';
+                        let combinedAiAssets = [];
 
-                            // The images might be outside the markdown element but inside the assistant message or its parent article
-                            const parentContainer = lastAiMsg.closest('article') || lastAiMsg.parentElement || lastAiMsg;
-                            data.assets = await extractAssets(parentContainer, 'ChatGPT');
+                        while (nextSibling) {
+                            // Only process it if it's NOT another user message. If it's a user message, we stop.
+                            if (nextSibling.getAttribute('data-testid')?.startsWith('conversation-turn-user') ||
+                                nextSibling.querySelector('div[data-message-author-role="user"]')) {
+                                break;
+                            }
+
+                            const markdownEl = nextSibling.querySelector('.markdown');
+                            const textContent = markdownEl ? markdownEl.innerText : nextSibling.innerText;
+                            if (textContent) {
+                                combinedAiText += textContent + '\n';
+                            }
+
+                            // Extract assets from this sibling
+                            combinedAiAssets = combinedAiAssets.concat(await extractAssets(nextSibling, 'ChatGPT'));
+
+                            nextSibling = nextSibling.nextElementSibling;
                         }
+
+                        // If no siblings but there is a globally found last AI message logically after our text (fallback)
+                        if (!combinedAiText && combinedAiAssets.length === 0) {
+                            const aiMsgs = document.querySelectorAll('article[data-testid^="conversation-turn-"], div[data-message-author-role="assistant"], div[data-message-author-role="tool"]');
+                            if (aiMsgs.length > 0) {
+                                const lastAiMsg = aiMsgs[aiMsgs.length - 1];
+                                const markdownEl = lastAiMsg.querySelector('.markdown');
+                                const textContent = markdownEl ? markdownEl.innerText : lastAiMsg.innerText;
+                                combinedAiText = textContent;
+                                combinedAiAssets = await extractAssets(lastAiMsg, 'ChatGPT');
+                            }
+                        }
+
+                        data.result = combinedAiText.trim().substring(0, 1500);
+                        if (combinedAiText.length > 1500) data.result += '...';
+                        data.assets = combinedAiAssets;
                     }
                     data.title = document.title || 'ChatGPT Session';
                 }
