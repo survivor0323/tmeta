@@ -258,6 +258,15 @@ function renderPrompts(prompts) {
                 ${escapeHtml(descText)}
             </div>
 
+            <!-- Asset Preview (If Images Exist) -->
+            ${p.result_assets && Array.isArray(p.result_assets) && p.result_assets.filter(a => a.type === 'image').length > 0 ?
+                `<div style="display: flex; gap: 6px; margin-bottom: 1rem; overflow-x: auto; padding-bottom: 4px;">
+                    ${p.result_assets.filter(a => a.type === 'image').map(img =>
+                    `<img src="${img.url}" style="height: 60px; min-width: 60px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0;"/>`
+                ).join('')}
+                </div>`
+                : ''}
+
             <!-- Divider -->
             <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 0 0 1rem 0;" />
 
@@ -492,10 +501,25 @@ function openPromptDetailModal(p) {
             <div style="font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.5rem;">
                 <i class="fa-regular fa-comment-dots"></i> PREVIEW / EXAMPLE
             </div>
-            ${p.result_image_url ? `<img src="${p.result_image_url}" style="max-width:100%; max-height: 250px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 1rem; object-fit: cover;" />` : ''}
-            <div style="background: #f8fafc; border: 1px solid #f1f5f9; padding: 1rem 1.2rem; border-radius: 8px; font-size: 0.9rem; color: #475569; line-height: 1.6; max-height: 350px; overflow-y: auto; white-space: pre-wrap;">
-                "${p.result_text ? escapeHtml(p.result_text) : escapeHtml(p.title) + '에 최적화된 결과물을 도출합니다.'}"
-            </div>
+
+            <!-- Enhanced Asset Gallery view -->
+            ${p.result_assets && Array.isArray(p.result_assets) && p.result_assets.filter(a => a.type === 'image').length > 0 ?
+            `<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 1rem;">
+                    ${p.result_assets.filter(a => a.type === 'image').map((img, idx) =>
+                `<a href="${img.url}" target="_blank">
+                            <img src="${img.url}" style="width:100%; height: 200px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='none'" />
+                         </a>`
+            ).join('')}
+                </div>`
+            : (p.result_image_url ? `<img src="${p.result_image_url}" style="max-width:100%; max-height: 250px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 1rem; object-fit: cover;" />` : '')}
+            
+            ${p.result_text ?
+            `<div style="background: #f8fafc; border: 1px solid #f1f5f9; padding: 1rem 1.2rem; border-radius: 8px; font-size: 0.9rem; color: #475569; line-height: 1.6; max-height: 350px; overflow-y: auto; white-space: pre-wrap;">
+                "${escapeHtml(p.result_text)}"
+            </div>` :
+            `<div style="background: #f8fafc; border: 1px solid #f1f5f9; padding: 1rem 1.2rem; border-radius: 8px; font-size: 0.9rem; color: #94a3b8; font-style: italic; line-height: 1.6;">
+                텍스트 결과 예시가 등록되지 않았습니다.
+             </div>`}
         </div>
 
         <!-- Core Prompt Section (System Instructions) -->
