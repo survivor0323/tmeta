@@ -75,13 +75,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             try {
                 if (url.includes('chatgpt.com')) {
                     data.source = 'ChatGPT';
-                    // ChatGPT UI structure: messages have data-message-author-role
-                    const userMsgs = document.querySelectorAll('div[data-message-author-role="user"]');
+                    // ChatGPT UI structure can vary between article tags and div roles
+                    const userMsgs = document.querySelectorAll('article[data-testid^="conversation-turn-user"], div[data-message-author-role="user"]');
                     if (userMsgs.length > 0) {
                         const lastUserMsg = userMsgs[userMsgs.length - 1];
-                        data.prompt = lastUserMsg.innerText.trim();
+                        const userTextEl = lastUserMsg.querySelector('.whitespace-pre-wrap') || lastUserMsg;
+                        data.prompt = userTextEl.innerText.trim();
 
-                        const aiMsgs = document.querySelectorAll('div[data-message-author-role="assistant"]');
+                        const aiMsgs = document.querySelectorAll('article[data-testid^="conversation-turn-assistant"], div[data-message-author-role="assistant"]');
                         if (aiMsgs.length > 0) {
                             const lastAiMsg = aiMsgs[aiMsgs.length - 1];
                             const markdownEl = lastAiMsg.querySelector('.markdown');
