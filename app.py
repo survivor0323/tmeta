@@ -614,13 +614,15 @@ async def generate_prompt_title(req: PromptTitleRequest, authorization: str = He
         client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         
         system_prompt = """주어진 프롬프트와 결과 텍스트를 분석하여, 이 프롬프트의 '제목'과 '카테고리'를 분류하세요.
+단순히 프롬프트 내용의 앞부분을 복사해 자르지 말고, 프롬프트가 의도하는 핵심 목적(예: '블로그 포스팅 초안 작성', '유튜브 스크립트 기획')을 파악하여 15자 이내의 명확하고 간결한 제목을 만들어주세요.
+
 다음 카테고리 중 하나를 정확히 선택하세요:
-["시장 조사 및 전략 (Insight & Strategy)", "카피라이팅 및 텍스트 (Copywriting)", "소셜 미디어 및 콘텐츠 (Social & Viral)", "시각적 크리에이티브 (Visual Concept)", "영상 기획 및 스토리보드 (Video & Storyboard)", "캠페인 및 프로모션 (Campaign & Promo)", "검색 최적화 및 광고 관리 (SEO & Paid Ads)", "클라이언트 관리 및 보고 (Client & Report)", "브랜드 아이덴티티 및 정립 (Branding)", "운영 및 행정 (Operations & Admin)", "개발 및 프로그래밍 (Development)", "기타 (Others)", "일반"]
+["시장 조사 및 전략", "카피라이팅 및 텍스트", "소셜 미디어 및 콘텐츠", "시각적 크리에이티브", "영상 기획 및 스토리보드", "캠페인 및 프로모션", "검색 최적화 및 광고 관리", "클라이언트 관리 및 보고", "브랜드 아이덴티티 및 정립", "운영 및 행정", "개발 및 프로그래밍", "기타", "일반"]
 
 반드시 아래 JSON 포맷으로만 응답하세요. 다른 내용은 절대 추가하지 마세요:
 ```json
 {
-  "title": "프롬프트 제목 (15자 이내)",
+  "title": "분석된 핵심 목적 중심의 제목 (15자 이내)",
   "category": "분류된 카테고리 문자열"
 }
 ```"""
@@ -645,10 +647,18 @@ async def generate_prompt_title(req: PromptTitleRequest, authorization: str = He
             title = result_content[:15] + "..."
             category = ""
         
-        # 제공된 카테고리에 속하지 않거나 파싱 실패시 일반 문구 설정
-        valid_categories = ["시장 조사 및 전략 (Insight & Strategy)", "카피라이팅 및 텍스트 (Copywriting)", "소셜 미디어 및 콘텐츠 (Social & Viral)", "시각적 크리에이티브 (Visual Concept)", "영상 기획 및 스토리보드 (Video & Storyboard)", "캠페인 및 프로모션 (Campaign & Promo)", "검색 최적화 및 광고 관리 (SEO & Paid Ads)", "클라이언트 관리 및 보고 (Client & Report)", "브랜드 아이덴티티 및 정립 (Branding)", "운영 및 행정 (Operations & Admin)", "개발 및 프로그래밍 (Development)", "기타 (Others)", "일반"]
-        if category not in valid_categories:
-            category = "일반"
+        # 제공된 카테고리에 속하지 않거나 파싱 실패시 기타 문구 설정
+        valid_categories = ["시장 조사 및 전략", "카피라이팅 및 텍스트", "소셜 미디어 및 콘텐츠", "시각적 크리에이티브", "영상 기획 및 스토리보드", "캠페인 및 프로모션", "검색 최적화 및 광고 관리", "클라이언트 관리 및 보고", "브랜드 아이덴티티 및 정립", "운영 및 행정", "개발 및 프로그래밍", "기타", "일반"]
+        
+        is_valid = False
+        for valid_cat in valid_categories:
+            if valid_cat in category or category in valid_cat:
+                category = valid_cat
+                is_valid = True
+                break
+                
+        if not is_valid or not category:
+            category = "기타"
             
         # 불필요한 따옴표 제거 (혹시 모를 예외 처리)
         if title.startswith('"') and title.endswith('"'):
