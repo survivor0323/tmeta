@@ -66,13 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Modal Logic
-    const promptCreateBtn = document.getElementById('promptCreateBtn');
     const closePromptModal = document.getElementById('closePromptModal');
     const promptModal = document.getElementById('promptModal');
-
-    if (promptCreateBtn) {
-        promptCreateBtn.addEventListener('click', openPromptCreateModal);
-    }
     if (closePromptModal) {
         closePromptModal.addEventListener('click', () => {
             promptModal.classList.add('hidden');
@@ -289,128 +284,7 @@ function renderPrompts(prompts) {
     });
 }
 
-function openPromptCreateModal() {
-    if (!window._motiverseSession) {
-        alert("로그인이 필요합니다.");
-        document.getElementById('loginBtn')?.click();
-        return;
-    }
 
-    const modal = document.getElementById('promptModal');
-    const body = document.getElementById('promptModalBody');
-
-    body.innerHTML = `
-            < h2 style = "font-size: 1.5rem; font-weight: 700; text-align: center; margin-bottom: 2rem; color: #1e293b;" > <i class="fa-solid fa-pen-nib" style="color:#3b82f6;"></i> 사내 AI 프롬프트 등록</h2 >
-                <div style="display: flex; flex-direction: column; gap: 1.5rem; font-size: 0.95rem;">
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                        <div>
-                            <label style="display:block; font-weight:600; margin-bottom:0.4rem;">제목 <span style="color:#ef4444">*</span></label>
-                            <input type="text" id="p_title" placeholder="예: [블로그 작성용] 제품 장점 뽑아주는 마법 주문" style="width:100%; padding: 0.8rem; border-radius:8px; border:1px solid #cbd5e1; outline:none;" />
-                        </div>
-                        <div>
-                            <label style="display:block; font-weight:600; margin-bottom:0.4rem;">카테고리</label>
-                            <select id="p_category" style="width:100%; padding: 0.8rem; border-radius:8px; border:1px solid #cbd5e1; outline:none;">
-                                <option value="" disabled selected>카테고리를 선택하세요</option>
-                                <option value="일반">일반</option>
-                                <option value="시장 조사 및 전략">시장 조사·전략</option>
-                                <option value="카피라이팅 및 텍스트">카피라이팅·텍스트</option>
-                                <option value="소셜 미디어 및 콘텐츠">소셜·콘텐츠</option>
-                                <option value="시각적 크리에이티브">시각적 크리에이티브</option>
-                                <option value="영상 기획 및 스토리보드">영상·스토리보드</option>
-                                <option value="캠페인 및 프로모션">캠페인·프로모션</option>
-                                <option value="검색 최적화 및 광고 관리">SEO·광고 관리</option>
-                                <option value="클라이언트 관리 및 보고">클라이언트·보고</option>
-                                <option value="브랜드 아이덴티티 및 정립">브랜드·정립</option>
-                                <option value="운영 및 행정">운영·행정</option>
-                                <option value="개발 및 프로그래밍">개발</option>
-                                <option value="기타">기타</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; background: #f8fafc; padding: 1rem; border-radius: 8px;">
-                        <div>
-                            <label style="display:block; font-weight:600; font-size:0.85rem; margin-bottom:0.4rem;">출처 (플랫폼/모델)</label>
-                            <input type="text" id="p_source_name" placeholder="예: ChatGPT, Midjourney" style="width:100%; padding: 0.6rem; border-radius:6px; border:1px solid #cbd5e1; outline:none; font-size:0.85rem;" />
-                        </div>
-                        <div>
-                            <label style="display:block; font-weight:600; font-size:0.85rem; margin-bottom:0.4rem;">사용 AI 모델</label>
-                            <input type="text" id="p_source_model" placeholder="예: GPT-4o, DALL-E 3" style="width:100%; padding: 0.6rem; border-radius:6px; border:1px solid #cbd5e1; outline:none; font-size:0.85rem;" />
-                        </div>
-                        <div>
-                            <label style="display:block; font-weight:600; font-size:0.85rem; margin-bottom:0.4rem;">공유 URL (GPTs 등)</label>
-                            <input type="text" id="p_source_url" placeholder="https://..." style="width:100%; padding: 0.6rem; border-radius:6px; border:1px solid #cbd5e1; outline:none; font-size:0.85rem;" />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label style="display:block; font-weight:600; margin-bottom:0.4rem;">💡 핵심 프롬프트 (주문) <span style="color:#ef4444">*</span></label>
-                        <textarea id="p_prompt_text" rows="5" placeholder="다음에 내가 입력할 [제품명]에 대해 블로그 포스팅 초안을 작성해줘. 타겟은 2030 여성이고 친근한 톤앤매너로 부탁해." style="width:100%; padding: 0.8rem; border-radius:8px; border:1px solid #cbd5e1; outline:none; resize:vertical; font-family: monospace; line-height: 1.5;"></textarea>
-                    </div>
-
-                    <hr style="border:0; border-top:1px dashed #cbd5e1;" />
-
-                    <div>
-                        <label style="display:block; font-weight:600; margin-bottom:0.4rem;">✨ 결과물 예시 (텍스트)</label>
-                        <textarea id="p_result_text" rows="3" placeholder="결과물 텍스트 예시를 붙여넣으세요 (또는 이미지 URL 대신 사용)" style="width:100%; padding: 0.8rem; border-radius:8px; border:1px solid #cbd5e1; outline:none; background: #f8fafc; resize:vertical;"></textarea>
-                    </div>
-
-                    <div>
-                        <label style="display:block; font-weight:600; margin-bottom:0.4rem;">🖼️ 결과물 이미지 URL (선택사항)</label>
-                        <input type="text" id="p_result_image_url" placeholder="https://..." style="width:100%; padding: 0.8rem; border-radius:8px; border:1px solid #cbd5e1; outline:none;" />
-                    </div>
-
-                    <button id="p_submit_btn" style="background:#3b82f6; color:white; padding:1rem; border-radius:8px; font-weight:700; border:none; margin-top:1rem; cursor:pointer;">프롬프트 라이브러리에 등록하기</button>
-                </div>
-        `;
-
-    document.getElementById('p_submit_btn').onclick = async () => {
-        const title = document.getElementById('p_title').value.trim();
-        const category = document.getElementById('p_category').value;
-        const source_name = document.getElementById('p_source_name').value.trim();
-        const source_model = document.getElementById('p_source_model').value.trim();
-        const source_url = document.getElementById('p_source_url').value.trim();
-        const prompt_text = document.getElementById('p_prompt_text').value.trim();
-        const result_text = document.getElementById('p_result_text').value.trim();
-        const result_image_url = document.getElementById('p_result_image_url').value.trim();
-
-        if (!title || !prompt_text) {
-            alert('필수 입력 항목(제목, 핵심 프롬프트)을 채워주세요.');
-            return;
-        }
-
-        document.getElementById('p_submit_btn').disabled = true;
-        document.getElementById('p_submit_btn').innerText = '저장 중...';
-
-        try {
-            const { error } = await window.supabaseClient.from('hub_prompts').insert({
-                user_id: window._motiverseSession.user.id,
-                title,
-                category,
-                source_name,
-                source_model,
-                source_url,
-                prompt_text,
-                result_text,
-                result_image_url
-            });
-
-            if (error) throw error;
-
-            alert('프롬프트가 성공적으로 등록되었습니다!');
-            modal.classList.add('hidden');
-            loadPrompts();
-
-        } catch (e) {
-            alert('저장에 실패했습니다: ' + e.message);
-            document.getElementById('p_submit_btn').disabled = false;
-            document.getElementById('p_submit_btn').innerText = '프롬프트 라이브러리에 등록하기';
-        }
-    };
-
-    modal.classList.remove('hidden');
-}
 
 function openPromptDetailModal(p) {
     const modal = document.getElementById('promptModal');
