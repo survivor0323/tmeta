@@ -167,8 +167,16 @@ function renderAssetsUI(assets) {
 
         if (asset.type === 'image') {
             const img = document.createElement('img');
-            img.src = asset.url;
             img.style.cssText = "width: 100%; height: 100%; object-fit: cover;";
+            if (asset.url.startsWith('http')) {
+                // Fetch the image as a blob to bypass <img> referer/CORS blocks
+                fetch(asset.url)
+                    .then(r => r.blob())
+                    .then(b => img.src = URL.createObjectURL(b))
+                    .catch(() => img.src = asset.url);
+            } else {
+                img.src = asset.url;
+            }
             el.appendChild(img);
         } else if (asset.type === 'video') {
             el.innerHTML = '<span style="font-size: 1.2rem;">🎥</span>';
