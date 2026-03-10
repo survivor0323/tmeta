@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     // Load saved manual inputs to survive popup closing
-    chrome.storage.local.get(['manualPrompt', 'manualResult'], (result) => {
+    chrome.storage.local.get(['manualPrompt', 'manualResult', 'lastAssets'], (result) => {
         if (result.manualPrompt) {
             manualPrompt.value = result.manualPrompt;
             setTimeout(() => autoResize(manualPrompt), 0);
@@ -68,6 +68,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (result.manualResult) {
             manualResult.value = result.manualResult;
             setTimeout(() => autoResize(manualResult), 0);
+        }
+        if (result.lastAssets && result.lastAssets.length > 0) {
+            renderAssetsUI(result.lastAssets);
         }
     });
 
@@ -141,6 +144,39 @@ async function handleCaptureAI() {
 
         statusMsg.textContent = '✨ 캡처 성공! 내용을 확인/수정 후 저장하세요. (다양한 결과형태 감지됨)';
         statusMsg.style.color = '#10b981';
+
+        // Render assets in UI
+        if (response.data.assets && response.data.assets.length > 0) {
+            renderAssetsUI(response.data.assets);
+        } else {
+            const container = document.getElementById('assetsContainer');
+            if (container) container.innerHTML = '';
+        }
+    });
+}
+
+function renderAssetsUI(assets) {
+    const container = document.getElementById('assetsContainer');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    assets.forEach(asset => {
+        let el = document.createElement('div');
+        el.style.cssText = "flex-shrink: 0; width: 60px; height: 60px; border-radius: 6px; border: 1px solid #cbd5e1; display: flex; align-items: center; justify-content: center; background: #f8fafc; overflow: hidden; position: relative;";
+
+        if (asset.type === 'image') {
+            const img = document.createElement('img');
+            img.src = asset.url;
+            img.style.cssText = "width: 100%; height: 100%; object-fit: cover;";
+            el.appendChild(img);
+        } else if (asset.type === 'video') {
+            el.innerHTML = '<span style="font-size: 1.2rem;">🎥</span>';
+        } else if (asset.type === 'canvas') {
+            el.innerHTML = '<span style="font-size: 1.2rem;">💻</span>';
+        }
+
+        container.appendChild(el);
     });
 }
 
@@ -260,6 +296,8 @@ async function handleManualSave() {
 
         // Clear local storage on success
         chrome.storage.local.remove(['manualPrompt', 'manualResult', 'lastSource', 'lastAssets']);
+        const container = document.getElementById('assetsContainer');
+        if (container) container.innerHTML = '';
 
     } catch (err) {
         statusMsg.textContent = '저장 실패: ' + err.message;
