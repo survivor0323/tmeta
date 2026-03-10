@@ -9,7 +9,10 @@ function syncAuthToExtension() {
     try {
         const token = window.localStorage.getItem(AUTH_KEY);
         if (token) {
-            chrome.storage.local.set({ [AUTH_KEY]: token }, () => {
+            chrome.storage.local.set({
+                [AUTH_KEY]: token,
+                'MOTIVERSE_API_URL': window.location.origin
+            }, () => {
                 // 성공적으로 동기화 됨
             });
         } else {

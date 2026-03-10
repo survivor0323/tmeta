@@ -89,8 +89,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Expose autoResize globally for handleCaptureAI to use
     window.autoResize = autoResize;
 
-    document.getElementById('btnOpenWeb').addEventListener('click', () => {
-        chrome.tabs.create({ url: 'http://localhost:8000' }); // TODO: Change to prod URL later
+    document.getElementById('btnOpenWeb').addEventListener('click', async () => {
+        const savedApiUrl = await chromeStorageAdapter.getItem('MOTIVERSE_API_URL');
+        const webUrl = savedApiUrl || 'http://localhost:8000';
+        chrome.tabs.create({ url: webUrl });
     });
 
     document.getElementById('btnCaptureCurrent').addEventListener('click', handleCaptureAI);
@@ -215,7 +217,11 @@ async function handleManualSave() {
         if (session) {
             // AI 제목 및 카테고리 생성 API 호출
             try {
-                const res = await fetch('http://localhost:8000/api/v1/generate-prompt-title', {
+                const savedApiUrl = await chromeStorageAdapter.getItem('MOTIVERSE_API_URL');
+                const apiUrl = savedApiUrl || 'http://localhost:8000';
+                const endpoint = `${apiUrl}/api/v1/generate-prompt-title`;
+
+                const res = await fetch(endpoint, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
