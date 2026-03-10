@@ -1,5 +1,5 @@
 // Helper function to extract multimodal assets (images, videos, code blocks)
-async function extractAssets(aiMsgElement, source) {
+async function extractAssets(aiMsgElement, source, seenUrls = new Set()) {
     let assets = [];
     if (!aiMsgElement) return assets;
 
@@ -7,8 +7,16 @@ async function extractAssets(aiMsgElement, source) {
     const imgs = aiMsgElement.querySelectorAll('img');
     for (let img of Array.from(imgs)) {
         const src = img.src || img.getAttribute('data-src');
-        // Filter out small UI icons, avatar profile pictures, or invalid URLs
-        if (src && !src.includes('avatar') && !src.includes('profile') && !src.startsWith('data:image/svg')) {
+
+        if (!src || seenUrls.has(src)) continue;
+
+        // Filter out small UI icons, avatar profile pictures, or invalid URLs.
+        // Also skip very small icons if they are naturally small (less than 50px).
+        // (Blob images from DALL-E are usually large, so we keep them).
+        const isLikelyIcon = img.naturalWidth > 0 && img.naturalWidth < 50 && img.naturalHeight > 0 && img.naturalHeight < 50;
+
+        if (!src.includes('avatar') && !src.includes('profile') && !src.startsWith('data:image/svg') && !isLikelyIcon) {
+            seenUrls.add(src);
             try {
                 // Fetch image (works for blob:, same-origin, or CORS-enabled images)
                 // Using credentials 'same-origin' to ensure cookies are sent if it's a same-origin Google image
@@ -90,6 +98,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
                         let combinedAiText = '';
                         let combinedAiAssets = [];
+                        let seenUrls = new Set(); // track URLs across siblings
 
                         while (nextSibling) {
                             // Only process it if it's NOT another user message. If it's a user message, we stop.
@@ -105,7 +114,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                             }
 
                             // Extract assets from this sibling
-                            combinedAiAssets = combinedAiAssets.concat(await extractAssets(nextSibling, 'ChatGPT'));
+                            const siblingAssets = await extractAssets(nextSibling, 'ChatGPT', seenUrls);
+                            combinedAiAssets = combinedAiAssets.concat(siblingAssets);
 
                             nextSibling = nextSibling.nextElementSibling;
                         }
@@ -118,7 +128,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                                 const markdownEl = lastAiMsg.querySelector('.markdown');
                                 const textContent = markdownEl ? markdownEl.innerText : lastAiMsg.innerText;
                                 combinedAiText = textContent;
-                                combinedAiAssets = await extractAssets(lastAiMsg, 'ChatGPT');
+                                combinedAiAssets = await extractAssets(lastAiMsg, 'ChatGPT', seenUrls);
                             }
                         }
 
