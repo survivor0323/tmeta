@@ -9,23 +9,40 @@ async function extractAssets(aiMsgElement, source) {
         const src = img.src || img.getAttribute('data-src');
         // Filter out small UI icons, avatar profile pictures, or invalid URLs
         if (src && !src.includes('avatar') && !src.includes('profile') && !src.startsWith('data:image/svg')) {
-            if (src.startsWith('blob:')) {
-                // Blob URLs cross-origin cannot be fetched by popup. Must convert to base64 here.
+            try {
+                // Fetch image (works for blob:, same-origin, or CORS-enabled images)
+                // Using credentials 'same-origin' to ensure cookies are sent if it's a same-origin Google image
+                const res = await fetch(src, { credentials: 'omit' });
+                const blob = await res.blob();
+                const base64 = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(blob);
+                });
+                assets.push({ type: 'image', url: base64 });
+            } catch (e) {
+                console.warn("Base64 capture failed for", src, e);
+                // Fallback: If fetch fails (CORS etc), try drawing it to a canvas
                 try {
-                    const res = await fetch(src);
-                    const blob = await res.blob();
-                    const base64 = await new Promise((resolve) => {
-                        const reader = new FileReader();
-                        reader.onloadend = () => resolve(reader.result);
-                        reader.readAsDataURL(blob);
+                    const canvasBase64 = await new Promise((resolve, reject) => {
+                        const imgElem = new Image();
+                        imgElem.crossOrigin = 'anonymous'; // might fail if server doesn't support CORS
+                        imgElem.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = imgElem.width;
+                            canvas.height = imgElem.height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(imgElem, 0, 0);
+                            resolve(canvas.toDataURL('image/jpeg', 0.9));
+                        };
+                        imgElem.onerror = () => reject('Canvas load error');
+                        imgElem.src = src;
                     });
-                    assets.push({ type: 'image', url: base64 });
-                } catch (e) {
-                    console.error("Blob capture failed", e);
+                    assets.push({ type: 'image', url: canvasBase64 });
+                } catch (err) {
+                    // Ultimate fallback: Just send the URL
                     assets.push({ type: 'image', url: src });
                 }
-            } else {
-                assets.push({ type: 'image', url: src });
             }
         }
     }

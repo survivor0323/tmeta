@@ -52,6 +52,7 @@
     "permissions": [
         "sidePanel",
         "storage",
+        "unlimitedStorage",
         "activeTab",
         "scripting",
         "tabs",
