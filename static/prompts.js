@@ -1,5 +1,27 @@
 // prompts.js - Motiverse Prompt Hub Frontend Logic
 
+window.updatePromptCategory = async function (promptId, newCategory) {
+    if (!window._motiverseSession) return;
+    try {
+        const { error } = await window.supabaseClient
+            .from('hub_prompts')
+            .update({ category: newCategory })
+            .eq('id', promptId);
+
+        if (error) throw error;
+
+        alert('카테고리가 변경되었습니다.');
+        document.getElementById('promptModalClose')?.click();
+
+        if (typeof loadPrompts === 'function') {
+            await loadPrompts();
+        }
+    } catch (err) {
+        console.error(err);
+        alert('카테고리 수정 실패: ' + err.message);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Navigation Logic
     const navPromptHub = document.getElementById('navPromptHub');
@@ -409,12 +431,47 @@ function openPromptDetailModal(p) {
     const detailTagList = p.tags && Array.isArray(p.tags) && p.tags.length > 0 ? p.tags : (p.source_name ? [p.source_name] : []);
     const displayCategory = (p.category || '기타').split('(')[0].trim();
 
-    body.innerHTML = `
-        <!-- Header Section: Category and Tags -->
-        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 1.5rem;">
+    const isOwner = window._motiverseSession && window._motiverseSession.user && window._motiverseSession.user.id === p.user_id;
+    const fullCategories = [
+        { val: "일반", label: "일반" },
+        { val: "시장 조사 및 전략 (Insight & Strategy)", label: "시장 조사·전략" },
+        { val: "카피라이팅 및 텍스트 (Copywriting)", label: "카피라이팅·텍스트" },
+        { val: "소셜 미디어 및 콘텐츠 (Social & Viral)", label: "소셜·콘텐츠" },
+        { val: "시각적 크리에이티브 (Visual Concept)", label: "시각적 크리에이티브" },
+        { val: "영상 기획 및 스토리보드 (Video & Storyboard)", label: "영상·스토리보드" },
+        { val: "캠페인 및 프로모션 (Campaign & Promo)", label: "캠페인·프로모션" },
+        { val: "검색 최적화 및 광고 관리 (SEO & Paid Ads)", label: "SEO·광고 관리" },
+        { val: "클라이언트 관리 및 보고 (Client & Report)", label: "클라이언트·보고" },
+        { val: "브랜드 아이덴티티 및 정립 (Branding)", label: "브랜드·정립" },
+        { val: "운영 및 행정 (Operations & Admin)", label: "운영·행정" },
+        { val: "개발 및 프로그래밍 (Development)", label: "개발·프로그래밍" },
+        { val: "기타 (Others)", label: "기타" }
+    ];
+
+    let categoryHtml = '';
+    if (isOwner) {
+        let optionsHtml = fullCategories.map(c => {
+            const isSelected = p.category && (p.category === c.val || p.category.includes(c.val) || c.val.includes(p.category));
+            return `<option value="${c.val}" ${isSelected ? 'selected' : ''}>${c.label}</option>`;
+        }).join('');
+
+        categoryHtml = `
+            <select onchange="window.updatePromptCategory('${p.id}', this.value)" style="background: ${styleInfo.bg}; color: ${styleInfo.text}; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; border: 1px solid ${styleInfo.text}33; cursor: pointer; appearance: none; -webkit-appearance: none; outline: none; text-align: center; text-align-last: center;">
+                ${optionsHtml}
+            </select>
+        `;
+    } else {
+        categoryHtml = `
             <div style="background: ${styleInfo.bg}; color: ${styleInfo.text}; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; border: 1px solid ${styleInfo.text}33;">
                 <i class="${styleInfo.icon}"></i> ${displayCategory}
             </div>
+        `;
+    }
+
+    body.innerHTML = `
+        <!-- Header Section: Category and Tags -->
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 1.5rem;">
+            ${categoryHtml}
             ${detailTagList.length > 0 ? detailTagList.map(t => `<span style="background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;"><i class="fa-solid fa-hashtag" style="font-size: 0.75rem; color:#93c5fd; margin-right:2px;"></i>${escapeHtml(t)}</span>`).join('') : ''}
         </div>
 
@@ -429,8 +486,8 @@ function openPromptDetailModal(p) {
             ` : ''}
         </div>
 
-        <!-- Example Conversions (If result_text or example usage) 
-             For now, we place a static placeholder if none, or display result_text snippets -->
+        <!--Example Conversions(If result_text or example usage) 
+             For now, we place a static placeholder if none, or display result_text snippets-- >
         <div style="margin-bottom: 2.5rem;">
             <div style="font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.5rem;">
                 <i class="fa-regular fa-comment-dots"></i> PREVIEW / EXAMPLE
@@ -441,7 +498,7 @@ function openPromptDetailModal(p) {
             </div>
         </div>
 
-        <!-- Core Prompt Section (System Instructions) -->
+        <!--Core Prompt Section(System Instructions)-- >
         <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin-bottom: 1.5rem; background: white;">
             <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1.2rem; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">
                 <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.5rem;">
@@ -454,17 +511,17 @@ function openPromptDetailModal(p) {
             <div style="padding: 1.5rem; color: #334155; font-family: 'Pretendard', sans-serif; font-size: 0.95rem; line-height: 1.8; white-space: pre-wrap; max-height: 300px; overflow-y: auto;">${escapeHtml(p.prompt_text)}</div>
         </div>
 
-        <!-- Footer Meta Data -->
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div style="font-size: 0.8rem; color: #94a3b8;">
-                Updated: ${new Date(p.created_at).toLocaleDateString()}
+        <!--Footer Meta Data-- >
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-size: 0.8rem; color: #94a3b8;">
+                    Updated: ${new Date(p.created_at).toLocaleDateString()}
+                </div>
+
+                <button id="usePromptBtn" style="background: #0f172a; color: white; padding: 0.7rem 1.2rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.2s;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background='#0f172a'">
+                    <i class="fa-regular fa-copy"></i> 프롬프트 복사
+                </button>
             </div>
-            
-            <button id="usePromptBtn" style="background: #0f172a; color: white; padding: 0.7rem 1.2rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.2s;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background='#0f172a'">
-                <i class="fa-regular fa-copy"></i> 프롬프트 복사
-            </button>
-        </div>
-    `;
+        `;
 
     document.getElementById('copyPromptBtn').onclick = async function () {
         try {
