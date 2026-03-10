@@ -234,20 +234,3 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true; // async marker
     }
 });
-
-// Optional: Add a floating button to save current prompt directly from the page
-function injectFloatingButton() {
-    const btn = document.createElement('button');
-    btn.className = 'motiverse-capture-btn';
-    btn.innerText = '✨ Motiverse에 저장';
-    btn.onclick = () => {
-        // Alerting or sending message to background
-        alert('Motiverse 확장의 팝업(우상단)을 열어서 저장하세요!');
-    };
-    document.body.appendChild(btn);
-}
-
-// Only inject in specific domains for safety
-if (window.location.href.match(/chatgpt\.com|claude\.ai|gemini\.google\.com/i)) {
-    injectFloatingButton();
-}

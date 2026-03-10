@@ -1,22 +1,2 @@
 /* content.css */
-/* Styles for injection UI (if we want to add a floating capture button on the page directly) */
-.motiverse-capture-btn {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: linear-gradient(135deg, #60a5fa, #a78bfa);
-    color: white;
-    border: none;
-    border-radius: 99px;
-    padding: 12px 20px;
-    font-weight: bold;
-    font-family: sans-serif;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    cursor: pointer;
-    z-index: 999999;
-    transition: transform 0.2s;
-}
-
-.motiverse-capture-btn:hover {
-    transform: translateY(-2px);
-}
+/* Add future content script styles here */
