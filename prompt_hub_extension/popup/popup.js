@@ -135,10 +135,11 @@ async function handleCaptureAI() {
         chrome.storage.local.set({
             manualPrompt: response.data.prompt,
             manualResult: response.data.result,
-            lastSource: response.data.source // 나중에 저장 시 출처 기록 위함
+            lastSource: response.data.source, // 나중에 저장 시 출처 기록 위함
+            lastAssets: response.data.assets || [] // 캡처된 에셋들 저장
         });
 
-        statusMsg.textContent = '✨ 캡처 성공! 내용을 확인/수정 후 저장하세요.';
+        statusMsg.textContent = '✨ 캡처 성공! 내용을 확인/수정 후 저장하세요. (다양한 결과형태 감지됨)';
         statusMsg.style.color = '#10b981';
     });
 }
@@ -190,9 +191,54 @@ async function handleManualSave() {
             }
         }
 
-        // 마지막으로 사용된 캡처 출처 가져오기
-        const locResult = await chromeStorageAdapter.getItem('lastSource');
-        const sourceName = locResult || '수동입력';
+        // 마지막으로 사용된 캡처 출처 및 에셋 가져오기
+        const locSource = await chromeStorageAdapter.getItem('lastSource');
+        const sourceName = locSource || '수동입력';
+        const rawAssets = await chromeStorageAdapter.getItem('lastAssets') || [];
+
+        // 에셋(이미지/비디오) Supabase Storage에 업로드 (3단계)
+        let finalAssets = [];
+        if (rawAssets.length > 0) {
+            statusMsg.textContent = '멀티모달 결과물을 서버에 안전하게 업로드 중입니다...';
+
+            for (let idx = 0; idx < rawAssets.length; idx++) {
+                let asset = rawAssets[idx];
+
+                if (asset.type === 'image' || asset.type === 'video') {
+                    try {
+                        // 원래 사이트의 URL을 fetch해서 Blob으로 가져옵니다
+                        const fileRes = await fetch(asset.url);
+                        const blob = await fileRes.blob();
+
+                        // 고유 파일명 생성
+                        const ext = blob.type.split('/')[1] || (asset.type === 'image' ? 'png' : 'mp4');
+                        const fileName = `${currentUser.id}/${Date.now()}_${idx}.${ext}`;
+
+                        // Supabase Storage에 업로드
+                        const { data: uploadData, error: uploadError } = await supabaseClient.storage
+                            .from('prompt-assets')
+                            .upload(fileName, blob, { upsert: true });
+
+                        if (!uploadError) {
+                            // 업로드 성공 시 Public URL로 치환
+                            const { data: { publicUrl } } = supabaseClient.storage
+                                .from('prompt-assets')
+                                .getPublicUrl(fileName);
+
+                            asset.url = publicUrl;
+                        } else {
+                            console.warn('Asset upload error:', uploadError);
+                        }
+                    } catch (e) {
+                        console.warn('Asset fetch/upload error:', e);
+                        // CORS 등의 에러로 인해 실패할 수 있음. 실패 시 원본 URL 유지
+                    }
+                }
+                finalAssets.push(asset);
+            }
+        }
+
+        statusMsg.textContent = '최종 데이터를 DB에 등록 중입니다...';
 
         const { error } = await supabaseClient.from('hub_prompts').insert({
             title: finalTitle,
@@ -200,7 +246,8 @@ async function handleManualSave() {
             source_name: sourceName,
             user_id: currentUser.id,
             category: finalCategory,
-            result_text: result || null
+            result_text: result || null,
+            result_assets: finalAssets // JSONB 컬럼에 추가 저장
         });
 
         if (error) throw error;
@@ -212,7 +259,7 @@ async function handleManualSave() {
         window.lastGeneratedTitle = null;
 
         // Clear local storage on success
-        chrome.storage.local.remove(['manualPrompt', 'manualResult', 'lastSource']);
+        chrome.storage.local.remove(['manualPrompt', 'manualResult', 'lastSource', 'lastAssets']);
 
     } catch (err) {
         statusMsg.textContent = '저장 실패: ' + err.message;

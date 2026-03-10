@@ -1,7 +1,40 @@
+// Helper function to extract multimodal assets (images, videos, code blocks)
+function extractAssets(aiMsgElement, source) {
+    let assets = [];
+    if (!aiMsgElement) return assets;
+
+    // 1. Images
+    const imgs = aiMsgElement.querySelectorAll('img');
+    imgs.forEach(img => {
+        const src = img.src || img.getAttribute('data-src');
+        // Filter out small UI icons, avatar profile pictures, or invalid URLs
+        if (src && !src.includes('avatar') && !src.includes('profile') && !src.startsWith('data:image/svg')) {
+            assets.push({ type: 'image', url: src });
+        }
+    });
+
+    // 2. Videos
+    const videos = aiMsgElement.querySelectorAll('video');
+    videos.forEach(v => {
+        const src = v.src || v.querySelector('source')?.src;
+        if (src) assets.push({ type: 'video', url: src });
+    });
+
+    // 3. Canvas/Code Blocks
+    const codeBlocks = aiMsgElement.querySelectorAll('pre code');
+    codeBlocks.forEach(cb => {
+        const langHtml = cb.className || 'code';
+        const content = cb.innerText.substring(0, 5000); // Limit to 5000 chars to avoid memory issues
+        assets.push({ type: 'canvas', language: langHtml, content: content });
+    });
+
+    return assets;
+}
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'EXTRACT_PROMPT') {
         const url = window.location.href;
-        let data = { source: 'Unknown', prompt: '', title: '', result: '' };
+        let data = { source: 'Unknown', prompt: '', title: '', result: '', assets: [] };
 
         try {
             if (url.includes('chatgpt.com')) {
@@ -12,8 +45,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     data.prompt = msgs[msgs.length - 1].innerText;
                     const aiMsgs = document.querySelectorAll('div[data-message-author-role="assistant"] .markdown, article[data-testid^="conversation-turn-assistant"] .markdown, div[data-message-author-role="assistant"]');
                     if (aiMsgs.length > 0) {
-                        data.result = aiMsgs[aiMsgs.length - 1].innerText.substring(0, 1500);
-                        if (aiMsgs[aiMsgs.length - 1].innerText.length > 1500) data.result += '...';
+                        const lastAiMsg = aiMsgs[aiMsgs.length - 1];
+                        data.result = lastAiMsg.innerText.substring(0, 1500);
+                        if (lastAiMsg.innerText.length > 1500) data.result += '...';
+                        data.assets = extractAssets(lastAiMsg, 'ChatGPT');
                     }
                 }
                 data.title = document.title || 'ChatGPT Session';
@@ -47,8 +82,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
                     const aiMsgs = document.querySelectorAll(claudeAiSelectors);
                     if (aiMsgs.length > 0) {
-                        data.result = aiMsgs[aiMsgs.length - 1].innerText.substring(0, 1500);
-                        if (aiMsgs[aiMsgs.length - 1].innerText.length > 1500) data.result += '...';
+                        const lastAiMsg = aiMsgs[aiMsgs.length - 1];
+                        data.result = lastAiMsg.innerText.substring(0, 1500);
+                        if (lastAiMsg.innerText.length > 1500) data.result += '...';
+                        data.assets = extractAssets(lastAiMsg, 'Claude');
                     }
                 }
                 data.title = document.title || 'Claude Session';
@@ -86,8 +123,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
                     const aiMsgs = document.querySelectorAll(geminiAiSelectors);
                     if (aiMsgs.length > 0) {
-                        data.result = aiMsgs[aiMsgs.length - 1].innerText.substring(0, 1500);
-                        if (aiMsgs[aiMsgs.length - 1].innerText.length > 1500) data.result += '...';
+                        const lastAiMsg = aiMsgs[aiMsgs.length - 1];
+                        data.result = lastAiMsg.innerText.substring(0, 1500);
+                        if (lastAiMsg.innerText.length > 1500) data.result += '...';
+                        // Gemini often places images outside the text box, search from parent
+                        const parentContainer = lastAiMsg.closest('.model-response') || lastAiMsg;
+                        data.assets = extractAssets(parentContainer, 'Gemini');
                     }
                 }
                 data.title = document.title || 'Gemini Session';

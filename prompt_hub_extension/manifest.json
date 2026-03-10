@@ -58,6 +58,7 @@
         "downloads"
     ],
     "host_permissions": [
-        "https://*.supabase.co/*"
+        "https://*.supabase.co/*",
+        "<all_urls>"
     ]
 }
