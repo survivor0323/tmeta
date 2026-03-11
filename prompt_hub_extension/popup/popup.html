@@ -35,6 +35,18 @@
                     <div id="assetsContainer"
                         style="display: flex; gap: 8px; overflow-x: auto; padding-top: 4px; padding-bottom: 8px;"></div>
 
+                    <select id="manualVisibility"
+                        style="width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid #cbd5e1; margin-bottom: 0.5rem; background: white;">
+                        <option value="public">🌍 전체보기 (기본)</option>
+                        <option value="shared_users">👥 공유자 지정</option>
+                        <option value="shared_team">🏢 팀 지정</option>
+                        <option value="private">🔒 나만 보기</option>
+                    </select>
+                    <div id="visibilityTargetContainer" style="display: none; margin-bottom: 0.5rem;">
+                        <input type="text" id="visibilityTarget" placeholder="로그인 이메일 또는 팀명 입력 (쉼표 구분)"
+                            style="width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid #cbd5e1;" />
+                    </div>
+
                     <button id="btnSaveManual" class="btn btn-secondary">저장하기</button>
                 </div>
             </div>

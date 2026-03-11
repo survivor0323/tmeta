@@ -97,6 +97,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('btnCaptureCurrent').addEventListener('click', handleCaptureAI);
     document.getElementById('btnSaveManual').addEventListener('click', handleManualSave);
+
+    const manualVisibility = document.getElementById('manualVisibility');
+    const visibilityTargetContainer = document.getElementById('visibilityTargetContainer');
+    if (manualVisibility) {
+        manualVisibility.addEventListener('change', (e) => {
+            const val = e.target.value;
+            if (val === 'shared_users' || val === 'shared_team') {
+                visibilityTargetContainer.style.display = 'block';
+            } else {
+                visibilityTargetContainer.style.display = 'none';
+            }
+        });
+    }
 });
 
 async function handleCaptureAI() {
@@ -313,12 +326,24 @@ async function handleManualSave() {
 
         statusMsg.textContent = '최종 데이터를 DB에 등록 중입니다...';
 
+        const visibilityVal = document.getElementById('manualVisibility').value;
+        const visibilityTargetRaw = (document.getElementById('visibilityTarget').value || '').trim();
+        let sharedWithObj = {};
+
+        if (visibilityVal === 'shared_users') {
+            sharedWithObj.users = visibilityTargetRaw.split(',').map(s => s.trim()).filter(Boolean);
+        } else if (visibilityVal === 'shared_team') {
+            sharedWithObj.teams = visibilityTargetRaw.split(',').map(s => s.trim()).filter(Boolean);
+        }
+
         const { error } = await supabaseClient.from('hub_prompts').insert({
             title: finalTitle,
             prompt_text: prompt,
             source_name: sourceName,
             user_id: currentUser.id,
             category: finalCategory,
+            visibility: visibilityVal,
+            shared_with: sharedWithObj,
             result_text: result || null,
             result_assets: finalAssets // JSONB 컬럼에 추가 저장
         });

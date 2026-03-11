@@ -411,22 +411,94 @@ function openPromptDetailModal(p) {
         </div>
 
         <!-- Footer Meta Data -->
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+                <div style="position: relative; display: inline-block; margin-bottom: 0.3rem;">
+                    <span id="authorHoverTrigger" style="font-size: 0.85rem; font-weight: 700; color: #3b82f6; cursor: pointer;">
+                        <i class="fa-solid fa-user-circle"></i> ${escapeHtml(p.author_name || '작성자 미상')}
+                    </span>
+                    <div id="authorHoverBox" style="display: none; position: absolute; bottom: 120%; left: 0; background: white; border: 1px solid #e2e8f0; padding: 0.8rem 1rem; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: max-content; z-index: 10;">
+                        <div style="font-weight:800; color: #1e293b; margin-bottom: 0.3rem;">${escapeHtml(p.author_name || '이름 없음')}</div>
+                        <div style="color:#64748b; font-size: 0.8rem; margin-bottom: 0.2rem;"><i class="fa-regular fa-envelope"></i> ${escapeHtml(p.author_email || '이메일 없음')}</div>
+                        <div style="color:#64748b; font-size: 0.8rem;"><i class="fa-regular fa-building"></i> ${escapeHtml(p.author_company || '회사 미정')} / ${escapeHtml(p.author_dept || '팀 미정')}</div>
+                    </div>
+                </div>
                 <div style="font-size: 0.8rem; color: #94a3b8;">
                     Updated: ${new Date(p.created_at).toLocaleDateString()}
                 </div>
+            </div>
+
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <select id="visibilitySelect-${p.id}" ${!isOwner ? 'disabled' : ''} style="background: white; border: 1px solid #cbd5e1; padding: 0.6rem 0.8rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600; color: #475569; cursor: ${isOwner ? 'pointer' : 'default'}; outline: none; appearance: none; -webkit-appearance: none; text-align: center;">
+                    <option value="public" ${p.visibility === 'public' || !p.visibility ? 'selected' : ''}>🌍 전체보기</option>
+                    <option value="shared_users" ${p.visibility === 'shared_users' ? 'selected' : ''}>👥 공유자 지정</option>
+                    <option value="shared_team" ${p.visibility === 'shared_team' ? 'selected' : ''}>🏢 팀 지정</option>
+                    <option value="private" ${p.visibility === 'private' ? 'selected' : ''}>🔒 나만 보기</option>
+                </select>
 
                 <button id="usePromptBtn" style="background: #0f172a; color: white; padding: 0.7rem 1.2rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.2s;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background='#0f172a'">
                     <i class="fa-regular fa-copy"></i> 프롬프트 복사
                 </button>
             </div>
-        `;
+        </div>
+    `;
+
+    // Tooltip trigger
+    const trigger = document.getElementById('authorHoverTrigger');
+    const box = document.getElementById('authorHoverBox');
+    if (trigger && box) {
+        trigger.onmouseover = () => box.style.display = 'block';
+        trigger.onmouseout = () => box.style.display = 'none';
+        box.onmouseover = () => box.style.display = 'block';
+        box.onmouseout = () => box.style.display = 'none';
+    }
+
+    // Visibility update logic for owner
+    if (isOwner) {
+        const visSelect = document.getElementById(`visibilitySelect-${p.id}`);
+        visSelect.addEventListener('change', async (e) => {
+            const newVis = e.target.value;
+            let sharedWithObj = p.shared_with || {};
+
+            if (newVis === 'shared_users') {
+                const emails = prompt('공유할 이메일을 쉼표(,)로 구분하여 입력하세요:', (sharedWithObj.users || []).join(', '));
+                if (emails === null) {
+                    e.target.value = p.visibility || 'public';
+                    return;
+                }
+                sharedWithObj.users = emails.split(',').map(s => s.trim()).filter(Boolean);
+            } else if (newVis === 'shared_team') {
+                const teams = prompt('공유할 웹 등록 팀명(부서명)을 쉼표(,)로 구분하여 입력하세요:', (sharedWithObj.teams || []).join(', '));
+                if (teams === null) {
+                    e.target.value = p.visibility || 'public';
+                    return;
+                }
+                sharedWithObj.teams = teams.split(',').map(s => s.trim()).filter(Boolean);
+            }
+
+            try {
+                const { error } = await window.supabaseClient.from('hub_prompts').update({
+                    visibility: newVis,
+                    shared_with: sharedWithObj
+                }).eq('id', p.id);
+
+                if (error) throw error;
+                // Update local obj
+                p.visibility = newVis;
+                p.shared_with = sharedWithObj;
+                alert('공개 설정이 변경되었습니다.');
+            } catch (err) {
+                alert('변경 실패: ' + err.message);
+                e.target.value = p.visibility || 'public';
+            }
+        });
+    }
 
     document.getElementById('copyPromptBtn').onclick = async function () {
         try {
             await navigator.clipboard.writeText(p.prompt_text);
             this.innerHTML = '<i class="fa-solid fa-check" style="color:#10b981;"></i> 복사됨';
-            setTimeout(() => { this.innerHTML = '<i class="fa-regular fa-copy"></i> 복사하기'; }, 2000);
+            setTimeout(() => { this.innerHTML = '<i class="fa-regular fa-copy"></i> Copy'; }, 2000);
         } catch (e) {
             alert('복사 실패');
         }
