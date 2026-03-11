@@ -44,6 +44,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     contentLoading.classList.add('hidden');
 
+    document.getElementById('btnOpenWeb').addEventListener('click', async () => {
+        const savedApiUrl = await chromeStorageAdapter.getItem('MOTIVERSE_API_URL');
+        const webUrl = savedApiUrl || 'http://localhost:8000';
+        chrome.tabs.create({ url: webUrl });
+    });
+
     if (!session) {
         contentAuth.classList.remove('hidden');
         return;
@@ -88,12 +94,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Expose autoResize globally for handleCaptureAI to use
     window.autoResize = autoResize;
-
-    document.getElementById('btnOpenWeb').addEventListener('click', async () => {
-        const savedApiUrl = await chromeStorageAdapter.getItem('MOTIVERSE_API_URL');
-        const webUrl = savedApiUrl || 'http://localhost:8000';
-        chrome.tabs.create({ url: webUrl });
-    });
 
     document.getElementById('btnCaptureCurrent').addEventListener('click', handleCaptureAI);
     document.getElementById('btnSaveManual').addEventListener('click', handleManualSave);
