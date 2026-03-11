@@ -96,8 +96,8 @@ document.addEventListener("DOMContentLoaded", () => {
         fetchKeywordRecommendations(rawInput);
 
         try {
-            const activeTab = document.querySelector(".tab-chip.active");
-            const selectedPlatform = activeTab ? activeTab.dataset.platform : "meta";
+            const activeTab = document.querySelector("#platformFilters .tab-chip.active");
+            const selectedPlatform = activeTab?.dataset?.platform || "meta";
             const countryFilter = document.getElementById("countryFilter");
             const tiktokSearchType = document.getElementById("tiktokSearchType");
 
@@ -364,7 +364,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="ad-details" style="flex-direction:column;align-items:stretch;">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
                     <div class="brand-name">
-                        <div class="brand-avatar">${ad.brand.charAt(0).toUpperCase()}</div> ${ad.brand}
+                        <div class="brand-avatar">${(ad.brand || '?').charAt(0).toUpperCase()}</div> ${ad.brand || '알 수 없음'}
                     </div>
                     <button class="btn-ai-analyze analyze-single-btn" title="상세 기획 의도 분석"><i class="fa-solid fa-wand-magic-sparkles"></i> 딥다이브</button>
                 </div>
