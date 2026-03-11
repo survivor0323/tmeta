@@ -134,6 +134,67 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     }
+
+    // Drag and Drop Logic
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+
+    if (dropZone && fileInput) {
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.background = '#f1f5f9';
+            dropZone.style.borderColor = '#3b82f6';
+        });
+
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dropZone.style.background = 'transparent';
+            dropZone.style.borderColor = '#cbd5e1';
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.background = 'transparent';
+            dropZone.style.borderColor = '#cbd5e1';
+            
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                handleFiles(e.dataTransfer.files);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files.length > 0) {
+                handleFiles(e.target.files);
+            }
+        });
+
+        function handleFiles(files) {
+            chrome.storage.local.get(['lastAssets'], (res) => {
+                let assets = res.lastAssets || [];
+                
+                let promises = Array.from(files).map(file => {
+                    return new Promise((resolve) => {
+                        if (!file.type.startsWith('image/')) return resolve();
+                        
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            assets.push({ type: 'image', url: e.target.result });
+                            resolve();
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                });
+
+                Promise.all(promises).then(() => {
+                    chrome.storage.local.set({ lastAssets: assets }, () => {
+                        renderAssetsUI(assets);
+                    });
+                });
+            });
+        }
+    }
 });
 
 async function handleCaptureAI() {
@@ -223,9 +284,9 @@ function renderAssetsUI(assets) {
 
     container.innerHTML = '';
 
-    assets.forEach(asset => {
+    assets.forEach((asset, idx) => {
         let el = document.createElement('div');
-        el.style.cssText = "flex-shrink: 0; width: 60px; height: 60px; border-radius: 6px; border: 1px solid #cbd5e1; display: flex; align-items: center; justify-content: center; background: #f8fafc; overflow: hidden; position: relative;";
+        el.style.cssText = "flex-shrink: 0; width: 60px; height: 60px; border-radius: 6px; border: 1px solid #cbd5e1; display: flex; align-items: center; justify-content: center; background: #f8fafc; overflow: hidden; position: relative; group";
 
         if (asset.type === 'image') {
             const img = document.createElement('img');
@@ -237,7 +298,7 @@ function renderAssetsUI(assets) {
                     .then(b => img.src = URL.createObjectURL(b))
                     .catch(() => img.src = asset.url);
             } else {
-                img.src = asset.url;
+                img.src = asset.url; // data URL
             }
             el.appendChild(img);
         } else if (asset.type === 'video') {
@@ -246,6 +307,23 @@ function renderAssetsUI(assets) {
             el.innerHTML = '<span style="font-size: 1.2rem;">💻</span>';
         }
 
+        // Add delete button
+        const delBtn = document.createElement('div');
+        delBtn.innerHTML = '✕';
+        delBtn.style.cssText = "position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.6); color: white; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; opacity: 0; transition: opacity 0.2s;";
+        
+        el.onmouseover = () => delBtn.style.opacity = '1';
+        el.onmouseout = () => delBtn.style.opacity = '0';
+        
+        delBtn.onclick = (e) => {
+            e.stopPropagation();
+            assets.splice(idx, 1);
+            chrome.storage.local.set({ lastAssets: assets }, () => {
+                renderAssetsUI(assets);
+            });
+        };
+
+        el.appendChild(delBtn);
         container.appendChild(el);
     });
 }

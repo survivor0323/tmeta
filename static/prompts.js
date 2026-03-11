@@ -22,6 +22,33 @@ window.updatePromptCategory = async function (promptId, newCategory) {
     }
 }
 
+window.deletePrompt = async function (promptId) {
+    if (!window._motiverseSession) return;
+    if (!confirm('이 프롬프트 카드를 정말 삭제하시겠습니까? (이 작업은 되돌릴 수 없습니다.)')) return;
+    try {
+        const { error } = await window.supabaseClient
+            .from('hub_prompts')
+            .delete()
+            .eq('id', promptId);
+
+        if (error) throw error;
+
+        alert('삭제되었습니다.');
+        
+        const promptModal = document.getElementById('promptModal');
+        if (promptModal && !promptModal.classList.contains('hidden')) {
+            promptModal.classList.add('hidden');
+        }
+
+        if (typeof loadPrompts === 'function') {
+            await loadPrompts();
+        }
+    } catch (err) {
+        console.error(err);
+        alert('삭제 실패: ' + err.message);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Navigation Logic
     const navPromptHub = document.getElementById('navPromptHub');
@@ -240,6 +267,11 @@ function renderPrompts(prompts) {
                     <button class="action-btn" style="width: 28px; height: 28px; border-radius: 50%; background: #f59e0b; color: white; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;" title="즐겨찾기" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='none'">
                         <i class="fa-regular fa-star" style="font-size: 0.85rem;"></i>
                     </button>
+                    ${window._isAdmin ? `
+                    <button class="action-btn" onclick="window.deletePrompt('${p.id}'); event.stopPropagation();" style="width: 28px; height: 28px; border-radius: 50%; background: #ef4444; color: white; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;" title="삭제" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='none'">
+                        <i class="fa-solid fa-trash" style="font-size: 0.85rem;"></i>
+                    </button>
+                    ` : ''}
                 </div>
             </div>
 

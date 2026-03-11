@@ -32,8 +32,13 @@
                     <textarea id="manualPrompt" placeholder="핵심 프롬프트를 입력하세요" rows="8"></textarea>
                     <textarea id="manualResult" placeholder="결과 예시 텍스트 (옵션)" rows="8"></textarea>
 
+                    <div id="dropZone" style="border: 2px dashed #cbd5e1; border-radius: 8px; padding: 1.5rem; text-align: center; color: #64748b; font-size: 0.85rem; margin-bottom: 0.5rem; transition: background 0.2s; cursor: pointer;">
+                        📎 클릭 또는 이미지를 여기로 드래그 앤 드롭<br>
+                        <span style="font-size: 0.75rem; color: #94a3b8;">(결과 예시 이미지 수동 등록)</span>
+                        <input type="file" id="fileInput" accept="image/*" multiple style="display: none;">
+                    </div>
                     <div id="assetsContainer"
-                        style="display: flex; gap: 8px; overflow-x: auto; padding-top: 4px; padding-bottom: 8px;"></div>
+                        style="display: flex; gap: 8px; overflow-x: auto; padding-top: 4px; padding-bottom: 8px; flex-wrap: wrap;"></div>
 
                     <div style="position: relative; margin-bottom: 0.5rem; width: 100%;">
                         <label

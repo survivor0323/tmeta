@@ -91,11 +91,14 @@ async function checkAdminAndUpsertProfile(user) {
             return;
         }
         if (data && data.is_admin) {
+            window._isAdmin = true;
             adminBtn.classList.remove("hidden");
         } else {
+            window._isAdmin = false;
             adminBtn.classList.add("hidden");
         }
     } catch (e) {
+        window._isAdmin = false;
         console.warn("[Admin Check] 예외 발생:", e.message);
         adminBtn.classList.add("hidden");
     }

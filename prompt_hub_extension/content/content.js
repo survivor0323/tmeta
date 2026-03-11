@@ -1,11 +1,33 @@
-// Helper function to extract multimodal assets (images, videos, code blocks)
-async function extractAssets(aiMsgElement, source, seenUrls = new Set()) {
-    let assets = [];
-    if (!aiMsgElement) return assets;
+function getAllElementsDeep(selector, root = document) {
+    const elements = Array.from(root.querySelectorAll(selector));
+    const allNodes = Array.from(root.querySelectorAll('*'));
+    for (const el of allNodes) {
+        if (el.shadowRoot) {
+            elements.push(...getAllElementsDeep(selector, el.shadowRoot));
+        }
+    }
+    return elements;
+}
 
-    // Search for images directly inside aiMsgElement, OR if aiMsgElement is just a wrapper of cloned nodes
-    const imgs = aiMsgElement.querySelectorAll('img');
-    for (let img of Array.from(imgs)) {
+// Helper function to extract multimodal assets (images, videos, code blocks)
+async function extractAssets(aiMsgElements, source, seenUrls = new Set()) {
+    let assets = [];
+    if (!aiMsgElements) return assets;
+
+    const roots = Array.isArray(aiMsgElements) ? aiMsgElements : [aiMsgElements];
+    if (roots.length === 0) return assets;
+
+    const imgs = [];
+    const videos = [];
+    const codeBlocks = [];
+
+    roots.forEach(root => {
+        imgs.push(...getAllElementsDeep('img', root));
+        videos.push(...getAllElementsDeep('video', root));
+        codeBlocks.push(...getAllElementsDeep('pre code', root));
+    });
+
+    for (let img of imgs) {
         const src = img.src || img.getAttribute('data-src');
 
         if (!src || seenUrls.has(src)) continue;
@@ -56,14 +78,12 @@ async function extractAssets(aiMsgElement, source, seenUrls = new Set()) {
     }
 
     // 2. Videos
-    const videos = aiMsgElement.querySelectorAll('video');
     videos.forEach(v => {
         const src = v.src || v.querySelector('source')?.src;
         if (src) assets.push({ type: 'video', url: src });
     });
 
     // 3. Canvas/Code Blocks
-    const codeBlocks = aiMsgElement.querySelectorAll('pre code');
     codeBlocks.forEach(cb => {
         const langHtml = cb.className || 'code';
         const content = cb.innerText.substring(0, 5000); // Limit to 5000 chars to avoid memory issues
@@ -73,21 +93,11 @@ async function extractAssets(aiMsgElement, source, seenUrls = new Set()) {
     return assets;
 }
 
-async function getAssetsAfter(userEl, source) {
-    if (!userEl) return [];
-
-    const isAfter = (node, ref) => !!(ref.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING);
-
-    const targetImgs = Array.from(document.querySelectorAll('img')).filter(el => isAfter(el, userEl));
-    const targetVids = Array.from(document.querySelectorAll('video')).filter(el => isAfter(el, userEl));
-    const targetCodes = Array.from(document.querySelectorAll('pre code')).filter(el => isAfter(el, userEl));
-
-    const mockContainer = document.createElement('div');
-    targetImgs.forEach(n => mockContainer.appendChild(n.cloneNode(true)));
-    targetVids.forEach(n => mockContainer.appendChild(n.cloneNode(true)));
-    targetCodes.forEach(n => mockContainer.appendChild(n.cloneNode(true)));
-
-    return await extractAssets(mockContainer, source);
+function getNodesAfter(nodes, refNode) {
+    if (!refNode || !nodes) return [];
+    return Array.from(nodes).filter(node => 
+        !!(refNode.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING)
+    );
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -114,6 +124,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                             let combinedAiText = '';
 
                             // Iterate backwards to find the last user message, then collect all following AI turns
+                            const aiTurns = [];
                             for (let i = conversationTurns.length - 1; i >= 0; i--) {
                                 const turn = conversationTurns[i];
                                 const isUser = turn.querySelector('[data-message-author-role="user"]');
@@ -121,6 +132,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                                 if (isUser && !foundUser) {
                                     foundUser = true; // We hit the last user message, so we stop here
                                 } else if (!isUser && !foundUser) {
+                                    aiTurns.unshift(turn);
                                     // This is an AI turn that came AFTER the last user message
                                     const markdownEl = turn.querySelector('.markdown') || turn.querySelector('[data-message-author-role="assistant"]');
                                     const textContent = markdownEl ? markdownEl.innerText : turn.innerText;
@@ -135,15 +147,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                             data.result = combinedAiText.trim().substring(0, 1500);
                             if (combinedAiText.length > 1500) data.result += '...';
 
-                            // Reliable DOM position-based extraction
-                            data.assets = await getAssetsAfter(lastUserMsg, 'ChatGPT');
+                            data.assets = await extractAssets(aiTurns, 'ChatGPT');
                         } else {
                             // Fallback if no <article> tags (e.g., UI changed again)
                             const aiMsgs = document.querySelectorAll('div[data-message-author-role="assistant"], div[data-message-author-role="tool"]');
                             if (aiMsgs.length > 0) {
                                 const lastAiMsg = aiMsgs[aiMsgs.length - 1];
                                 data.result = lastAiMsg.innerText.substring(0, 1500);
-                                data.assets = await getAssetsAfter(lastUserMsg, 'ChatGPT');
+                                const targetMsgs = getNodesAfter(aiMsgs, userMsgs[userMsgs.length - 1]);
+                                data.assets = await extractAssets(targetMsgs, 'ChatGPT');
                             }
                         }
                     }
@@ -181,9 +193,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                             const lastAiMsg = aiMsgs[aiMsgs.length - 1];
                             data.result = lastAiMsg.innerText.substring(0, 1500);
                             if (lastAiMsg.innerText.length > 1500) data.result += '...';
-                            // Use robust DOM extraction from the user element down
-                            data.assets = await getAssetsAfter(msgs[msgs.length - 1], 'Claude');
                         }
+                        const targetMsgs = getNodesAfter(aiMsgs, msgs[msgs.length - 1]);
+                        data.assets = await extractAssets(targetMsgs, 'Claude');
                     }
                     data.title = document.title || 'Claude Session';
                 }
@@ -223,10 +235,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                             const lastAiMsg = aiMsgs[aiMsgs.length - 1];
                             data.result = lastAiMsg.innerText.substring(0, 1500);
                             if (lastAiMsg.innerText.length > 1500) data.result += '...';
-
-                            // Extremely robust DOM order sequence extraction for Gemini
-                            data.assets = await getAssetsAfter(msgs[msgs.length - 1], 'Gemini');
                         }
+                        const targetMsgs = getNodesAfter(aiMsgs, msgs[msgs.length - 1]);
+                        data.assets = await extractAssets(targetMsgs, 'Gemini');
                     }
                     data.title = document.title || 'Gemini Session';
                 }

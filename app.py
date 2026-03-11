@@ -669,22 +669,21 @@ async def generate_prompt_title(req: PromptTitleRequest, authorization: str = He
         import os
         client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         
-        system_prompt = """주어진 프롬프트와 결과 텍스트를 분석하여, 이 프롬프트의 '제목'과 '카테고리'를 분류하세요.
-단순히 프롬프트 내용의 앞부분을 복사해 자르지 말고, 프롬프트가 의도하는 핵심 목적(예: '블로그 포스팅 초안 작성', '유튜브 스크립트 기획', '20대 여성 이미지 생성')을 파악하여 15자 내외의 명확하고 간결한 제목을 만들어주세요.
+        system_prompt = """당신은 주어진 프롬프트와 결과를 분석하여 직관적이고 핵심적인 '제목'과 '카테고리'를 도출하는 AI 어시스턴트입니다.
+단순히 프롬프트의 도입부를 복사하지 마세요. 사용자의 프롬프트가 궁극적으로 '무엇을 위해 쓰이는 것인지'를 파악하여 15자 내외의 명확한 제목을 작명하세요.
+예시: '인스타그램 뷰티 제품 홍보 카피', '유튜브 쇼츠 기획 대본', '반려동물 사료 광고 썸네일 생성'
 
-특히 프롬프트 내용이 이미지나 영상을 그려 달라는 요청이라면 반드시 'OO 이미지 생성' 과 같이 그 의도가 분명하게 드러나도록 제목을 기획해 주세요. 프롬프트 원문을 제목으로 그대로 쓰지 마세요.
+만약 이미지나 영상 생성이 목적이라면, 제목 끝에 '생성' 혹은 '에셋' 등의 단어를 포함하여 시각적 프롬프트임을 명시하세요.
 
-다음 카테고리 중 하나를 정확히 선택하세요:
+카테고리는 반드시 아래 중 하나만 선택하세요:
 ["시장 조사 및 전략", "카피라이팅 및 텍스트", "소셜 미디어 및 콘텐츠", "시각적 크리에이티브", "영상 기획 및 스토리보드", "캠페인 및 프로모션", "검색 최적화 및 광고 관리", "클라이언트 관리 및 보고", "브랜드 아이덴티티 및 정립", "운영 및 행정", "개발 및 프로그래밍", "기타", "일반"]
 
-반드시 아래 JSON 포맷으로만 응답하세요. 다른 내용은 절대 추가하지 마세요:
-```json
+응답은 오직 아래 JSON 형식이어야 합니다. 마크다운 백틱(`) 없이 순수 JSON 형태만 반환할 수도 있고, 마크다운 코드블럭을 사용할 수도 있습니다.
 {
   "title": "분석된 핵심 목적 중심의 제목 (15자 이내)",
   "category": "분류된 카테고리 문자열"
-}
-```"""
-        user_content = f"[프롬프트]\n{req.prompt_text}\n\n[결과 텍스트]\n{req.result_text}"
+}"""
+        user_content = f"[프롬프트 원문]\n{req.prompt_text}\n\n[결과 텍스트 예시]\n{req.result_text}"
         
         response = client.chat.completions.create(
             model="gpt-4o-mini",
@@ -696,31 +695,30 @@ async def generate_prompt_title(req: PromptTitleRequest, authorization: str = He
             response_format={ "type": "json_object" }
         )
         import json
+        import re
         result_content = response.choices[0].message.content.strip()
+        
+        # JSON 블록 정리 
+        json_match = re.search(r'\{.*\}', result_content, re.DOTALL)
+        if json_match:
+            result_content = json_match.group(0)
+            
         try:
             parsed = json.loads(result_content)
             title = parsed.get("title", "").strip()
             category = parsed.get("category", "")
         except:
-            title = result_content[:15] + "..."
-            category = ""
+            title = req.prompt_text[:15] + "..."
+            category = "기타"
         
         # 제공된 카테고리에 속하지 않거나 파싱 실패시 기타 문구 설정
         valid_categories = ["시장 조사 및 전략", "카피라이팅 및 텍스트", "소셜 미디어 및 콘텐츠", "시각적 크리에이티브", "영상 기획 및 스토리보드", "캠페인 및 프로모션", "검색 최적화 및 광고 관리", "클라이언트 관리 및 보고", "브랜드 아이덴티티 및 정립", "운영 및 행정", "개발 및 프로그래밍", "기타", "일반"]
         
-        is_valid = False
-        for valid_cat in valid_categories:
-            if valid_cat in category or category in valid_cat:
-                category = valid_cat
-                is_valid = True
-                break
-                
-        if not is_valid or not category:
+        if category not in valid_categories:
             category = "기타"
             
-        # 불필요한 따옴표 제거 (혹시 모를 예외 처리)
-        if title.startswith('"') and title.endswith('"'):
-             title = title[1:-1]
+        # 불필요한 따옴표 제거
+        title = title.strip('"').strip("'")
         
         return {"status": "success", "data": {"title": title, "category": category}}
     except Exception as e:
