@@ -1090,7 +1090,7 @@ def generate_ai_insight_report(ads_data: List[Dict], query: str, platform: str) 
    - '최신 등록' 광고: 최신 트렌드 및 경쟁사의 새로운 가설 분석.
 
 2. 크리에이티브 리버스 엔지니어링:
-   - 각 분석 파트에서 반드시 제공된 **미디어썸네일** 텍스트(예: <img src='...' /> 형태)를 그대로 복사해 붙여넣어 해당 소재를 시각적으로 참고할 수 있게 할 것. (이미지를 너무 크게 하지 마세요. 제공된 <img .../> 태그를 그대로 쓰면 됩니다.)
+   - 각 분석 파트에서 반드시 제공된 **미디어썸네일** 텍스트(예: [MEDIA_TAG_1])를 원본 그대로 복사해 붙여넣어 해당 소재를 시각적으로 참고할 수 있게 할 것. (절대 스스로 HTML img 태그 등으로 변환하지 말고, 대괄호가 포함된 원본 태그 그대로 출력하세요. 시스템이 나중에 치환합니다.)
    - [Hooking]: 사용자 시선을 끈 결정적 문구나 이미지 요소는 무엇인가? 썸네일과 매칭하여 설명할 것.
    - [Messaging]: 고객의 어떤 Pain Point를 건드리고 있는가?
    - [Visual Strategy]: 사용된 메인 컬러, 레이아웃, 폰트 스타일의 의도는 무엇인가?
@@ -1124,8 +1124,15 @@ def generate_ai_insight_report(ads_data: List[Dict], query: str, platform: str) 
             max_tokens=3000
         )
         output_text = response.choices[0].message.content
+        import re
         for placeholder, html_tag in media_map.items():
+            tang_name = placeholder.strip("[]")
+            # GPT가 임의로 <img src='MEDIA_TAG_1' /> 형태로 만든 경우 우선 치환
+            output_text = re.sub(rf"<img[^>]*?src=['\"]?\[?{tang_name}\]?['\"]?[^>]*?>", html_tag, output_text, flags=re.IGNORECASE)
+            # 정상적인 [MEDIA_TAG_x] 치환
             output_text = output_text.replace(placeholder, html_tag)
+            # 괄호를 빼먹고 MEDIA_TAG_x 만 쓴 경우 치환
+            output_text = output_text.replace(tang_name, html_tag)
         return output_text
     except Exception as e:
         logger.error(f"AI Insight 리포트 생성 중 에러 발생: {e}")
