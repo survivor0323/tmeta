@@ -471,6 +471,11 @@ function openPromptDetailModal(p) {
                 <button id="usePromptBtn" style="background: #0f172a; color: white; padding: 0.7rem 1.2rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.2s;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background='#0f172a'">
                     <i class="fa-regular fa-copy"></i> 프롬프트 복사
                 </button>
+                ${window._isAdmin ? `
+                <button onclick="window.deletePrompt('${p.id}')" style="background: #ef4444; color: white; padding: 0.7rem 1.2rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.2s;" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">
+                    <i class="fa-solid fa-trash"></i> 삭제
+                </button>
+                ` : ''}
             </div>
         </div>
     `;
