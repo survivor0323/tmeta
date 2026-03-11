@@ -54,6 +54,15 @@ def get_user_id_from_token(authorization: str) -> str:
 
 app = FastAPI(title="Motiverse AI Ads Platform")
 
+from fastapi.middleware.cors import CORSMiddleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # 정적 파일 서빙 ('static' 폴더 하위의 html, css, js 리소스들을 루트경로에 호스팅)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
