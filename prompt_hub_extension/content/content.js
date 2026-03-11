@@ -90,51 +90,43 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                         const userTextEl = lastUserMsg.querySelector('.whitespace-pre-wrap') || lastUserMsg;
                         data.prompt = userTextEl.innerText.trim();
 
-                        // To get the AI response (which could be an assistant message, or a tool/DALL-E message),
-                        // we find the parent container of the user message, and look at all its succeeding siblings.
-                        // In modern ChatGPT, conversation turns are sibling `article` elements.
-                        const userTurnContainer = lastUserMsg.closest('article') || lastUserMsg.parentElement;
-                        let nextSibling = userTurnContainer.nextElementSibling;
+                        // The container for the entire user turn and its subsequent AI turns
+                        const conversationTurns = document.querySelectorAll('article[data-testid^="conversation-turn-"]');
+                        if (conversationTurns.length > 0) {
+                            let foundUser = false;
+                            let combinedAiText = '';
+                            let combinedAiAssets = [];
+                            let seenUrls = new Set();
 
-                        let combinedAiText = '';
-                        let combinedAiAssets = [];
-                        let seenUrls = new Set(); // track URLs across siblings
+                            // Iterate backwards to find the last user message, then collect all following AI turns
+                            for (let i = conversationTurns.length - 1; i >= 0; i--) {
+                                const turn = conversationTurns[i];
+                                const isUser = turn.querySelector('[data-message-author-role="user"]');
 
-                        while (nextSibling) {
-                            // Only process it if it's NOT another user message. If it's a user message, we stop.
-                            if (nextSibling.getAttribute('data-testid')?.startsWith('conversation-turn-user') ||
-                                nextSibling.querySelector('div[data-message-author-role="user"]')) {
-                                break;
+                                if (isUser && !foundUser) {
+                                    foundUser = true; // We hit the last user message, so we stop here
+                                } else if (!isUser && !foundUser) {
+                                    // This is an AI turn that came AFTER the last user message
+                                    const markdownEl = turn.querySelector('.markdown');
+                                    const textContent = markdownEl ? markdownEl.innerText : turn.innerText;
+
+                                    // Prepend text since we are iterating backwards
+                                    if (textContent) {
+                                        combinedAiText = textContent + '\n' + combinedAiText;
+                                    }
+
+                                    // Collect assets and prepend to maintain order
+                                    const siblingAssets = await extractAssets(turn, 'ChatGPT', seenUrls);
+                                    if (siblingAssets.length > 0) {
+                                        combinedAiAssets = siblingAssets.concat(combinedAiAssets);
+                                    }
+                                }
                             }
 
-                            const markdownEl = nextSibling.querySelector('.markdown');
-                            const textContent = markdownEl ? markdownEl.innerText : nextSibling.innerText;
-                            if (textContent) {
-                                combinedAiText += textContent + '\n';
-                            }
-
-                            // Extract assets from this sibling
-                            const siblingAssets = await extractAssets(nextSibling, 'ChatGPT', seenUrls);
-                            combinedAiAssets = combinedAiAssets.concat(siblingAssets);
-
-                            nextSibling = nextSibling.nextElementSibling;
+                            data.result = combinedAiText.trim().substring(0, 1500);
+                            if (combinedAiText.length > 1500) data.result += '...';
+                            data.assets = combinedAiAssets;
                         }
-
-                        // If no siblings but there is a globally found last AI message logically after our text (fallback)
-                        if (!combinedAiText && combinedAiAssets.length === 0) {
-                            const aiMsgs = document.querySelectorAll('article[data-testid^="conversation-turn-"], div[data-message-author-role="assistant"], div[data-message-author-role="tool"]');
-                            if (aiMsgs.length > 0) {
-                                const lastAiMsg = aiMsgs[aiMsgs.length - 1];
-                                const markdownEl = lastAiMsg.querySelector('.markdown');
-                                const textContent = markdownEl ? markdownEl.innerText : lastAiMsg.innerText;
-                                combinedAiText = textContent;
-                                combinedAiAssets = await extractAssets(lastAiMsg, 'ChatGPT', seenUrls);
-                            }
-                        }
-
-                        data.result = combinedAiText.trim().substring(0, 1500);
-                        if (combinedAiText.length > 1500) data.result += '...';
-                        data.assets = combinedAiAssets;
                     }
                     data.title = document.title || 'ChatGPT Session';
                 }

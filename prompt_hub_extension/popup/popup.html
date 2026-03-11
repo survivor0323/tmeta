@@ -35,16 +35,42 @@
                     <div id="assetsContainer"
                         style="display: flex; gap: 8px; overflow-x: auto; padding-top: 4px; padding-bottom: 8px;"></div>
 
-                    <select id="manualVisibility"
-                        style="width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid #cbd5e1; margin-bottom: 0.5rem; background: white;">
-                        <option value="public">🌍 전체보기 (기본)</option>
-                        <option value="shared_users">👥 공유자 지정</option>
-                        <option value="shared_team">🏢 팀 지정</option>
-                        <option value="private">🔒 나만 보기</option>
-                    </select>
-                    <div id="visibilityTargetContainer" style="display: none; margin-bottom: 0.5rem;">
-                        <input type="text" id="visibilityTarget" placeholder="로그인 이메일 또는 팀명 입력 (쉼표 구분)"
-                            style="width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid #cbd5e1;" />
+                    <div style="position: relative; margin-bottom: 0.5rem; width: 100%;">
+                        <label
+                            style="display:block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 4px;">공개
+                            설정</label>
+                        <button id="visDropdownBtn" type="button"
+                            style="width: 100%; text-align: left; padding: 0.6rem 0.8rem; background: white; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; color: #334155; font-weight: 500;">
+                            <span id="visDropdownLabel">🌍 전체보기</span>
+                            <span style="color:#94a3b8; font-size:0.8rem;">▼</span>
+                        </button>
+
+                        <!-- Dropdown Menu -->
+                        <div id="visDropdownMenu"
+                            style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); z-index: 50; margin-top: 4px; padding: 4px 0;">
+                            <div class="vis-option" data-val="public"
+                                style="padding: 0.6rem 0.8rem; cursor: pointer; transition: background 0.2s;">🌍 전체보기
+                            </div>
+                            <div class="vis-option" data-val="shared_users"
+                                style="padding: 0.6rem 0.8rem; cursor: pointer; transition: background 0.2s;">👥 공유자 지정
+                            </div>
+                            <div class="vis-option" data-val="shared_team"
+                                style="padding: 0.6rem 0.8rem; cursor: pointer; transition: background 0.2s;">🏢 팀 지정
+                            </div>
+                            <div class="vis-option" data-val="private"
+                                style="padding: 0.6rem 0.8rem; cursor: pointer; transition: background 0.2s;">🔒 나만 보기
+                            </div>
+                        </div>
+
+                        <!-- Target Input for shared -->
+                        <div id="visibilityTargetContainer"
+                            style="display: none; margin-top: 0.5rem; background: #f8fafc; padding: 0.5rem; border-radius: 6px; border: 1px solid #e2e8f0;">
+                            <input type="text" id="visibilityTarget" placeholder="이메일 또는 팀명 입력 (쉼표 구분)"
+                                style="width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid #cbd5e1; font-size: 0.85rem;" />
+                            <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">여러 명/팀 입력 시 쉼표로 구분하세요.
+                            </div>
+                        </div>
+                        <input type="hidden" id="manualVisibility" value="public" />
                     </div>
 
                     <button id="btnSaveManual" class="btn btn-secondary">저장하기</button>

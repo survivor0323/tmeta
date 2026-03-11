@@ -98,15 +98,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btnCaptureCurrent').addEventListener('click', handleCaptureAI);
     document.getElementById('btnSaveManual').addEventListener('click', handleManualSave);
 
-    const manualVisibility = document.getElementById('manualVisibility');
-    const visibilityTargetContainer = document.getElementById('visibilityTargetContainer');
-    if (manualVisibility) {
-        manualVisibility.addEventListener('change', (e) => {
-            const val = e.target.value;
-            if (val === 'shared_users' || val === 'shared_team') {
-                visibilityTargetContainer.style.display = 'block';
-            } else {
-                visibilityTargetContainer.style.display = 'none';
+    const visBtn = document.getElementById('visDropdownBtn');
+    const visMenu = document.getElementById('visDropdownMenu');
+    const visLabel = document.getElementById('visDropdownLabel');
+    const visInput = document.getElementById('manualVisibility');
+    const visTargetContainer = document.getElementById('visibilityTargetContainer');
+
+    if (visBtn && visMenu) {
+        visBtn.addEventListener('click', () => {
+            visMenu.style.display = visMenu.style.display === 'none' ? 'block' : 'none';
+        });
+
+        document.querySelectorAll('.vis-option').forEach(opt => {
+            opt.addEventListener('click', (e) => {
+                const val = e.target.getAttribute('data-val');
+                const text = e.target.innerText;
+                visLabel.innerText = text;
+                visInput.value = val;
+                visMenu.style.display = 'none';
+
+                if (val === 'shared_users' || val === 'shared_team') {
+                    visTargetContainer.style.display = 'block';
+                } else {
+                    visTargetContainer.style.display = 'none';
+                }
+            });
+            opt.addEventListener('mouseover', (e) => e.target.style.background = '#f8fafc');
+            opt.addEventListener('mouseout', (e) => e.target.style.background = 'white');
+        });
+
+        // Close on outside click
+        document.addEventListener('click', (e) => {
+            if (!visBtn.contains(e.target) && !visMenu.contains(e.target)) {
+                visMenu.style.display = 'none';
             }
         });
     }
