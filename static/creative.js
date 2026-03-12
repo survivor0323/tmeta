@@ -81,6 +81,106 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // === Image Upload & Thumbnails ===
+    let uploadedCreativeImages = []; // Array of base64 strings
+    const creativeImageUploadBtn = document.getElementById('creativeImageUploadBtn');
+    const creativeImageUploadInput = document.getElementById('creativeImageUploadInput');
+    const creativeImagePreviewContainer = document.getElementById('creativeImagePreviewContainer');
+
+    function updateCreativeImagePreviews() {
+        if (!creativeImagePreviewContainer) return;
+        creativeImagePreviewContainer.innerHTML = '';
+        
+        uploadedCreativeImages.forEach((imgB64, index) => {
+            const wrap = document.createElement('div');
+            wrap.style.position = 'relative';
+            wrap.style.flexShrink = '0';
+            wrap.style.width = '64px';
+            wrap.style.height = '64px';
+            wrap.style.borderRadius = '8px';
+            wrap.style.overflow = 'hidden';
+            wrap.style.border = '1px solid #e2e8f0';
+
+            const img = document.createElement('img');
+            img.src = imgB64;
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'cover';
+
+            const btn = document.createElement('button');
+            btn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+            btn.style.position = 'absolute';
+            btn.style.top = '2px';
+            btn.style.right = '2px';
+            btn.style.width = '16px';
+            btn.style.height = '16px';
+            btn.style.background = 'rgba(0,0,0,0.5)';
+            btn.style.color = '#fff';
+            btn.style.border = 'none';
+            btn.style.borderRadius = '50%';
+            btn.style.display = 'flex';
+            btn.style.alignItems = 'center';
+            btn.style.justifyContent = 'center';
+            btn.style.fontSize = '10px';
+            btn.style.cursor = 'pointer';
+
+            btn.onclick = () => {
+                uploadedCreativeImages.splice(index, 1);
+                updateCreativeImagePreviews();
+            };
+
+            const numBadge = document.createElement('div');
+            numBadge.innerText = (index + 1).toString();
+            numBadge.style.position = 'absolute';
+            numBadge.style.bottom = '2px';
+            numBadge.style.left = '2px';
+            numBadge.style.background = 'var(--accent-blue)';
+            numBadge.style.color = '#fff';
+            numBadge.style.fontSize = '10px';
+            numBadge.style.fontWeight = 'bold';
+            numBadge.style.padding = '0 4px';
+            numBadge.style.borderRadius = '4px';
+
+            wrap.appendChild(img);
+            wrap.appendChild(btn);
+            wrap.appendChild(numBadge);
+            creativeImagePreviewContainer.appendChild(wrap);
+        });
+    }
+
+    if (creativeImageUploadBtn && creativeImageUploadInput) {
+        creativeImageUploadBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (uploadedCreativeImages.length >= 5) {
+                alert("이미지는 최대 5장까지 업로드할 수 있습니다.");
+                return;
+            }
+            creativeImageUploadInput.click();
+        });
+
+        creativeImageUploadInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            
+            if (uploadedCreativeImages.length + files.length > 5) {
+                alert("이미지는 최대 5장까지 업로드할 수 있습니다.");
+            }
+
+            const filesToProcess = files.slice(0, 5 - uploadedCreativeImages.length);
+            
+            filesToProcess.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    uploadedCreativeImages.push(evt.target.result);
+                    updateCreativeImagePreviews();
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            // reset input
+            creativeImageUploadInput.value = '';
+        });
+    }
+
         const creativeGenerateBtn = document.getElementById('creativeGenerateBtn');
         const creativeEmptyState = document.getElementById('creativeEmptyState');
         const creativeLoading = document.getElementById('creativeLoading');
@@ -135,7 +235,12 @@ document.addEventListener("DOMContentLoaded", () => {
                             const res = await fetch('/api/v1/generate-creative-image', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ prompt: promptInput, aspect_ratio: ratio, model: modelValue })
+                                body: JSON.stringify({ 
+                                    prompt: promptInput, 
+                                    aspect_ratio: ratio, 
+                                    model: modelValue,
+                                    reference_images: uploadedCreativeImages
+                                })
                             });
                             const result = await res.json();
                             

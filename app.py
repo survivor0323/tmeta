@@ -1630,6 +1630,7 @@ class GenerateImageRequest(BaseModel):
     prompt: str
     aspect_ratio: Optional[str] = "16:9"
     model: Optional[str] = "imagen-3.0-generate-001"
+    reference_images: Optional[List[str]] = None
 
 @app.post("/api/v1/generate-creative-image")
 async def generate_creative_image(req: GenerateImageRequest, authorization: str = Header(default="")):
@@ -1682,15 +1683,27 @@ async def generate_creative_image(req: GenerateImageRequest, authorization: str 
             async with httpx.AsyncClient(timeout=60.0) as client:
                 # 1단계: Google Gemini Text 모델을 사용하여 프롬프트 고도화 (system_instruction, tools, 검색 반영)
                 text_model_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key_gemini}"
-                # gemini-2.5-flash나 gemini-2.0-flash 등 최신 모델 사용 (thinking 기능 지원 모델)
                 
+                parts_list = [{"text": f"다음 광고 소재 기획(사용자 요청 및 첨부된 레퍼런스 이미지들)을 바탕으로 이미지 프롬프트를 작성해줘: {req.prompt}"}]
+                if req.reference_images:
+                    for b64_url in req.reference_images:
+                        if "," in b64_url:
+                            mime = b64_url.split(";")[0].split(":")[1]
+                            data = b64_url.split(",")[1]
+                            parts_list.append({
+                                "inlineData": {
+                                    "mimeType": mime,
+                                    "data": data
+                                }
+                            })
+
                 text_payload = {
                     "systemInstruction": {
-                        "parts": [{"text": "당신은 15년차 이상의 전문 CF 사진작가이며, 10년이상의 모바일 광고 배너 제작자입니다. 사용자의 요청을 가장 트렌디하고 효과적인 카메라, 조명, 구도, 질감이 포함된 완벽한 Imagen 3 영문 이미지 생성 프롬프트로 변환하세요. 출력은 오직 영문 프롬프트 문자열만 해야 합니다."}]
+                        "parts": [{"text": "당신은 15년차 이상의 전문 CF 사진작가이며, 10년이상의 모바일 광고 배너 제작자입니다. 사용자의 요청과 레퍼런스 이미지를 바탕으로 가장 트렌디하고 효과적인 카메라, 조명, 구도, 질감이 포함된 완벽한 Imagen 3 영문 이미지 생성 프롬프트로 변환하세요. 출력은 오직 영문 프롬프트 문자열만 해야 합니다."}]
                     },
-                    "contents": [{"parts": [{"text": f"다음 광고 소재 기획을 바탕으로 이미지 프롬프트를 작성해줘: {req.prompt}"}]}],
+                    "contents": [{"parts": parts_list}],
                     "tools": [{"googleSearch": {}}],  # 구글 검색 활성화
-                    # 생각 수준(Thinking Level) 속성 (생각 기능이 활성화된 모델을 위해 설정)
+                    # 생각 수준(Thinking Level) 속성
                     "generationConfig": {
                         "thinkingLevel": "HIGH"
                     }
