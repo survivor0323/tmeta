@@ -63,6 +63,72 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+import asyncio
+from datetime import datetime, timedelta, timezone
+
+async def monitor_daily_job():
+    while True:
+        now = datetime.now()
+        # 매일 새벽 3시에 실행
+        next_run = now.replace(hour=3, minute=0, second=0, microsecond=0)
+        if next_run <= now:
+            next_run += timedelta(days=1)
+        
+        sleep_seconds = (next_run - now).total_seconds()
+        logger.info(f"다음 새벽 모니터링(3AM) 배치 실행까지 {sleep_seconds} 초 대기...")
+        await asyncio.sleep(sleep_seconds)
+        
+        logger.info("새벽 일일 모니터링 배치 시작...")
+        try:
+            if not supabase_admin:
+                continue
+            monitors = supabase_admin.table("monitored_brands").select("*").eq("is_active", True).execute()
+            if not monitors.data:
+                continue
+            
+            for mon in monitors.data:
+                brand = mon["brand_name"]
+                platform = mon.get("platform", "meta")
+                country = mon.get("country", "KR")
+                user_id = mon.get("user_id")
+                
+                try:
+                    ads = []
+                    if platform == "meta":
+                        from anti_gravity_ads_logic import fetch_competitor_ads_batch
+                        ads_by_brand = fetch_competitor_ads_batch([brand], country=country)
+                        ads = ads_by_brand.get(brand, [])
+                    elif platform == "tiktok":
+                        from anti_gravity_ads_logic import fetch_tiktok_creatives
+                        ads = fetch_tiktok_creatives(keyword=brand, country=country)
+                    elif platform == "instagram":
+                        from anti_gravity_ads_logic import fetch_instagram_reels
+                        ads = fetch_instagram_reels(keyword=brand)
+                    elif platform == "google":
+                        from anti_gravity_ads_logic import fetch_google_ads
+                        ads = fetch_google_ads(keyword=brand, country=country)
+                except Exception as e:
+                    logger.error(f"[Batch] {brand} 수집 실패: {e}")
+                    continue
+                
+                if ads:
+                    try:
+                        archive_ads(ads, platform, country)
+                    except:
+                        pass
+                    
+                    supabase_admin.table("monitored_brands").update({
+                        "last_checked_at": datetime.now(timezone.utc).isoformat(),
+                        "ads_data": ads[:50]
+                    }).eq("id", mon["id"]).execute()
+                    
+        except Exception as e:
+            logger.error(f"일일 모니터링 배치 오류: {e}")
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(monitor_daily_job())
+
 # 정적 파일 서빙 ('static' 폴더 하위의 html, css, js 리소스들을 루트경로에 호스팅)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 

@@ -695,6 +695,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('monitorHistoryView')?.classList.add('hidden');
         document.getElementById('monitorTimelineView')?.classList.add('hidden');
         document.getElementById('monitorDashboardView')?.classList.add('hidden');
+        document.getElementById('monitorStoppedView')?.classList.add('hidden');
 
         // 선택된 탭 활성화
         const selectedTab = document.getElementById(`monitorTab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`);
@@ -710,6 +711,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const selectedView = document.getElementById(`monitor${capitalizedTab}View`);
         if (selectedView) {
             selectedView.classList.remove('hidden');
+        }
+        
+        // '광고' 또는 '게재중단 광고' 탭으로 이동할 때 다시 렌더링하도록 처리
+        if (tabId === 'ads' || tabId === 'stopped') {
+            if (typeof window.renderMonitorAds === 'function' && window._currentMonitorAds) {
+                window.renderMonitorAds();
+            }
         }
     };
 
@@ -753,6 +761,53 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Refresh Btn logic
+    const monitorRefreshBtn = document.getElementById('monitorRefreshBtn');
+    if (monitorRefreshBtn) {
+        monitorRefreshBtn.addEventListener('click', async () => {
+            const platform = window._currentMonitorPlatform;
+            const brandName = window._currentMonitorBrand;
+            if (!brandName || !platform) return;
+
+            const originalText = monitorRefreshBtn.innerHTML;
+            monitorRefreshBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 로딩 중...';
+            monitorRefreshBtn.disabled = true;
+
+            try {
+                const headers = (typeof window.getAuthHeaders === 'function') ? window.getAuthHeaders() : { 'Content-Type': 'application/json' };
+                const requestBody = { query: brandName, platform: platform, country: "KR" };
+
+                // Reuse analyze logic
+                const res = await fetch("/api/v1/analyze", {
+                    method: "POST",
+                    headers: { ...headers, "Content-Type": "application/json" },
+                    body: JSON.stringify(requestBody)
+                });
+                const json = await res.json();
+                
+                if (res.ok && json.status === "success" && json.data) {
+                    // Success, retrieve current db entry to update and reload
+                    const queryDomItem = Array.from(document.querySelectorAll('#monitorSidebarList .competitor-item')).find(item => item.dataset.brand === brandName && item.dataset.platform === platform);
+                    if (queryDomItem) {
+                        const brandId = queryDomItem.dataset.id;
+                        if (brandId && window._motiverseSession && typeof window.updateMonitoredBrandDB === 'function') {
+                            await window.updateMonitoredBrandDB(brandId, { ads_data: json.data });
+                        }
+                    }
+                    window.showCompetitorDetail(brandName, platform, json.data, window.tempIsKeyword);
+                } else {
+                    alert('새 광고를 가져오는데 실패했습니다.');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('요청 중 오류 발생');
+            } finally {
+                monitorRefreshBtn.innerHTML = originalText;
+                monitorRefreshBtn.disabled = false;
+            }
+        });
+    }
+
 });
 
 window.renderMonitorAds = function (page = 1) {
@@ -762,7 +817,14 @@ window.renderMonitorAds = function (page = 1) {
         window._currentMonitorPage = 1;
     }
 
-    const adGrid = document.getElementById("monitorAdGrid");
+    let adGrid = document.getElementById("monitorAdGrid");
+    
+    // Determine the right grid based on the active tab
+    const isStoppedActive = document.getElementById('monitorTabStopped')?.classList.contains('active');
+    if (isStoppedActive) {
+        adGrid = document.getElementById("monitorStoppedAdGrid");
+    }
+
     if (!adGrid) return;
     adGrid.innerHTML = '';
 
@@ -771,6 +833,22 @@ window.renderMonitorAds = function (page = 1) {
     const sortVal = document.getElementById('monitorSortSelect')?.value;
     const bookmarkBtn = document.getElementById('bookmarkToggleBtn');
     const showOnlyBookmarked = bookmarkBtn?.dataset.mode === 'bookmarked';
+    
+    // Check which tab is currently active to determine whether to render Active Ads or Stopped Ads
+    const isStoppedTabNav = document.getElementById('monitorTabStopped')?.classList.contains('active');
+    
+    // Split the ads based on their active status
+    const activeAdsCount = adsToRender.filter(ad => ad.is_active !== false && ad.status !== 'INACTIVE').length;
+    const stoppedAdsCount = adsToRender.filter(ad => ad.is_active === false || ad.status === 'INACTIVE').length;
+    
+    const countBadge = document.getElementById('monitorStoppedCountBadge');
+    if (countBadge) countBadge.innerText = stoppedAdsCount;
+
+    if (isStoppedTabNav) {
+        adsToRender = adsToRender.filter(ad => ad.is_active === false || ad.status === 'INACTIVE');
+    } else {
+        adsToRender = adsToRender.filter(ad => ad.is_active !== false && ad.status !== 'INACTIVE');
+    }
 
     if (showOnlyBookmarked) {
         // Supposing bookmarked status is stored in supabase or locally via features.js bookmark mapping
@@ -906,7 +984,8 @@ window.renderMonitorAds = function (page = 1) {
             btn.onclick = () => {
                 window.renderMonitorAds(i);
                 // Scroll to top of grid
-                document.getElementById('monitorTabAds')?.scrollIntoView({ behavior: 'smooth' });
+                const activeTabEl = document.querySelector('.monitor-tab.active');
+                if (activeTabEl) activeTabEl.scrollIntoView({ behavior: 'smooth' });
             };
             paginationContainer.appendChild(btn);
         }
@@ -970,7 +1049,7 @@ window.showCompetitorDetail = function (brandName, platform, adsData = null, isK
                     <i class="fa-solid fa-magnifying-glass" style="color: #64748b; font-size: 1.2rem;"></i>
                 </div> 
                 <span style="font-weight:700;">'${cleanName}'</span> <span style="font-size: 1rem; color: #64748b; font-weight: 600; margin-left:0.2rem; margin-right: 0.5rem;">모니터링</span>
-                ${platformBadge} <span style="font-size: 0.75rem; color: #94a3b8; font-weight: 500; margin-left: 0.5rem;"><i class="fa-solid fa-rotate"></i> 방금 업데이트됨</span>
+                ${platformBadge}
             `;
         } else {
             const match = cleanName.match(/[A-Z가-힣0-9]/i);
@@ -985,7 +1064,6 @@ window.showCompetitorDetail = function (brandName, platform, adsData = null, isK
                 ${customSpan} 
                 <span style="font-weight:700;">${cleanName}</span> 
                 <span style="margin-left: 0.5rem;">${platformBadge}</span> 
-                <span style="font-size: 0.75rem; color: #94a3b8; font-weight: 500; margin-left: 0.5rem;"><i class="fa-solid fa-rotate"></i> 방금 업데이트됨</span>
             `;
         }
     }
