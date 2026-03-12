@@ -1678,16 +1678,49 @@ async def generate_creative_image(req: GenerateImageRequest, authorization: str 
         async def run_gemini():
             if not api_key_gemini:
                 return {"status": "error", "message": "Gemini API 키가 설정되어 있지 않습니다."}
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key={api_key_gemini}"
-            payload = {
-                "instances": [{"prompt": req.prompt}],
-                "parameters": {
-                    "sampleCount": 1,
-                    "aspectRatio": req.aspect_ratio
+                
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                # 1단계: Google Gemini Text 모델을 사용하여 프롬프트 고도화 (system_instruction, tools, 검색 반영)
+                text_model_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key_gemini}"
+                # gemini-2.5-flash나 gemini-2.0-flash 등 최신 모델 사용 (thinking 기능 지원 모델)
+                
+                text_payload = {
+                    "systemInstruction": {
+                        "parts": [{"text": "당신은 15년차 이상의 전문 CF 사진작가이며, 10년이상의 모바일 광고 배너 제작자입니다. 사용자의 요청을 가장 트렌디하고 효과적인 카메라, 조명, 구도, 질감이 포함된 완벽한 Imagen 3 영문 이미지 생성 프롬프트로 변환하세요. 출력은 오직 영문 프롬프트 문자열만 해야 합니다."}]
+                    },
+                    "contents": [{"parts": [{"text": f"다음 광고 소재 기획을 바탕으로 이미지 프롬프트를 작성해줘: {req.prompt}"}]}],
+                    "tools": [{"googleSearch": {}}],  # 구글 검색 활성화
+                    # 생각 수준(Thinking Level) 속성 (생각 기능이 활성화된 모델을 위해 설정)
+                    "generationConfig": {
+                        "thinkingLevel": "HIGH"
+                    }
                 }
-            }
-            async with httpx.AsyncClient(timeout=45.0) as client:
-                resp = await client.post(url, json=payload)
+                
+                improved_prompt = req.prompt
+                try:
+                    text_resp = await client.post(text_model_url, json=text_payload)
+                    if text_resp.status_code == 200:
+                        candidates = text_resp.json().get("candidates", [])
+                        if candidates:
+                            parts = candidates[0].get("content", {}).get("parts", [])
+                            if parts:
+                                improved_prompt = parts[0].get("text", req.prompt).strip()
+                    else:
+                        logger.warning(f"프롬프트 고도화 API 오류, 원본 프롬프트 사용: {text_resp.text}")
+                except Exception as ex:
+                    logger.warning(f"프롬프트 고도화 중 예외, 원본 프롬프트 사용: {ex}")
+
+                # 2단계: 최적화된 프롬프트로 Imagen 3 호출
+                img_url = f"https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key={api_key_gemini}"
+                img_payload = {
+                    "instances": [{"prompt": improved_prompt}],
+                    "parameters": {
+                        "sampleCount": 1,
+                        "aspectRatio": req.aspect_ratio
+                    }
+                }
+                
+                resp = await client.post(img_url, json=img_payload)
                 res_json = resp.json()
                 if resp.status_code == 200 and 'predictions' in res_json:
                     b64_img = res_json['predictions'][0].get('bytesBase64Encoded', '')
