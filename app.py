@@ -1800,17 +1800,19 @@ async def generate_cf_prompt(req: GenerateCFPromptRequest, authorization: str = 
 (```json 과 같은 마크다운 코드블록 래퍼 없이 순수한 JSON 텍스트만 출력할 것)
 {{
     "mj_prompt": "Midjourney용 파라미터(--ar, --v 6.0 등)가 포함된 최적화 영문 프롬프트 (가장 구체적이고 디테일하게 작성)",
-    "sd_prompt": "Stable Diffusion용 영문 프롬프트 (Positive, Negative 구분 없이 쉼표로 나열된 키워드 위주)",
-    "gemini_prompt": "Gemini/Imagen 3용 영문 프롬프트 (스토리보드 시안용 간결하고 직관적인 장면 묘사 위주 프롬프트)"
+    "sd_prompt": "Stable Diffusion 등 여러 모델에서 사용하기 좋은 범용적인 영문 프롬프트 (가장 깔끔하고 디테일하고 다양한 키워드 수식어들을 쉼표로 연결하여 고화질을 강제하는 형태의 추천 프롬프트)"
 }}"""
 
-            parts_list = [{"text": user_msg}]
+            parts_list = []
             if req.reference_images:
-                for b64_url in req.reference_images:
+                for idx, b64_url in enumerate(req.reference_images):
                     if "," in b64_url:
                         mime = b64_url.split(";")[0].split(":")[1]
                         data = b64_url.split(",")[1]
+                        parts_list.append({"text": f"[{idx+1}번 이미지]"})
                         parts_list.append({"inlineData": {"mimeType": mime, "data": data}})
+                        
+            parts_list.append({"text": user_msg})
 
             system_instruction = "당신은 15년차 이상의 전문 CF 감독이자 프롬프트 엔지니어입니다. 주어진 설정과 레퍼런스 이미지를 바탕으로 완벽한 수준의 영문 생성형 AI 프롬프트를 제조해 주는 것이 목표입니다."
 
@@ -1837,8 +1839,7 @@ async def generate_cf_prompt(req: GenerateCFPromptRequest, authorization: str = 
             except Exception:
                 prompt_data = {
                     "mj_prompt": "분석 실패: " + raw_text,
-                    "sd_prompt": "분석 실패: " + raw_text,
-                    "gemini_prompt": req.prompt
+                    "sd_prompt": "분석 실패: " + raw_text
                 }
             
             # 2단계: Imagen 3 - 스토리보드 시안 생성 (기능 제거됨)
@@ -1850,7 +1851,6 @@ async def generate_cf_prompt(req: GenerateCFPromptRequest, authorization: str = 
                 "data": {
                     "mj_prompt": prompt_data.get("mj_prompt", ""),
                     "sd_prompt": prompt_data.get("sd_prompt", ""),
-                    "gemini_prompt": prompt_data.get("gemini_prompt", ""),
                     "image_b64": image_b64,
                     "image_error": image_error
                 }

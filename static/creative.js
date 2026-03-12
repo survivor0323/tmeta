@@ -185,7 +185,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const creativeEmptyState = document.getElementById('creativeEmptyState');
         const creativeResultArea = document.getElementById('creativeResultArea');
         const mjPromptText = document.getElementById('mjPromptText');
-        const geminiPromptText = document.getElementById('geminiPromptText');
+
     
         if (creativeGenerateBtn) {
             creativeGenerateBtn.addEventListener('click', async () => {
@@ -215,7 +215,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 
                 if (mjPromptText) mjPromptText.innerHTML = '<span style="color: #94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> AI가 프롬프트를 설계 중입니다...</span>';
                 if (sdPromptText) sdPromptText.innerHTML = '<span style="color: #94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> AI가 프롬프트를 설계 중입니다...</span>';
-                if (geminiPromptText) geminiPromptText.innerHTML = '<span style="color: #94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> AI가 프롬프트를 설계 중입니다...</span>';
+
                 // Disable inputs
                 creativeGenerateBtn.disabled = true;
                 creativeGenerateBtn.style.opacity = '0.7';
@@ -245,7 +245,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (result.status === 'success' && result.data) {
                         mjPromptText.innerText = result.data.mj_prompt || "프롬프트를 생성할 수 없습니다.";
                         sdPromptText.innerText = result.data.sd_prompt || "프롬프트를 생성할 수 없습니다.";
-                        if (geminiPromptText) geminiPromptText.innerText = result.data.gemini_prompt || "프롬프트를 생성할 수 없습니다.";
+
                     } else {
                         throw new Error(result.message || '알 수 없는 오류');
                     }
@@ -254,7 +254,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     console.error("생성 에러:", err);
                     mjPromptText.innerText = `에러 발생: ${err.message}`;
                     sdPromptText.innerText = `에러 발생: ${err.message}`;
-                    if (geminiPromptText) geminiPromptText.innerText = `에러 발생: ${err.message}`;
+
                 } finally {
                     creativeGenerateBtn.disabled = false;
                     creativeGenerateBtn.style.opacity = '1';
