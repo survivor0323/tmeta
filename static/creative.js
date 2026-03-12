@@ -186,6 +186,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const creativeResultArea = document.getElementById('creativeResultArea');
         const mjPromptText = document.getElementById('mjPromptText');
         const sdPromptText = document.getElementById('sdPromptText');
+        const geminiPromptText = document.getElementById('geminiPromptText');
         const creativePreviewGallery = document.getElementById('creativePreviewGallery');
     
         if (creativeGenerateBtn) {
@@ -216,6 +217,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 
                 if (mjPromptText) mjPromptText.innerHTML = '<span style="color: #94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> AI가 프롬프트를 설계 중입니다...</span>';
                 if (sdPromptText) sdPromptText.innerHTML = '<span style="color: #94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> AI가 프롬프트를 설계 중입니다...</span>';
+                if (geminiPromptText) geminiPromptText.innerHTML = '<span style="color: #94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> AI가 프롬프트를 설계 중입니다...</span>';
                 if (creativePreviewGallery) creativePreviewGallery.innerHTML = '<div style="color: #94a3b8; font-size: 0.9rem;"><i class="fa-solid fa-spinner fa-spin"></i> 스토리보드 시안 렌더링 중...</div>';
                 
                 // Disable inputs
@@ -247,6 +249,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (result.status === 'success' && result.data) {
                         mjPromptText.innerText = result.data.mj_prompt || "프롬프트를 생성할 수 없습니다.";
                         sdPromptText.innerText = result.data.sd_prompt || "프롬프트를 생성할 수 없습니다.";
+                        if (geminiPromptText) geminiPromptText.innerText = result.data.gemini_prompt || "프롬프트를 생성할 수 없습니다.";
                         
                         if (result.data.image_b64) {
                             creativePreviewGallery.innerHTML = `<img src="${result.data.image_b64}" style="width: 100%; height: auto; border-radius: 8px; object-fit: contain; max-height: 500px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">`;
@@ -261,6 +264,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     console.error("생성 에러:", err);
                     mjPromptText.innerText = `에러 발생: ${err.message}`;
                     sdPromptText.innerText = `에러 발생: ${err.message}`;
+                    if (geminiPromptText) geminiPromptText.innerText = `에러 발생: ${err.message}`;
                     creativePreviewGallery.innerHTML = `<div style="color: #ef4444;"><i class="fa-solid fa-triangle-exclamation"></i> 시안 렌더링 에러: ${err.message}</div>`;
                 } finally {
                     creativeGenerateBtn.disabled = false;

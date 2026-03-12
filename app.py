@@ -1801,7 +1801,7 @@ async def generate_cf_prompt(req: GenerateCFPromptRequest, authorization: str = 
 {{
     "mj_prompt": "Midjourney용 파라미터(--ar, --v 6.0 등)가 포함된 최적화 영문 프롬프트 (가장 구체적이고 디테일하게 작성)",
     "sd_prompt": "Stable Diffusion용 영문 프롬프트 (Positive, Negative 구분 없이 쉼표로 나열된 키워드 위주)",
-    "basic_prompt": "스토리보드 시안용 간결한 영문 프롬프트 (Imagen 3 전용)"
+    "gemini_prompt": "Gemini/Imagen 3용 영문 프롬프트 (스토리보드 시안용 간결하고 직관적인 장면 묘사 위주 프롬프트)"
 }}"""
 
             parts_list = [{"text": user_msg}]
@@ -1818,7 +1818,6 @@ async def generate_cf_prompt(req: GenerateCFPromptRequest, authorization: str = 
                 "systemInstruction": {"parts": [{"text": system_instruction}]},
                 "contents": [{"parts": parts_list}],
                 "generationConfig": {
-                    "thinkingLevel": "HIGH",
                     "responseMimeType": "application/json"
                 }
             }
@@ -1839,14 +1838,14 @@ async def generate_cf_prompt(req: GenerateCFPromptRequest, authorization: str = 
                 prompt_data = {
                     "mj_prompt": "분석 실패: " + raw_text,
                     "sd_prompt": "분석 실패: " + raw_text,
-                    "basic_prompt": req.prompt
+                    "gemini_prompt": req.prompt
                 }
             
             # 2단계: Imagen 3 - 스토리보드 시안 생성
             img_model_url = f"https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key={api_key_gemini}"
-            basic_prompt = prompt_data.get("basic_prompt", req.prompt)
+            gemini_prompt = prompt_data.get("gemini_prompt", req.prompt)
             # Add options visually into basic prompt string
-            enhanced_basic_prompt = f"{basic_prompt}. Vibe: {req.vibe}, Lighting: {req.lighting}, Camera: {req.camera}"
+            enhanced_basic_prompt = f"{gemini_prompt}. Vibe: {req.vibe}, Lighting: {req.lighting}, Camera: {req.camera}"
             
             img_payload = {
                 "instances": [{"prompt": enhanced_basic_prompt}],
@@ -1867,6 +1866,7 @@ async def generate_cf_prompt(req: GenerateCFPromptRequest, authorization: str = 
                 "data": {
                     "mj_prompt": prompt_data.get("mj_prompt", ""),
                     "sd_prompt": prompt_data.get("sd_prompt", ""),
+                    "gemini_prompt": prompt_data.get("gemini_prompt", ""),
                     "image_b64": image_b64
                 }
             }
