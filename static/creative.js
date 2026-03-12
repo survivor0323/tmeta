@@ -185,9 +185,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const creativeEmptyState = document.getElementById('creativeEmptyState');
         const creativeResultArea = document.getElementById('creativeResultArea');
         const mjPromptText = document.getElementById('mjPromptText');
-        const sdPromptText = document.getElementById('sdPromptText');
         const geminiPromptText = document.getElementById('geminiPromptText');
-        const creativePreviewGallery = document.getElementById('creativePreviewGallery');
     
         if (creativeGenerateBtn) {
             creativeGenerateBtn.addEventListener('click', async () => {
@@ -212,14 +210,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 // UI Update: Hide empty state, show result area, set loading UX
                 if (creativeEmptyState) creativeEmptyState.style.display = 'none';
                 if (creativeResultArea) {
-                    creativeResultArea.style.display = 'grid'; // display grid for result area
+                    creativeResultArea.style.display = 'flex'; // display flex for result area
                 }
                 
                 if (mjPromptText) mjPromptText.innerHTML = '<span style="color: #94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> AI가 프롬프트를 설계 중입니다...</span>';
                 if (sdPromptText) sdPromptText.innerHTML = '<span style="color: #94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> AI가 프롬프트를 설계 중입니다...</span>';
                 if (geminiPromptText) geminiPromptText.innerHTML = '<span style="color: #94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> AI가 프롬프트를 설계 중입니다...</span>';
-                if (creativePreviewGallery) creativePreviewGallery.innerHTML = '<div style="color: #94a3b8; font-size: 0.9rem;"><i class="fa-solid fa-spinner fa-spin"></i> 스토리보드 시안 렌더링 중...</div>';
-                
                 // Disable inputs
                 creativeGenerateBtn.disabled = true;
                 creativeGenerateBtn.style.opacity = '0.7';
@@ -250,13 +246,6 @@ document.addEventListener("DOMContentLoaded", () => {
                         mjPromptText.innerText = result.data.mj_prompt || "프롬프트를 생성할 수 없습니다.";
                         sdPromptText.innerText = result.data.sd_prompt || "프롬프트를 생성할 수 없습니다.";
                         if (geminiPromptText) geminiPromptText.innerText = result.data.gemini_prompt || "프롬프트를 생성할 수 없습니다.";
-                        
-                        if (result.data.image_b64) {
-                            creativePreviewGallery.innerHTML = `<img src="${result.data.image_b64}" style="width: 100%; height: auto; border-radius: 8px; object-fit: contain; max-height: 500px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">`;
-                        } else {
-                            let errorTxt = result.data.image_error ? JSON.stringify(result.data.image_error) : '알 수 없음';
-                            creativePreviewGallery.innerHTML = `<div style="color: #ef4444; padding: 1rem;"><i class="fa-solid fa-triangle-exclamation"></i> 시안 이미지를 가져오지 못했습니다.<br><br><span style="font-size: 0.8rem; word-break: break-all;">${errorTxt}</span></div>`;
-                        }
                     } else {
                         throw new Error(result.message || '알 수 없는 오류');
                     }
@@ -266,7 +255,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     mjPromptText.innerText = `에러 발생: ${err.message}`;
                     sdPromptText.innerText = `에러 발생: ${err.message}`;
                     if (geminiPromptText) geminiPromptText.innerText = `에러 발생: ${err.message}`;
-                    creativePreviewGallery.innerHTML = `<div style="color: #ef4444;"><i class="fa-solid fa-triangle-exclamation"></i> 시안 렌더링 에러: ${err.message}</div>`;
                 } finally {
                     creativeGenerateBtn.disabled = false;
                     creativeGenerateBtn.style.opacity = '1';
