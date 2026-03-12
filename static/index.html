@@ -669,13 +669,38 @@
             <main id="creativeMainArea" style="flex: 1; padding: 2rem 3rem; overflow-y: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2rem;">
                 <!-- Empty State -->
                 <div id="creativeEmptyState" style="text-align: center;">
-                    <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-main); margin-bottom: 1rem;"><span class="text-gradient">START CREATING</span></h1>
-                    <p style="color: var(--text-muted); font-size: 1.1rem;">크리에이티브는 실험중이며, 원하는 수준의 이미지 품질을 보장할 수 없습니다.</p>
+                    <h1 style="font-size: 2.5rem; font-weight: 800; color: var(--text-main); margin-bottom: 1rem;"><span class="text-gradient">CF PROMPT MASTER</span></h1>
+                    <p style="color: var(--text-muted); font-size: 1.1rem; line-height: 1.6;">레퍼런스 이미지와 기획을 입력하면, 광고 전문가 수준의 고급 영문 프롬프트와<br>시각적 스토리보드 시안을 함께 생성해 드립니다.</p>
                 </div>
 
-                <!-- Image Gallery (Generated Images) -->
-                <div id="creativeGallery" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; width: 100%; max-width: 1200px; display: none; align-items: center;">
-                    <!-- JS will inject images here -->
+                <!-- Prompt Master Result Area -->
+                <div id="creativeResultArea" style="display: none; width: 100%; max-width: 1400px; gap: 2rem; align-items: stretch; grid-template-columns: 2fr 1fr;">
+                    <!-- Left: Prompts -->
+                    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                        <div class="panel-box" style="padding: 1.5rem; background: white;">
+                            <h3 style="margin-bottom: 0.8rem; font-size: 1.1rem; color: #10b981; display: flex; align-items: center; gap: 0.5rem;"><i class="fa-solid fa-paintbrush"></i> Midjourney 프롬프트</h3>
+                            <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0; position: relative;">
+                                <p id="mjPromptText" style="font-family: monospace; font-size: 0.95rem; color: var(--text-main); word-break: break-all; margin: 0; min-height: 60px;"></p>
+                                <button onclick="navigator.clipboard.writeText(document.getElementById('mjPromptText').innerText); alert('복사되었습니다.');" style="position: absolute; top: 0.5rem; right: 0.5rem; border: none; background: white; border-radius: 4px; padding: 0.3rem 0.6rem; font-size: 0.8rem; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"><i class="fa-regular fa-copy"></i> 복사</button>
+                            </div>
+                        </div>
+                        <div class="panel-box" style="padding: 1.5rem; background: white;">
+                            <h3 style="margin-bottom: 0.8rem; font-size: 1.1rem; color: #8b5cf6; display: flex; align-items: center; gap: 0.5rem;"><i class="fa-solid fa-layer-group"></i> Stable Diffusion 프롬프트</h3>
+                            <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0; position: relative;">
+                                <p id="sdPromptText" style="font-family: monospace; font-size: 0.95rem; color: var(--text-main); word-break: break-all; margin: 0; min-height: 60px;"></p>
+                                <button onclick="navigator.clipboard.writeText(document.getElementById('sdPromptText').innerText); alert('복사되었습니다.');" style="position: absolute; top: 0.5rem; right: 0.5rem; border: none; background: white; border-radius: 4px; padding: 0.3rem 0.6rem; font-size: 0.8rem; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"><i class="fa-regular fa-copy"></i> 복사</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right: Storyboard Preview (Imagen 3 directly connected) -->
+                    <div class="panel-box" style="padding: 1.5rem; background: white; display: flex; flex-direction: column;">
+                        <h3 style="margin-bottom: 0.8rem; font-size: 1.1rem; color: var(--accent-blue); display: flex; align-items: center; gap: 0.5rem;"><i class="fa-solid fa-image"></i> 스토리보드 시안 미리보기</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">생성된 프롬프트를 시각적으로 확인하기 위한 초안입니다.</p>
+                        <div id="creativePreviewGallery" style="flex: 1; display: flex; flex-direction: column; gap: 1rem; align-items: center; justify-content: center; min-height: 300px; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">
+                            <div style="color: #94a3b8; font-size: 0.9rem;"><i class="fa-solid fa-spinner fa-spin"></i> 렌더링 중...</div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Loading State -->
@@ -705,39 +730,57 @@
 
                     <!-- Toolbar Row -->
                     <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 0.8rem;">
-                        <div style="display: flex; gap: 1.5rem; align-items: center;">
-                            <!-- Model Select -->
+                        <div style="display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap;">
+                            <!-- Vibe Select -->
                             <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500; cursor: pointer;">
-                                <i class="fa-solid fa-layer-group"></i> 
-                                <select id="creativeModelSelect" style="border: none; background: transparent; font-family: inherit; font-size: inherit; color: var(--text-main); font-weight: 600; outline: none; cursor: pointer;">
-                                    <option value="imagen-3.0-generate-001">Google Imagen 3</option>
-                                    <option value="dall-e-3">OpenAI DALL-E 3</option>
+                                <i class="fa-solid fa-palette"></i> 
+                                <select id="creativeVibeSelect" style="border: none; background: transparent; font-family: inherit; font-size: inherit; color: var(--text-main); font-weight: 600; outline: none; cursor: pointer;">
+                                    <option value="자동 (AI가 타겟 컨셉에 맞춰 최적화)">Vibe: 자동 지정</option>
+                                    <option value="Cinematic (영화의 한 장면 같은 필름 룩)">Cinematic</option>
+                                    <option value="Minimalist (여백을 살린 깔끔한 레이아웃)">Minimalist</option>
+                                    <option value="Vivid (채도가 높고 선명하게 튀는 광고톤)">Vivid</option>
+                                    <option value="Pastel (부드럽고 몽환적인 파스텔 톤)">Pastel</option>
+                                    <option value="Matte (매끄럽고 차분한 매트한 질감)">Matte</option>
+                                    <option value="Cyberpunk (네온빛, 사이버 펑크 미래 느낌)">Cyberpunk</option>
                                 </select>
                             </div>
 
+                            <!-- Lighting Select -->
+                            <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500; cursor: pointer;">
+                                <i class="fa-regular fa-lightbulb"></i>
+                                <select id="creativeLightingSelect" style="border: none; background: transparent; font-family: inherit; font-size: inherit; color: var(--text-main); font-weight: 600; outline: none; cursor: pointer;">
+                                    <option value="자동 (AI가 피사체에 맞춰 최적화)">Lighting: 자동 지정</option>
+                                    <option value="Studio Softbox (그림자가 부드러운 화보/제품용 조명)">Studio Softbox</option>
+                                    <option value="Golden Hour (해질녘의 따뜻한 자연광)">Golden Hour</option>
+                                    <option value="Edge Lighting (윤곽선을 살리는 측후면 조명)">Edge Lighting</option>
+                                    <option value="Neon Lights (원색의 강렬한 인공 빛)">Neon Lights</option>
+                                    <option value="Natural / Daylight (창문 너머 들어오는 밝고 자연스러운 빛)">Natural Daylight</option>
+                                </select>
+                            </div>
+
+                            <!-- Camera Select -->
+                            <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500; cursor: pointer;">
+                                <i class="fa-solid fa-camera"></i>
+                                <select id="creativeCameraSelect" style="border: none; background: transparent; font-family: inherit; font-size: inherit; color: var(--text-main); font-weight: 600; outline: none; cursor: pointer;">
+                                    <option value="자동 (AI가 씬에 맞춰 최적화)">Camera: 자동 지정</option>
+                                    <option value="100mm Macro (극강의 접사, 질감 강조, 아웃포커싱)">100mm Macro (접사)</option>
+                                    <option value="35mm Wide (제품과 배경 환경을 함께 시원하게 담는 광각)">35mm Wide (광각)</option>
+                                    <option value="Drone / Aerial Shot (위에서 넓게 내려다보는 뷰)">Drone / Aerial</option>
+                                    <option value="Eye Level (대중적인 눈높이 앵글)">Eye Level</option>
+                                    <option value="Low Angle (위엄을 강조하는 아래에서 올려다보는 뷰)">Low Angle</option>
+                                </select>
+                            </div>
 
                             <!-- Aspect Ratio -->
                             <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500; cursor: pointer;">
                                 <i class="fa-solid fa-crop-simple"></i>
                                 <select id="creativeRatioSelect" style="border: none; background: transparent; font-family: inherit; font-size: inherit; color: var(--text-main); font-weight: 600; outline: none; cursor: pointer;">
-                                    <option value="1:1">1:1</option>
-                                    <option value="3:4">3:4</option>
-                                    <option value="16:9">16:9</option>
-                                    <option value="9:16">9:16</option>
+                                    <option value="1:1">1:1 (정방형)</option>
+                                    <option value="3:4">3:4 (가로피드)</option>
+                                    <option value="16:9">16:9 (유튜브)</option>
+                                    <option value="9:16">9:16 (릴스)</option>
                                 </select>
                             </div>
-
-                            <!-- Count -->
-                            <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500; user-select: none;">
-                                <span style="cursor: pointer; padding: 0 4px;" onclick="const el=document.getElementById('creativeCountValue'); let v=parseInt(el.innerText); if(v>1) el.innerText=v-1;">-</span>
-                                <span id="creativeCountValue" style="color: var(--text-main); font-weight: 600; width: 12px; text-align: center;">4</span>
-                                <span style="color: var(--text-main);">/ 4</span>
-                                <span style="cursor: pointer; padding: 0 4px;" onclick="const el=document.getElementById('creativeCountValue'); let v=parseInt(el.innerText); if(v<4) el.innerText=v+1;">+</span>
-                            </div>
-                        </div>
-
-                        <div style="color: var(--text-muted); font-size: 1.1rem; cursor: pointer;" title="Advanced Options">
-                            <i class="fa-solid fa-gear"></i>
                         </div>
                     </div>
                 </div>

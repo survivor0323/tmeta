@@ -1765,6 +1765,117 @@ async def generate_creative_image(req: GenerateImageRequest, authorization: str 
         return {"status": "error", "message": f"서버 예외 발생: {str(e)}"}
 
 
+class GenerateCFPromptRequest(BaseModel):
+    prompt: str
+    aspect_ratio: str = "1:1"
+    vibe: str = "자동"
+    lighting: str = "자동"
+    camera: str = "자동"
+    reference_images: Optional[List[str]] = None
+
+@app.post("/api/v1/generate-cf-prompt")
+async def generate_cf_prompt(req: GenerateCFPromptRequest, authorization: str = Header(default="")):
+    """Gemini 2.5 Flash를 사용하여 광고 현업에 적합한 플랫폼별 전문 프롬프트를 설계하고, Imagen 3로 스토리보드 시안을 함께 출력합니다."""
+    api_key_gemini = os.getenv("GEMINI_API_KEY")
+    if not api_key_gemini:
+        return {"status": "error", "message": "Gemini API 키가 설정되어 있지 않습니다."}
+        
+    try:
+        import httpx
+        import json
+        import re
+        
+        async with httpx.AsyncClient(timeout=90.0) as client:
+            # 1단계: Gemini 2.5 Flash - 프롬프트 엔지니어링 수행
+            text_model_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key_gemini}"
+            
+            user_msg = f"""사용자 기획 의도: {req.prompt}
+[설정된 옵션]
+- 영상미/톤앤매너(Vibe): {req.vibe}
+- 조명(Lighting): {req.lighting}
+- 카메라/앵글(Camera): {req.camera}
+- 화면비율(Ratio): {req.aspect_ratio}
+
+이 정보를 바탕으로 광고 시안 생성용 프롬프트를 구조화하여 다음 JSON 포맷으로 응답하세요.
+(```json 과 같은 마크다운 코드블록 래퍼 없이 순수한 JSON 텍스트만 출력할 것)
+{{
+    "mj_prompt": "Midjourney용 파라미터(--ar, --v 6.0 등)가 포함된 최적화 영문 프롬프트 (가장 구체적이고 디테일하게 작성)",
+    "sd_prompt": "Stable Diffusion용 영문 프롬프트 (Positive, Negative 구분 없이 쉼표로 나열된 키워드 위주)",
+    "basic_prompt": "스토리보드 시안용 간결한 영문 프롬프트 (Imagen 3 전용)"
+}}"""
+
+            parts_list = [{"text": user_msg}]
+            if req.reference_images:
+                for b64_url in req.reference_images:
+                    if "," in b64_url:
+                        mime = b64_url.split(";")[0].split(":")[1]
+                        data = b64_url.split(",")[1]
+                        parts_list.append({"inlineData": {"mimeType": mime, "data": data}})
+
+            system_instruction = "당신은 15년차 이상의 전문 CF 감독이자 프롬프트 엔지니어입니다. 주어진 설정과 레퍼런스 이미지를 바탕으로 완벽한 수준의 영문 생성형 AI 프롬프트를 제조해 주는 것이 목표입니다."
+
+            text_payload = {
+                "systemInstruction": {"parts": [{"text": system_instruction}]},
+                "contents": [{"parts": parts_list}],
+                "generationConfig": {
+                    "thinkingLevel": "HIGH",
+                    "responseMimeType": "application/json"
+                }
+            }
+            
+            resp_text = await client.post(text_model_url, json=text_payload)
+            resp_text_json = resp_text.json()
+            
+            if 'candidates' not in resp_text_json:
+                raise Exception(f"Gemini 응답 실패: {resp_text_json}")
+                
+            raw_text = resp_text_json['candidates'][0]['content']['parts'][0]['text']
+            
+            try:
+                # JSON 파싱 시도
+                cleaned_text = re.sub(r'```json\n|```', '', raw_text).strip()
+                prompt_data = json.loads(cleaned_text)
+            except Exception:
+                prompt_data = {
+                    "mj_prompt": "분석 실패: " + raw_text,
+                    "sd_prompt": "분석 실패: " + raw_text,
+                    "basic_prompt": req.prompt
+                }
+            
+            # 2단계: Imagen 3 - 스토리보드 시안 생성
+            img_model_url = f"https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key={api_key_gemini}"
+            basic_prompt = prompt_data.get("basic_prompt", req.prompt)
+            # Add options visually into basic prompt string
+            enhanced_basic_prompt = f"{basic_prompt}. Vibe: {req.vibe}, Lighting: {req.lighting}, Camera: {req.camera}"
+            
+            img_payload = {
+                "instances": [{"prompt": enhanced_basic_prompt}],
+                "parameters": {"sampleCount": 1, "aspectRatio": req.aspect_ratio}
+            }
+            
+            resp_img = await client.post(img_model_url, json=img_payload)
+            res_img_json = resp_img.json()
+            
+            image_b64 = None
+            if resp_img.status_code == 200 and 'predictions' in res_img_json:
+                image_bytes = res_img_json['predictions'][0].get('bytesBase64Encoded', '')
+                if image_bytes:
+                    image_b64 = f"data:image/jpeg;base64,{image_bytes}"
+                    
+            return {
+                "status": "success",
+                "data": {
+                    "mj_prompt": prompt_data.get("mj_prompt", ""),
+                    "sd_prompt": prompt_data.get("sd_prompt", ""),
+                    "image_b64": image_b64
+                }
+            }
+            
+    except Exception as e:
+        logger.error(f"CF 프롬프트 마스터 생성 에러: {e}")
+        return {"status": "error", "message": f"서버 예외 발생: {str(e)}"}
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)

@@ -183,8 +183,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const creativeGenerateBtn = document.getElementById('creativeGenerateBtn');
         const creativeEmptyState = document.getElementById('creativeEmptyState');
-        const creativeLoading = document.getElementById('creativeLoading');
-        const creativeGallery = document.getElementById('creativeGallery');
+        const creativeResultArea = document.getElementById('creativeResultArea');
+        const mjPromptText = document.getElementById('mjPromptText');
+        const sdPromptText = document.getElementById('sdPromptText');
+        const creativePreviewGallery = document.getElementById('creativePreviewGallery');
     
         if (creativeGenerateBtn) {
             creativeGenerateBtn.addEventListener('click', async () => {
@@ -195,71 +197,71 @@ document.addEventListener("DOMContentLoaded", () => {
                     return;
                 }
     
-                // Get configuration
+                // Get configurations
                 const ratioSelect = document.getElementById('creativeRatioSelect');
-                const modelSelect = document.getElementById('creativeModelSelect');
+                const vibeSelect = document.getElementById('creativeVibeSelect');
+                const lightingSelect = document.getElementById('creativeLightingSelect');
+                const cameraSelect = document.getElementById('creativeCameraSelect');
+                
                 const ratio = ratioSelect ? ratioSelect.value : "1:1";
-                const modelName = modelSelect ? modelSelect.options[modelSelect.selectedIndex].text : "Google Imagen 3";
-                const modelValue = modelSelect ? modelSelect.value : "imagen-3.0-generate-001";
+                const vibe = vibeSelect ? vibeSelect.value : "자동";
+                const lighting = lightingSelect ? lightingSelect.value : "자동";
+                const camera = cameraSelect ? cameraSelect.value : "자동";
     
-                // UI Update: Hide empty state, show gallery
-                if (creativeEmptyState) creativeEmptyState.classList.add('hidden');
-                if (creativeGallery) {
-                    creativeGallery.classList.remove('hidden');
-                    creativeGallery.style.display = 'grid'; // Ensure grid display
+                // UI Update: Hide empty state, show result area, set loading UX
+                if (creativeEmptyState) creativeEmptyState.style.display = 'none';
+                if (creativeResultArea) {
+                    creativeResultArea.style.display = 'grid'; // display grid for result area
                 }
+                
+                if (mjPromptText) mjPromptText.innerHTML = '<span style="color: #94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> AI가 프롬프트를 설계 중입니다...</span>';
+                if (sdPromptText) sdPromptText.innerHTML = '<span style="color: #94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> AI가 프롬프트를 설계 중입니다...</span>';
+                if (creativePreviewGallery) creativePreviewGallery.innerHTML = '<div style="color: #94a3b8; font-size: 0.9rem;"><i class="fa-solid fa-spinner fa-spin"></i> 스토리보드 시안 렌더링 중...</div>';
                 
                 // Disable inputs
                 creativeGenerateBtn.disabled = true;
                 creativeGenerateBtn.style.opacity = '0.7';
                 if (promptTextarea) promptTextarea.disabled = true;
                 
-                // Create placeholders per image
-                const placeholders = [];
-                for (let i = 0; i < currentImageCount; i++) {
-                    const el = createPlaceholder(ratio, modelName, promptInput);
-                    if (creativeGallery) creativeGallery.appendChild(el);
-                    placeholders.push(el);
-                }
-                
-                // Scroll gallery to bottom
+                // Scroll result area to view
                 const mainArea = document.getElementById('creativeMainArea');
                 if (mainArea) {
-                    mainArea.scrollTop = mainArea.scrollHeight;
+                    mainArea.scrollTop = 0;
                 }
     
                 try {
-                    // Generate concurrent requests
-                    const generatePromises = placeholders.map(async (placeholder, index) => {
-                        try {
-                            const res = await fetch('/api/v1/generate-creative-image', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ 
-                                    prompt: promptInput, 
-                                    aspect_ratio: ratio, 
-                                    model: modelValue,
-                                    reference_images: uploadedCreativeImages
-                                })
-                            });
-                            const result = await res.json();
-                            
-                            if (result.status === 'success' && result.data && result.data.image_b64) {
-                                replacePlaceholderWithImage(placeholder, result.data.image_b64, promptInput, ratio);
-                            } else {
-                                console.error('생성 실패:', result);
-                                showPlaceholderError(placeholder, result.message || '알 수 없는 오류');
-                            }
-                        } catch (e) {
-                            console.error('Fetch 에러:', e);
-                            showPlaceholderError(placeholder, '네트워크 오류가 발생했습니다.');
-                        }
+                    const res = await fetch('/api/v1/generate-cf-prompt', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            prompt: promptInput, 
+                            aspect_ratio: ratio, 
+                            vibe: vibe,
+                            lighting: lighting,
+                            camera: camera,
+                            reference_images: uploadedCreativeImages
+                        })
                     });
-    
-                    await Promise.allSettled(generatePromises);
+                    const result = await res.json();
+                    
+                    if (result.status === 'success' && result.data) {
+                        mjPromptText.innerText = result.data.mj_prompt || "프롬프트를 생성할 수 없습니다.";
+                        sdPromptText.innerText = result.data.sd_prompt || "프롬프트를 생성할 수 없습니다.";
+                        
+                        if (result.data.image_b64) {
+                            creativePreviewGallery.innerHTML = `<img src="${result.data.image_b64}" style="width: 100%; height: auto; border-radius: 8px; object-fit: contain; max-height: 500px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">`;
+                        } else {
+                            creativePreviewGallery.innerHTML = '<div style="color: #ef4444;"><i class="fa-solid fa-triangle-exclamation"></i> 시안 이미지를 가져오지 못했습니다.</div>';
+                        }
+                    } else {
+                        throw new Error(result.message || '알 수 없는 오류');
+                    }
     
                 } catch (err) {
                     console.error("생성 에러:", err);
+                    mjPromptText.innerText = `에러 발생: ${err.message}`;
+                    sdPromptText.innerText = `에러 발생: ${err.message}`;
+                    creativePreviewGallery.innerHTML = `<div style="color: #ef4444;"><i class="fa-solid fa-triangle-exclamation"></i> 시안 렌더링 에러: ${err.message}</div>`;
                 } finally {
                     creativeGenerateBtn.disabled = false;
                     creativeGenerateBtn.style.opacity = '1';
