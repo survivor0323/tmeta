@@ -1844,9 +1844,21 @@ async def generate_cf_prompt(req: GenerateCFPromptRequest, authorization: str = 
             # 2단계: Imagen 3 - 스토리보드 시안 생성
             img_model_url = f"https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key={api_key_gemini}"
             gemini_prompt = prompt_data.get("gemini_prompt", req.prompt)
-            # Add options visually into basic prompt string
-            enhanced_basic_prompt = f"{gemini_prompt}. Vibe: {req.vibe}, Lighting: {req.lighting}, Camera: {req.camera}"
             
+            # Remove korean text from options and skip if it's '자동' (Auto)
+            vibe_val = req.vibe.split(" (")[0].strip() if req.vibe else ""
+            light_val = req.lighting.split(" (")[0].strip() if req.lighting else ""
+            cam_val = req.camera.split(" (")[0].strip() if req.camera else ""
+            
+            enhancements = []
+            if vibe_val and "자동" not in vibe_val: enhancements.append(f"Vibe: {vibe_val}")
+            if light_val and "자동" not in light_val: enhancements.append(f"Lighting: {light_val}")
+            if cam_val and "자동" not in cam_val: enhancements.append(f"Camera: {cam_val}")
+            
+            enhanced_basic_prompt = gemini_prompt
+            if enhancements:
+                enhanced_basic_prompt += ". " + ", ".join(enhancements)
+                
             img_payload = {
                 "instances": [{"prompt": enhanced_basic_prompt}],
                 "parameters": {"sampleCount": 1, "aspectRatio": req.aspect_ratio}
@@ -1856,10 +1868,15 @@ async def generate_cf_prompt(req: GenerateCFPromptRequest, authorization: str = 
             res_img_json = resp_img.json()
             
             image_b64 = None
+            image_error = None
             if resp_img.status_code == 200 and 'predictions' in res_img_json:
                 image_bytes = res_img_json['predictions'][0].get('bytesBase64Encoded', '')
                 if image_bytes:
                     image_b64 = f"data:image/jpeg;base64,{image_bytes}"
+                else:
+                    image_error = "이미지 데이터(bytesBase64Encoded)가 응답에 없습니다."
+            else:
+                image_error = res_img_json.get("error", {}).get("message", str(res_img_json))
                     
             return {
                 "status": "success",
@@ -1867,7 +1884,8 @@ async def generate_cf_prompt(req: GenerateCFPromptRequest, authorization: str = 
                     "mj_prompt": prompt_data.get("mj_prompt", ""),
                     "sd_prompt": prompt_data.get("sd_prompt", ""),
                     "gemini_prompt": prompt_data.get("gemini_prompt", ""),
-                    "image_b64": image_b64
+                    "image_b64": image_b64,
+                    "image_error": image_error
                 }
             }
             

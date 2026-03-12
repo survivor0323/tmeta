@@ -254,7 +254,8 @@ document.addEventListener("DOMContentLoaded", () => {
                         if (result.data.image_b64) {
                             creativePreviewGallery.innerHTML = `<img src="${result.data.image_b64}" style="width: 100%; height: auto; border-radius: 8px; object-fit: contain; max-height: 500px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">`;
                         } else {
-                            creativePreviewGallery.innerHTML = '<div style="color: #ef4444;"><i class="fa-solid fa-triangle-exclamation"></i> 시안 이미지를 가져오지 못했습니다.</div>';
+                            let errorTxt = result.data.image_error ? JSON.stringify(result.data.image_error) : '알 수 없음';
+                            creativePreviewGallery.innerHTML = `<div style="color: #ef4444; padding: 1rem;"><i class="fa-solid fa-triangle-exclamation"></i> 시안 이미지를 가져오지 못했습니다.<br><br><span style="font-size: 0.8rem; word-break: break-all;">${errorTxt}</span></div>`;
                         }
                     } else {
                         throw new Error(result.message || '알 수 없는 오류');
