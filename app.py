@@ -1629,40 +1629,95 @@ async def image_proxy(url: str):
 class GenerateImageRequest(BaseModel):
     prompt: str
     aspect_ratio: Optional[str] = "16:9"
+    model: Optional[str] = "imagen-3.0-generate-001"
 
 @app.post("/api/v1/generate-creative-image")
 async def generate_creative_image(req: GenerateImageRequest, authorization: str = Header(default="")):
-    """Gemini API (imagen-4.0-generate-001)를 사용하여 기획 데이터를 바탕으로 소재 이미지를 생성합니다."""
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        return {"status": "error", "message": "GEMINI_API_KEY가 설정되지 않았습니다."}
-        
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key={api_key}"
-    payload = {
-        "instances": [{"prompt": req.prompt}],
-        "parameters": {
-            "sampleCount": 1,
-            "aspectRatio": req.aspect_ratio  # 1:1, 3:4, 4:3, 9:16, 16:9 지원
-        }
-    }
+    """Gemini API (imagen-3.0-generate-001) 또는 OpenAI DALL-E 3를 사용하여 소재 이미지를 생성합니다."""
+    api_key_gemini = os.getenv("GEMINI_API_KEY")
+    api_key_openai = os.getenv("OPENAI_API_KEY")
     
+    if not api_key_gemini and not api_key_openai:
+        return {"status": "error", "message": "API_KEY(Gemini 또는 OpenAI)가 설정되지 않았습니다."}
+        
     try:
         import httpx
-        async with httpx.AsyncClient(timeout=45.0) as client:
-            resp = await client.post(url, json=payload)
-            res_json = resp.json()
-            
-            if resp.status_code == 200 and 'predictions' in res_json:
-                b64_img = res_json['predictions'][0].get('bytesBase64Encoded', '')
-                if b64_img:
-                    return {"status": "success", "data": {"image_b64": f"data:image/jpeg;base64,{b64_img}"}}
-            
-            # 실패 시 상세 메시지 전달
-            error_details = res_json.get("error", {}).get("message", str(res_json))
-            return {"status": "error", "message": f"API 상태({resp.status_code}): {error_details}"}
+        import asyncio
+        import base64
+        
+        # User explicitly requested dall-e-3, or Gemini key is missing
+        use_dalle_first = req.model == "dall-e-3" or (req.model == "imagen-3.0-generate-001" and not api_key_gemini)
+        
+        # Helper to run dall-e-3
+        async def run_dalle():
+            if not api_key_openai:
+                return {"status": "error", "message": "OpenAI API 키가 설정되어 있지 않습니다."}
+            size = "1024x1024"
+            if req.aspect_ratio in ["9:16", "3:4"]:
+                size = "1024x1792"
+            elif req.aspect_ratio in ["16:9", "4:3"]:
+                size = "1792x1024"
+                
+            from openai import OpenAI
+            openai_client = OpenAI(api_key=api_key_openai)
+            response = await asyncio.to_thread(
+                openai_client.images.generate,
+                model="dall-e-3",
+                prompt=req.prompt,
+                size=size,
+                quality="standard",
+                n=1,
+                response_format="b64_json"
+            )
+            b64_img = response.data[0].b64_json
+            if b64_img:
+                return {"status": "success", "data": {"image_b64": f"data:image/jpeg;base64,{b64_img}"}}
+            return {"status": "error", "message": "OpenAI에서 이미지 데이터를 반환하지 않았습니다."}
+
+        # Helper to run gemini
+        async def run_gemini():
+            if not api_key_gemini:
+                return {"status": "error", "message": "Gemini API 키가 설정되어 있지 않습니다."}
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key={api_key_gemini}"
+            payload = {
+                "instances": [{"prompt": req.prompt}],
+                "parameters": {
+                    "sampleCount": 1,
+                    "aspectRatio": req.aspect_ratio
+                }
+            }
+            async with httpx.AsyncClient(timeout=45.0) as client:
+                resp = await client.post(url, json=payload)
+                res_json = resp.json()
+                if resp.status_code == 200 and 'predictions' in res_json:
+                    b64_img = res_json['predictions'][0].get('bytesBase64Encoded', '')
+                    if b64_img:
+                        return {"status": "success", "data": {"image_b64": f"data:image/jpeg;base64,{b64_img}"}}
+                error_details = res_json.get("error", {}).get("message", str(res_json))
+                return {"status": "error", "message": f"Gemini API 오류({resp.status_code}): {error_details}"}
+
+        # Execute primarily the requested model
+        if use_dalle_first:
+            res = await run_dalle()
+            if res["status"] == "success":
+                return res
+            elif api_key_gemini: # Fallback to gemini if requested model failed
+                res2 = await run_gemini()
+                if res2["status"] == "success": return res2
+            return res # return original error
+        else:
+            res = await run_gemini()
+            if res["status"] == "success":
+                return res
+            elif api_key_openai: # Fallback to openai if gemini failed
+                res2 = await run_dalle()
+                if res2["status"] == "success": return res2
+            return res # return original error
+                
     except Exception as e:
         logger.error(f"이미지 생성 에러: {e}")
         return {"status": "error", "message": f"서버 예외 발생: {str(e)}"}
+
 
 if __name__ == "__main__":
     import uvicorn

@@ -694,7 +694,7 @@
                             <i class="fa-solid fa-plus"></i>
                         </button>
                         <textarea id="creativeBottomPrompt" placeholder="어떤 이미지를 만들고 싶으신가요? (예: 푸른 바다 배경의 여름 휴가 컨셉 뷰티 제품 컷)" style="flex: 1; border: none; outline: none; resize: none; min-height: 48px; max-height: 120px; font-family: 'Pretendard', sans-serif; font-size: 1rem; color: var(--text-main); padding: 0.8rem 0; overflow-y: auto;"></textarea>
-                        <button id="creativeGenerateBtn" style="padding: 0 1.8rem; height: 48px; background: #c0ea3c; color: #1e293b; border: none; border-radius: 24px; font-weight: 700; font-size: 1rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s; flex-shrink: 0; box-shadow: 0 4px 10px rgba(192, 234, 60, 0.3);" onmouseover="this.style.filter='brightness(1.05)';" onmouseout="this.style.filter='none';">
+                        <button id="creativeGenerateBtn" style="padding: 0 1.8rem; height: 48px; background: var(--accent-blue); color: white; border: none; border-radius: 24px; font-weight: 700; font-size: 1rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s; flex-shrink: 0; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);" onmouseover="this.style.filter='brightness(1.05)';" onmouseout="this.style.filter='none';">
                             Generate <i class="fa-solid fa-wand-magic-sparkles"></i>
                         </button>
                     </div>
@@ -706,10 +706,11 @@
                             <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500; cursor: pointer;">
                                 <i class="fa-solid fa-layer-group"></i> 
                                 <select id="creativeModelSelect" style="border: none; background: transparent; font-family: inherit; font-size: inherit; color: var(--text-main); font-weight: 600; outline: none; cursor: pointer;">
-                                    <option value="nanobanana_2">나노바나나 2</option>
-                                    <option value="nanobanana_pro">나노바나나 프로</option>
+                                    <option value="imagen-3.0-generate-001">Google Imagen 3</option>
+                                    <option value="dall-e-3">OpenAI DALL-E 3</option>
                                 </select>
                             </div>
+
 
                             <!-- Aspect Ratio -->
                             <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500; cursor: pointer;">

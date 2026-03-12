@@ -81,79 +81,191 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    const creativeGenerateBtn = document.getElementById('creativeGenerateBtn');
-    const creativeEmptyState = document.getElementById('creativeEmptyState');
-    const creativeLoading = document.getElementById('creativeLoading');
-    const creativeGallery = document.getElementById('creativeGallery');
-
-    if (creativeGenerateBtn) {
-        creativeGenerateBtn.addEventListener('click', async () => {
-            const promptInput = promptTextarea?.value.trim();
-            if (!promptInput) {
-                alert("생성할 이미지의 프롬프트를 입력해주세요.");
-                promptTextarea?.focus();
-                return;
-            }
-
-            // Get configuration
-            const ratioSelect = document.getElementById('creativeRatioSelect');
-            const modelSelect = document.getElementById('creativeModelSelect');
-            const ratio = ratioSelect ? ratioSelect.value : "1:1";
-            // const model = modelSelect ? modelSelect.value : "nanobanana_2"; // Currently backend does not support switching models, so we capture it but ignore or pass later
-
-            // UI Update: Hide empty state, show gallery and loading
-            if (creativeEmptyState) creativeEmptyState.classList.add('hidden');
-            if (creativeGallery) creativeGallery.classList.remove('hidden');
-            if (creativeLoading) creativeLoading.style.display = 'flex';
-            
-            // Disable inputs
-            creativeGenerateBtn.disabled = true;
-            creativeGenerateBtn.style.opacity = '0.7';
-            if (promptTextarea) promptTextarea.disabled = true;
-
-            try {
-                // Generate 'currentImageCount' images one by one or concurrently.
-                // Doing concurrently as they are separate API calls.
-                const generatePromises = [];
-                for (let i = 0; i < currentImageCount; i++) {
-                    generatePromises.push(
-                        fetch('/api/v1/generate-creative-image', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ prompt: promptInput, aspect_ratio: ratio })
-                        }).then(res => res.json())
-                    );
+        const creativeGenerateBtn = document.getElementById('creativeGenerateBtn');
+        const creativeEmptyState = document.getElementById('creativeEmptyState');
+        const creativeLoading = document.getElementById('creativeLoading');
+        const creativeGallery = document.getElementById('creativeGallery');
+    
+        if (creativeGenerateBtn) {
+            creativeGenerateBtn.addEventListener('click', async () => {
+                const promptInput = promptTextarea?.value.trim();
+                if (!promptInput) {
+                    alert("생성할 이미지의 프롬프트를 입력해주세요.");
+                    promptTextarea?.focus();
+                    return;
                 }
-
-                const results = await Promise.allSettled(generatePromises);
-
-                results.forEach(result => {
-                    if (result.status === 'fulfilled' && result.value.status === 'success' && result.value.data?.image_b64) {
-                        const imgB64 = result.value.data.image_b64;
-                        appendImageToGallery(imgB64, promptInput, ratio);
-                    } else {
-                        console.error('이미지 생성 실패:', result);
-                        alert(`일부 이미지 생성에 실패했습니다: ${result?.value?.message || '알 수 없는 오류'}`);
-                    }
-                });
-
-            } catch (err) {
-                console.error("생성 에러:", err);
-                alert("이미지 생성 중 오류가 발생했습니다.");
-            } finally {
-                if (creativeLoading) creativeLoading.style.display = 'none';
-                creativeGenerateBtn.disabled = false;
-                creativeGenerateBtn.style.opacity = '1';
-                if (promptTextarea) promptTextarea.disabled = false;
+    
+                // Get configuration
+                const ratioSelect = document.getElementById('creativeRatioSelect');
+                const modelSelect = document.getElementById('creativeModelSelect');
+                const ratio = ratioSelect ? ratioSelect.value : "1:1";
+                const modelName = modelSelect ? modelSelect.options[modelSelect.selectedIndex].text : "Google Imagen 3";
+                const modelValue = modelSelect ? modelSelect.value : "imagen-3.0-generate-001";
+    
+                // UI Update: Hide empty state, show gallery
+                if (creativeEmptyState) creativeEmptyState.classList.add('hidden');
+                if (creativeGallery) {
+                    creativeGallery.classList.remove('hidden');
+                    creativeGallery.style.display = 'grid'; // Ensure grid display
+                }
+                
+                // Disable inputs
+                creativeGenerateBtn.disabled = true;
+                creativeGenerateBtn.style.opacity = '0.7';
+                if (promptTextarea) promptTextarea.disabled = true;
+                
+                // Create placeholders per image
+                const placeholders = [];
+                for (let i = 0; i < currentImageCount; i++) {
+                    const el = createPlaceholder(ratio, modelName, promptInput);
+                    if (creativeGallery) creativeGallery.appendChild(el);
+                    placeholders.push(el);
+                }
                 
                 // Scroll gallery to bottom
                 const mainArea = document.getElementById('creativeMainArea');
                 if (mainArea) {
                     mainArea.scrollTop = mainArea.scrollHeight;
                 }
-            }
-        });
-    }
+    
+                try {
+                    // Generate concurrent requests
+                    const generatePromises = placeholders.map(async (placeholder, index) => {
+                        try {
+                            const res = await fetch('/api/v1/generate-creative-image', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ prompt: promptInput, aspect_ratio: ratio, model: modelValue })
+                            });
+                            const result = await res.json();
+                            
+                            if (result.status === 'success' && result.data && result.data.image_b64) {
+                                replacePlaceholderWithImage(placeholder, result.data.image_b64, promptInput, ratio);
+                            } else {
+                                console.error('생성 실패:', result);
+                                showPlaceholderError(placeholder, result.message || '알 수 없는 오류');
+                            }
+                        } catch (e) {
+                            console.error('Fetch 에러:', e);
+                            showPlaceholderError(placeholder, '네트워크 오류가 발생했습니다.');
+                        }
+                    });
+    
+                    await Promise.allSettled(generatePromises);
+    
+                } catch (err) {
+                    console.error("생성 에러:", err);
+                } finally {
+                    creativeGenerateBtn.disabled = false;
+                    creativeGenerateBtn.style.opacity = '1';
+                    if (promptTextarea) promptTextarea.disabled = false;
+                }
+            });
+        }
+        
+        function createPlaceholder(ratio, modelName, promptStr) {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'gallery-item placeholder-box';
+            
+            const aspectMapping = {
+                "1:1": "1 / 1",
+                "3:4": "3 / 4",
+                "16:9": "16 / 9",
+                "9:16": "9 / 16"
+            };
+            const cssRatio = aspectMapping[ratio] || "1 / 1";
+            const isTall = ratio === "3:4" || ratio === "9:16";
+            let gridSpan = isTall ? 'grid-row: span 2;' : '';
+    
+            itemDiv.style.cssText = `
+                position: relative;
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: var(--shadow-sm);
+                aspect-ratio: ${cssRatio};
+                background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+                border: 1px solid #e2e8f0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                ${gridSpan}
+            `;
+            
+            // Gemini-style spinner and model name
+            itemDiv.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px; color: #475569; font-size: 0.95rem; font-weight: 600;">
+                    <div style="position: relative; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fa-solid fa-wand-magic-sparkles text-gradient" style="font-size: 14px; position: absolute; z-index: 2; background: linear-gradient(135deg, #3b82f6, #10b981); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                        <svg viewBox="0 0 50 50" style="width: 32px; height: 32px; position: absolute; animation: spin 1.5s linear infinite;">
+                            <circle cx="25" cy="25" r="20" fill="none" class="spinner-track" stroke="#e2e8f0" stroke-width="3"></circle>
+                            <circle cx="25" cy="25" r="20" fill="none" class="spinner-head" stroke="url(#spinnerGrad)" stroke-width="3" stroke-linecap="round" stroke-dasharray="31.4 100" stroke-dashoffset="0"></circle>
+                            <defs>
+                                <linearGradient id="spinnerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#3b82f6" />
+                                    <stop offset="100%" stop-color="#10b981" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                    <span>${modelName} 로딩 중...</span>
+                </div>
+            `;
+            return itemDiv;
+        }
+        
+        function showPlaceholderError(placeholderEl, errorMsg) {
+            placeholderEl.innerHTML = `
+                <div style="text-align: center; color: #ef4444; padding: 1rem;">
+                    <i class="fa-solid fa-circle-exclamation" style="font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
+                    <div style="font-size: 0.85rem; font-weight: 600; line-height: 1.4;">이미지 생성 실패</div>
+                    <div style="font-size: 0.75rem; color: #ef4444; opacity: 0.8; margin-top: 0.3rem;">${escapeHtml(errorMsg)}</div>
+                </div>
+            `;
+        }
+    
+        function replacePlaceholderWithImage(placeholderEl, imgSrc, promptStr, ratio) {
+            const tempDiv = document.createElement('div');
+            // Re-use logic from appendImageToGallery
+            const isTall = ratio === "3:4" || ratio === "9:16";
+            
+            placeholderEl.innerHTML = `
+                <img src="${imgSrc}" style="width: 100%; height: 100%; object-fit: cover; display: block;" alt="Generated Image" />
+                <div class="gallery-overlay" style="position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); padding: 16px; color: white; opacity: 0; transition: opacity 0.2s;">
+                    <p style="margin: 0; font-size: 0.85rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(promptStr)}</p>
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                        <button class="gallery-action-btn" title="다운로드" onclick="downloadImage('${imgSrc}', 'creative_image_${Date.now()}.jpg', event)" style="background: rgba(255,255,255,0.2); border: none; color: white; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                            <i class="fa-solid fa-download"></i>
+                        </button>
+                        <button class="gallery-action-btn expand-btn" title="크게 보기" style="background: rgba(255,255,255,0.2); border: none; color: white; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                            <i class="fa-solid fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            placeholderEl.style.background = '#1e293b';
+            placeholderEl.style.border = 'none';
+            placeholderEl.style.cursor = 'pointer';
+            
+            // Events 
+            placeholderEl.addEventListener('mouseenter', () => {
+                placeholderEl.querySelector('.gallery-overlay').style.opacity = '1';
+                placeholderEl.style.transform = 'translateY(-2px)';
+                placeholderEl.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.5)';
+            });
+            placeholderEl.addEventListener('mouseleave', () => {
+                placeholderEl.querySelector('.gallery-overlay').style.opacity = '0';
+                placeholderEl.style.transform = 'none';
+                placeholderEl.style.boxShadow = 'var(--shadow-sm)';
+            });
+            
+            placeholderEl.querySelector('.expand-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                const newTab = window.open();
+                newTab.document.write('<style>body{margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh;}img{max-width:100%;max-height:100%;}</style>' + 
+                    `<img src="${imgSrc}" />`);
+            });
+        }
 
     function appendImageToGallery(imgSrc, promptStr, ratio) {
         if (!creativeGallery) return;
