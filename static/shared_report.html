@@ -215,8 +215,9 @@
 
                     // Parse Content
                     let reportContent = report.report_content || report.report || '';
-                    // 이미지 프록시 처리 (만약 직접 접근이라면 프록시 경로 조정 필요하지만 현재 도메인 내이므로 그대로 유지)
-                    reportContent = reportContent.replace(/(<img[^>]+src=['"])(https?:\\/\\/[^'"]+)(['"])/gi, (match, prefix, url, suffix) => {
+                    // 이미지 프록시 처리
+                    const imgRegex = new RegExp("(<img[^>]+src=['\"])(https?:\\\\/\\\\/[^'\"]+)(['\"])", "gi");
+                    reportContent = reportContent.replace(imgRegex, (match, prefix, url, suffix) => {
                         if (url.includes('/api/v1/image-proxy')) return match;
                         return `${prefix}/api/v1/image-proxy?url=${encodeURIComponent(url)}${suffix}`;
                     });
