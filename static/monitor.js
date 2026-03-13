@@ -245,6 +245,7 @@ document.addEventListener("DOMContentLoaded", () => {
         newItemBlock.dataset.brand = brandName;
         newItemBlock.dataset.platform = platform;
         newItemBlock.dataset.id = brandId;
+        newItemBlock.dataset.updatedAt = dbData?.updated_at || new Date().toISOString();
         newItemBlock.style.cssText = "background: white; border: 1px solid #3b82f6; border-radius: 8px; padding: 0.8rem 1rem; margin-bottom: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem; cursor: pointer; position: relative;";
 
         // Save references before we clear the globals
@@ -1036,6 +1037,20 @@ window.showCompetitorDetail = function (brandName, platform, adsData = null, isK
     }
 
     if (titleEl) {
+        const queryDomItem = Array.from(document.querySelectorAll('#monitorSidebarList .competitor-item')).find(item => item.dataset.brand === cleanName && item.dataset.platform === platform);
+        const lastUpdateSpan = document.getElementById('monitorLastUpdate');
+        if (lastUpdateSpan) {
+            if (queryDomItem && queryDomItem.dataset.updatedAt) {
+                const upDate = new Date(queryDomItem.dataset.updatedAt);
+                const timeString = `${upDate.getFullYear()}.${String(upDate.getMonth()+1).padStart(2,'0')}.${String(upDate.getDate()).padStart(2,'0')} ${String(upDate.getHours()).padStart(2,'0')}:${String(upDate.getMinutes()).padStart(2,'0')}`;
+                lastUpdateSpan.innerText = `최근 업데이트: ${timeString}`;
+            } else {
+                const now = new Date();
+                const timeString = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+                lastUpdateSpan.innerText = `최근 업데이트: ${timeString}`;
+            }
+        }
+
         let bgCol = "#3b82f6";
         if (platform === "instagram") bgCol = "#e1306c";
         else if (platform === "tiktok") bgCol = "#000000";

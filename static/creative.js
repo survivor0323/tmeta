@@ -11,6 +11,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const promptHubView = document.getElementById('promptHubView');
 
     function switchTab(activeNav, activeView) {
+        if (activeView && activeView !== referenceView && !window._motiverseSession) {
+            alert("로그인이 필요한 서비스입니다. 상단의 'Google 계정으로 시작하기' 버튼을 눌러 로그인해 주세요.");
+            document.getElementById("loginBtn")?.click();
+            return;
+        }
+
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         if (activeNav) activeNav.parentElement.classList.add("active");
 
@@ -189,6 +195,12 @@ document.addEventListener("DOMContentLoaded", () => {
     
         if (creativeGenerateBtn) {
             creativeGenerateBtn.addEventListener('click', async () => {
+                if (!window._motiverseSession) {
+                    alert("로그인이 필요한 서비스입니다. 상단의 'Google 계정으로 시작하기' 버튼을 눌러 로그인해 주세요.");
+                    document.getElementById("loginBtn")?.click();
+                    return;
+                }
+
                 const promptInput = promptTextarea?.value.trim();
                 if (!promptInput) {
                     alert("생성할 이미지의 프롬프트를 입력해주세요.");

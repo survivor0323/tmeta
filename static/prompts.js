@@ -63,6 +63,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (navPromptHub) {
         navPromptHub.addEventListener('click', (e) => {
             e.preventDefault();
+            if (!window._motiverseSession) {
+                alert("로그인이 필요한 서비스입니다. 상단의 'Google 계정으로 시작하기' 버튼을 눌러 로그인해 주세요.");
+                document.getElementById("loginBtn")?.click();
+                return;
+            }
             // Active current nav menu, remove others
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             navPromptHub.parentElement.classList.add('active');

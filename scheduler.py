@@ -7,7 +7,14 @@ from anti_gravity_ads_logic import (
     analyze_creatives_with_ai
 )
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - SCHEDULER - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, 
+    format='%(asctime)s - SCHEDULER - %(message)s',
+    handlers=[
+        logging.FileHandler("scheduler.log", encoding='utf-8'),
+        logging.StreamHandler()
+    ]
+)
 
 # 분석을 희망하는 타겟 경쟁사 배포 리스트 (중복 등록 테스트 포함)
 COMPETITORS = ["Brand_Nike", "Brand_Adidas", "Brand_Puma", "Brand_Nike"]

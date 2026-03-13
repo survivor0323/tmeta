@@ -403,11 +403,14 @@
                                         <!-- Injected by JS -->
                                     </h2>
                                 </div>
-                                <button id="monitorRefreshBtn"
-                                    style="padding: 0.5rem 1rem; border: 1px solid #e2e8f0; border-radius: 8px; font-weight: 600; cursor: pointer; color: #1d4ed8; background: #eff6ff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);"
-                                    onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">
-                                    <i class="fa-solid fa-rotate"></i> 즉시 업데이트
-                                </button>
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <span id="monitorLastUpdate" style="font-size: 0.8rem; color: #64748b; font-weight: 500;"></span>
+                                    <button id="monitorRefreshBtn"
+                                        style="padding: 0.5rem 1rem; border: 1px solid #e2e8f0; border-radius: 8px; font-weight: 600; cursor: pointer; color: #1d4ed8; background: #eff6ff; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);"
+                                        onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">
+                                        <i class="fa-solid fa-rotate"></i> 즉시 업데이트
+                                    </button>
+                                </div>
                             </div>
 
                             <!-- Stats Row -->

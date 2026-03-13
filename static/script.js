@@ -69,6 +69,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const aiRecommendations = document.getElementById("aiRecommendations");
 
     analyzeBtn.addEventListener("click", async () => {
+        if (!window._motiverseSession) {
+            alert("로그인이 필요한 서비스입니다. 상단의 'Google 계정으로 시작하기' 버튼을 눌러 로그인해 주세요.");
+            document.getElementById("loginBtn")?.click();
+            return;
+        }
+
         const rawInput = inputField.value.trim();
         if (!rawInput) {
             alert("원하시는 스타일이나 브랜드 키워드를 입력해 주세요.");
