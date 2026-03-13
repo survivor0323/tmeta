@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 크리에이티브 인사이트 - Motiverse</title>
+    <!-- 폰트어썸 (아이콘) & 폰트 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
+    <!-- marked.js (마크다운 렌더링) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --primary: #3b82f6;
+            --border: #e2e8f0;
+            --card-bg: #fff;
+        }
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            color: var(--text-main);
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--card-bg);
+            min-height: 100vh;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 800;
+            font-size: 1.4rem;
+            color: var(--text-main);
+        }
+        .brand-meta {
+            text-align: right;
+        }
+        .brand-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            justify-content: flex-end;
+        }
+        .report-date {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 0.3rem;
+        }
+        .ai-insight-result {
+            font-size: 1rem;
+            color: #1e293b;
+            line-height: 1.8;
+        }
+        .ai-insight-result h2, .ai-insight-result h3 {
+            color: var(--text-main);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+        }
+        .ai-insight-result table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+        .ai-insight-result th, .ai-insight-result td {
+            border: 1px solid var(--border);
+            padding: 0.8rem;
+            text-align: left;
+        }
+        .ai-insight-result th {
+            background-color: #f1f5f9;
+            font-weight: 600;
+        }
+        .ai-insight-result img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 1rem 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .ai-insight-result blockquote {
+            border-left: 4px solid var(--primary);
+            background: #eff6ff;
+            color: #1d4ed8;
+            margin: 1.5rem 0;
+            padding: 1rem 1.2rem;
+            border-radius: 4px;
+        }
+        .loading {
+            text-align: center;
+            padding: 4rem 0;
+            color: var(--text-muted);
+        }
+        .error {
+            text-align: center;
+            padding: 4rem 0;
+            color: #ef4444;
+            font-weight: 600;
+        }
+        .btn-copy-url {
+            margin-top: 3rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background: #e0f2fe;
+            color: #0369a1;
+            border: 1px solid #bae6fd;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+        }
+        .btn-copy-url:hover {
+            background: #bae6fd;
+        }
+        .footer {
+            margin-top: 4rem;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.8rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo-area">
+                <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--primary);"></i>
+                Motiverse AI
+            </div>
+            <div class="brand-meta" id="brandMeta" style="display: none;">
+                <div class="brand-title">
+                    <span id="titleBrand">브랜드</span>
+                    <span id="titlePlatform" style="background:#2563eb;color:white;padding:2px 8px;border-radius:12px;font-size:0.7rem;">플랫폼</span>
+                </div>
+                <div class="report-date" id="reportDate">2026.03.13 생성됨</div>
+            </div>
+        </div>
+
+        <div id="contentArea">
+            <div class="loading">
+                <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+                <p style="margin-top:1rem;">AI 리포트를 불러오는 중입니다...</p>
+            </div>
+        </div>
+
+        <button id="copyUrlBtn" class="btn-copy-url" style="display: none;">
+            <i class="fa-solid fa-link"></i> 이 리포트 링크 복사하기
+        </button>
+        
+        <div class="footer">
+            Generated by Motiverse AI Agent <br>
+            Powered by Gemini Pro
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const reportId = urlParams.get('id');
+            const contentArea = document.getElementById('contentArea');
+            const brandMeta = document.getElementById('brandMeta');
+            const copyUrlBtn = document.getElementById('copyUrlBtn');
+
+            if (!reportId) {
+                contentArea.innerHTML = '<div class="error"><i class="fa-solid fa-circle-exclamation fa-2x"></i><p style="margin-top:1rem;">잘못된 접근입니다. 리포트 ID가 없습니다.</p></div>';
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/v1/ai-insights/${reportId}`);
+                const data = await res.json();
+
+                if (data.status === 'success' && data.data) {
+                    const report = data.data;
+
+                    // Update Headers
+                    document.getElementById('titleBrand').innerText = report.brand_name || '분석 리포트';
+                    const plat = report.platform || 'meta';
+                    document.getElementById('titlePlatform').innerText = plat === 'meta' ? 'Meta' : plat.toUpperCase();
+                    
+                    const dt = new Date(report.created_at);
+                    const dateStr = `${dt.getFullYear()}.${String(dt.getMonth() + 1).padStart(2, '0')}.${String(dt.getDate()).padStart(2, '0')} ${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`;
+                    document.getElementById('reportDate').innerText = `${dateStr} 분석 완료됨`;
+                    brandMeta.style.display = 'block';
+
+                    // Parse Content
+                    let reportContent = report.report_content || report.report || '';
+                    // 이미지 프록시 처리 (만약 직접 접근이라면 프록시 경로 조정 필요하지만 현재 도메인 내이므로 그대로 유지)
+                    reportContent = reportContent.replace(/(<img[^>]+src=['"])(https?:\\/\\/[^'"]+)(['"])/gi, (match, prefix, url, suffix) => {
+                        if (url.includes('/api/v1/image-proxy')) return match;
+                        return `${prefix}/api/v1/image-proxy?url=${encodeURIComponent(url)}${suffix}`;
+                    });
+
+                    let renderedHtml = reportContent;
+                    if (window.marked && typeof window.marked.parse === 'function') {
+                        window.marked.setOptions({ breaks: true, gfm: true });
+                        renderedHtml = window.marked.parse(reportContent);
+                    }
+
+                    contentArea.innerHTML = `
+                        <div class="ai-insight-result">
+                            ${renderedHtml}
+                        </div>
+                    `;
+
+                    copyUrlBtn.style.display = 'inline-flex';
+                    copyUrlBtn.onclick = () => {
+                        navigator.clipboard.writeText(window.location.href).then(() => {
+                            const original = copyUrlBtn.innerHTML;
+                            copyUrlBtn.innerHTML = '<i class="fa-solid fa-check"></i> 복사되었습니다!';
+                            copyUrlBtn.style.background = '#dcfce7';
+                            copyUrlBtn.style.color = '#166534';
+                            copyUrlBtn.style.borderColor = '#bbf7d0';
+                            setTimeout(() => {
+                                copyUrlBtn.innerHTML = original;
+                                copyUrlBtn.style.background = '#e0f2fe';
+                                copyUrlBtn.style.color = '#0369a1';
+                                copyUrlBtn.style.borderColor = '#bae6fd';
+                            }, 3000);
+                        }).catch(err => {
+                            prompt("아래 URL을 복사하여 전달하세요:", window.location.href);
+                        });
+                    };
+
+                } else {
+                    throw new Error(data.message || '리포트를 찾을 수 없습니다.');
+                }
+            } catch (err) {
+                contentArea.innerHTML = `<div class="error"><i class="fa-solid fa-file-circle-xmark fa-2x"></i><p style="margin-top:1rem;">${err.message}</p></div>`;
+            }
+        });
+    </script>
+</body>
+</html>

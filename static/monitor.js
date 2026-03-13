@@ -1612,10 +1612,41 @@ window.loadAndRenderAiReports = async function (brandName, platform) {
                 }
 
                 aiInsightContent.innerHTML = `
+                    <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+                        <button class="share-report-btn" data-id="${report.id}" style="padding: 0.5rem 1rem; border: 1px solid #bae6fd; border-radius: 8px; font-weight: 600; cursor: pointer; color: #0284c7; background: #e0f2fe; transition: all 0.2s; display: flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-share-nodes"></i> URL 공유 전달
+                        </button>
+                    </div>
                     <div class="ai-insight-result" style="line-height: 1.7; font-size: 0.95rem; color: #1e293b;">
                         ${renderedHtml}
                     </div>
                 `;
+
+                const shareBtn = aiInsightContent.querySelector('.share-report-btn');
+                if (shareBtn) {
+                    shareBtn.onclick = () => {
+                        const shareUrl = window.location.origin + '/static/shared_report.html?id=' + report.id;
+                        if (navigator.clipboard && navigator.clipboard.writeText) {
+                            navigator.clipboard.writeText(shareUrl).then(() => {
+                                const originalHtml = shareBtn.innerHTML;
+                                shareBtn.innerHTML = '<i class="fa-solid fa-check"></i> 링크가 복사되었습니다';
+                                shareBtn.style.background = '#dcfce7';
+                                shareBtn.style.color = '#166534';
+                                shareBtn.style.borderColor = '#bbf7d0';
+                                setTimeout(() => {
+                                    shareBtn.innerHTML = originalHtml;
+                                    shareBtn.style.background = '#e0f2fe';
+                                    shareBtn.style.color = '#0284c7';
+                                    shareBtn.style.borderColor = '#bae6fd';
+                                }, 3000);
+                            }).catch(() => {
+                                prompt("아래 공유 링크를 복사하여 전달하세요:", shareUrl);
+                            });
+                        } else {
+                            prompt("아래 공유 링크를 복사하여 전달하세요:", shareUrl);
+                        }
+                    };
+                }
 
                 // Styling
                 const resultDiv = aiInsightContent.querySelector('.ai-insight-result');

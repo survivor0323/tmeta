@@ -564,6 +564,22 @@ async def get_ai_insights(brand: str, platform: str, authorization: str = Header
         logger.error(f"AI insights fetch error: {e}")
         return {"status": "error", "message": str(e)}
 
+@app.get("/api/v1/ai-insights/{report_id}")
+async def get_single_ai_insight(report_id: str):
+    """공유받은 고유 ID로 단일 AI 인사이트 리포트를 조회합니다 (로그인 불필요)."""
+    client = supabase_admin if supabase_admin else supabase
+    if not client:
+        return {"status": "error", "message": "Supabase 클라이언트가 초기화되지 않았습니다."}
+    
+    try:
+        response = client.table("ai_insights").select("*").eq("id", report_id).limit(1).execute()
+        if not response.data:
+            return {"status": "error", "message": "해당 리포트를 찾을 수 없습니다."}
+        return {"status": "success", "data": response.data[0]}
+    except Exception as e:
+        logger.error(f"Single AI insight fetch error: {e}")
+        return {"status": "error", "message": str(e)}
+
 class RecommendRequest(BaseModel):
     keyword: str
     platform: str
