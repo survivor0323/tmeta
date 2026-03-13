@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('btnOpenWeb').addEventListener('click', async () => {
         const savedApiUrl = await chromeStorageAdapter.getItem('MOTIVERSE_API_URL');
-        const webUrl = savedApiUrl || 'http://localhost:8000';
+        const webUrl = savedApiUrl || 'https://tmeta-beige.vercel.app';
         chrome.tabs.create({ url: webUrl });
     });
 
@@ -210,6 +210,17 @@ async function handleCaptureAI() {
         return;
     }
 
+    // 새로고침(F5) 없이도 항상 최신 돔 상태를 분석할 수 있도록,
+    // 캡처 버튼을 누르는 순간 현재 탭에 안전하게 스크립트를 동적 재주입합니다.
+    try {
+        await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            files: ['content/content.js']
+        });
+    } catch (e) {
+        console.warn('Script injection failed (possibly already injected or restricted page):', e);
+    }
+
     // content script에 데이터 추출 요청
     chrome.tabs.sendMessage(tab.id, { action: 'EXTRACT_PROMPT' }, async (response) => {
         if (chrome.runtime.lastError || !response) {
@@ -224,7 +235,7 @@ async function handleCaptureAI() {
 
             // Log silent error to backend
             const savedApiUrl = await chromeStorageAdapter.getItem('MOTIVERSE_API_URL');
-            const apiUrl = savedApiUrl || 'http://localhost:8000';
+            const apiUrl = savedApiUrl || 'https://tmeta-beige.vercel.app';
             const savedSessionObj = await chromeStorageAdapter.getItem('sb-motiverse-auth-token');
             const sess = savedSessionObj ? JSON.parse(savedSessionObj) : null;
 
@@ -356,7 +367,7 @@ async function handleManualSave() {
             // AI 제목 및 카테고리 생성 API 호출
             try {
                 const savedApiUrl = await chromeStorageAdapter.getItem('MOTIVERSE_API_URL');
-                const apiUrl = savedApiUrl || 'http://localhost:8000';
+                const apiUrl = savedApiUrl || 'https://tmeta-beige.vercel.app';
                 const endpoint = `${apiUrl}/api/v1/generate-prompt-title`;
 
                 const res = await fetch(endpoint, {

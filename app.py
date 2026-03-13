@@ -1812,7 +1812,8 @@ async def generate_cf_prompt(req: GenerateCFPromptRequest, authorization: str = 
 - 카메라/앵글(Camera): {req.camera}
 - 화면비율(Ratio): {req.aspect_ratio}
 
-이 정보를 바탕으로 광고 시안 생성용 프롬프트를 구조화하여 다음 JSON 포맷으로 응답하세요.
+이 정보를 바탕으로, 레퍼런스 이미지가 주어졌다면 가장 먼저 그 이미지의 피사체, 구도, 환경 요소들을 꼼꼼하게 파악하여 묘사하고, 사용자의 기획 의도에 맞춰 최고 품질의 광고 시안 생성용 영문 프롬프트를 다음 JSON 포맷으로 작성하세요. 
+(※ 주의사항: 이미지에 전혀 없는 대상(예: 맥주, 칵테일 유리잔 등)을 마음대로 지어내서 묘사하는 환각(Hallucination)을 절대 범하지 마세요. 주어진 이미지를 최우선으로 반영할 것.)
 (```json 과 같은 마크다운 코드블록 래퍼 없이 순수한 JSON 텍스트만 출력할 것)
 {{
     "mj_prompt": "Midjourney용 파라미터(--ar, --v 6.0 등)가 포함된 최적화 영문 프롬프트 (가장 구체적이고 디테일하게 작성)",
@@ -1830,7 +1831,7 @@ async def generate_cf_prompt(req: GenerateCFPromptRequest, authorization: str = 
                         
             parts_list.append({"text": user_msg})
 
-            system_instruction = "당신은 15년차 이상의 전문 CF 감독이자 프롬프트 엔지니어입니다. 주어진 설정과 레퍼런스 이미지를 바탕으로 완벽한 수준의 영문 생성형 AI 프롬프트를 제조해 주는 것이 목표입니다."
+            system_instruction = "당신은 15년차 이상의 전문 영상 기획자이자 최고의 프롬프트 엔지니어입니다. 목표는 주어진 레퍼런스 이미지를 있는 그대로 철저히 분석 및 활용하여 해당 이미지의 본질을 살린 최고급 영문 생성형 AI 프롬프트를 제조하는 것입니다. 이미지에 존재하지 않는 피사체를 임의로 추가하여 완전히 다른 사물을 묘사하지 마세요. 사용자의 <기획 의도> 방향성에 충실하되, 원본 이미지의 디테일을 유지하는 것이 핵심입니다."
 
             text_payload = {
                 "systemInstruction": {"parts": [{"text": system_instruction}]},

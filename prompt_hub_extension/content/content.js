@@ -1,3 +1,6 @@
+if (typeof window.MOTIVERSE_CONTENT_SCRIPT_LOADED === 'undefined') {
+window.MOTIVERSE_CONTENT_SCRIPT_LOADED = true;
+
 function getAllElementsDeep(selector, root = document) {
     const elements = Array.from(root.querySelectorAll(selector));
     const allNodes = Array.from(root.querySelectorAll('*'));
@@ -256,3 +259,5 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true; // async marker
     }
 });
+
+} // end of MOTIVERSE_CONTENT_SCRIPT_LOADED check
